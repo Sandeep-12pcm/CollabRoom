@@ -1,8 +1,44 @@
 import { motion } from "framer-motion";
 import { Code2, Github, Twitter, Linkedin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Footer = () => {
+  const navigate = useNavigate();
+
+  const sections = [
+    {
+      title: "Product",
+      items: ["Features", "Pricing", "Roadmap", "Changelog"],
+    },
+    {
+      title: "Company",
+      items: ["About", "Blog", "Careers", "Contact"],
+    },
+    {
+      title: "Legal",
+      items: ["Privacy", "Terms", "Security", "Cookies"],
+    },
+  ];
+
+  const socialLinks = [
+    { icon: Github, href: "https://github.com/Sandeep-12pcm" },
+    { icon: Twitter, href: "https://x.com/Sandeep36701746" },
+    { icon: Linkedin, href: "https://www.linkedin.com/in/sandeep12pcm/" },
+  ];
+
+  const handleScroll = (sectionId: string) => {
+    const section = document.getElementById(sectionId.toLowerCase());
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        const homeSection = document.getElementById(sectionId.toLowerCase());
+        homeSection?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+  };
+
   return (
     <footer className="relative bg-background border-t border-border overflow-hidden font-mono">
       {/* === Ambient Background Glow === */}
@@ -56,15 +92,11 @@ export const Footer = () => {
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Real-time collaborative coding environment.  
-              Connect. Build. Create.
+              Real-time collaborative coding environment. Connect. Build. Create.
             </p>
+
             <div className="flex gap-4 pt-3">
-              {[
-                { icon: Github, href: "https://github.com/Sandeep-12pcm" },
-                { icon: Twitter, href: "https://x.com/Sandeep36701746" },
-                { icon: Linkedin, href: "https://www.linkedin.com/in/sandeep12pcm/" },
-              ].map(({ icon: Icon, href }, i) => (
+              {socialLinks.map(({ icon: Icon, href }, i) => (
                 <motion.a
                   key={i}
                   href={href}
@@ -81,25 +113,21 @@ export const Footer = () => {
           </div>
 
           {/* --- Quick Links --- */}
-          {[
-            { title: "Product", items: ["Features", "Pricing", "Roadmap", "Changelog"] },
-            { title: "Company", items: ["About", "Blog", "Careers", "Contact"] },
-            { title: "Legal", items: ["Privacy", "Terms", "Security", "Cookies"] },
-          ].map((section, idx) => (
-            <div key={idx}>
+          {sections.map(({ title, items }) => (
+            <div key={title}>
               <h3 className="font-semibold mb-4 text-foreground tracking-wide uppercase">
-                {section.title}
+                {title}
               </h3>
               <ul className="space-y-2 text-sm">
-                {section.items.map((item) => (
+                {items.map((item) => (
                   <li key={item}>
-                    <Link
-                      to="#"
-                      className="text-muted-foreground hover:text-primary transition-colors relative group"
+                    <button
+                      onClick={() => handleScroll(item)}
+                      className="text-muted-foreground hover:text-primary transition-colors relative group w-full text-left"
                     >
                       {item}
                       <span className="absolute left-0 bottom-0 h-[1px] w-0 bg-primary group-hover:w-full transition-all duration-300"></span>
-                    </Link>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -115,6 +143,7 @@ export const Footer = () => {
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             className="absolute top-0 left-1/2 -translate-x-1/2 h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent"
           />
+
           <div className="flex flex-col items-center justify-center gap-1">
             <motion.p
               animate={{ opacity: [0.6, 1, 0.6] }}

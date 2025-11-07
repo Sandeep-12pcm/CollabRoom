@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
@@ -51,7 +52,7 @@ const Room = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isJoining, setIsJoining] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [roomOwnerId, setRoomOwnerId] = useState<string | null>(null);
   const { toast } = useToast();
   const collaborative = useCollaborativePage(activePageId, id);
@@ -111,6 +112,7 @@ body {
     any: `// Write your code here...`,
     markdown: `# Welcome to CodeRoom!`,
   };
+
 
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang);
@@ -369,6 +371,14 @@ body {
   //   return <LoadingScreen />;
   // }
 
+  // Simulate initialization or fetch
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000); // Adjust as needed
+      return () => clearTimeout(timer);
+    }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -392,6 +402,21 @@ body {
           deleteRoom={deleteRoom}
           setRoomName={setRoomName}
         />
+
+        {/* AnimatePresence handles mount/unmount animations */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="absolute inset-0 z-50 bg-background"
+          >
+            <LoadingScreen />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
         <main className="flex-1 flex flex-col relative">
           <div className="p-4 border-b border-border bg-card">

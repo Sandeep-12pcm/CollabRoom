@@ -22,7 +22,7 @@ const Index = () => {
   
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div id="home" className="min-h-screen relative overflow-hidden">
       
       {/* AnimatePresence handles mount/unmount animations */}
       <AnimatePresence>

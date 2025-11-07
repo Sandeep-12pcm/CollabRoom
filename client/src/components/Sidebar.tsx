@@ -1,3 +1,4 @@
+import ConfirmDialog from "./ui/ConfirmDialog";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,6 +64,10 @@ export default function Sidebar({
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [editingRoomName, setEditingRoomName] = useState(false);
   const [showExitPopup, setShowExitPopup] = useState(false);
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+
 
   // Fetch room creator (to show/hide delete room)
   useEffect(() => {
@@ -192,8 +197,6 @@ export default function Sidebar({
   const deletePage = async (pageId: string) => {
     if (!pageId) return;
     // optional confirm
-    const confirm = window.confirm("Delete this page? This action cannot be undone.");
-    if (!confirm) return;
 
     setDeletingPageIds((s) => ({ ...s, [pageId]: true }));
     try {
@@ -399,9 +402,8 @@ export default function Sidebar({
             {pages.map((page, idx) => (
               <div
                 key={page.id}
-                className={`flex items-center justify-between px-2 py-1 rounded-lg text-sm transition-colors ${
-                  activePage === page.id ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground"
-                }`}
+                className={`flex items-center justify-between px-2 py-1 rounded-lg text-sm transition-colors ${activePage === page.id ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground"
+                  }`}
               >
                 {editingPageId === page.id ? (
                   <form
@@ -441,10 +443,21 @@ export default function Sidebar({
                   />
                   {/* Delete page button */}
                   <X
-                    className={`h-4 w-4 text-muted-foreground hover:text-red-500 transition cursor-pointer ${
-                      deletingPageIds[page.id] ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                    onClick={() => deletePage(page.id)}
+                    className={`h-4 w-4 text-muted-foreground hover:text-red-500 transition cursor-pointer ${deletingPageIds[page.id] ? "opacity-50 pointer-events-none" : ""
+                      }`}
+                    onClick={() => {
+                      setSelectedPageId(page.id);
+                      setShowConfirm(true);
+                    }}
+                  />
+                  <ConfirmDialog
+                    isOpen={showConfirm}
+                    onClose={() => setShowConfirm(false)}
+                    onConfirm={() => {
+                      if (selectedPageId) deletePage(selectedPageId);
+                    }}
+                    title="Delete Page?"
+                    message="Are you sure you want to delete this page? This action cannot be undone."
                   />
                 </div>
               </div>

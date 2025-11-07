@@ -46,12 +46,33 @@ export const Navbar = () => {
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
-            <Link
+            {/* <Link
               to="/"
               className="text-foreground hover:text-primary transition-colors"
             >
               Home
-            </Link>
+            </Link> */}
+            <button
+              onClick={() => {
+                const section = document.getElementById("home");
+                if (section) {
+                  section.scrollIntoView({ behavior: "smooth" });
+                } else {
+                  // if user is on another route, go home first, then scroll
+                  navigate("/");
+                  setTimeout(() => {
+                    const section = document.getElementById("features");
+                    section?.scrollIntoView({ behavior: "smooth" });
+                  }, 300);
+                }
+              }}
+            >
+              <div
+                className="text-foreground hover:text-primary transition-colors"
+              >
+                Home
+              </div>
+            </button>
             <button onClick={() => joinDemoRoom(navigate)}>
               <div
                 className="text-foreground hover:text-primary transition-colors"
@@ -80,7 +101,12 @@ export const Navbar = () => {
                 }
               }}
             >
-              Features
+              <div
+                className="text-foreground hover:text-primary transition-colors"
+              >
+
+                Features
+              </div>
             </button>
             <ThemeToggle />
             {isLoggedIn ? (
