@@ -20,7 +20,8 @@ import Sidebar from "@/components/Sidebar";
 import Editor from "@monaco-editor/react";
 import { set } from "date-fns";
 import LoadingScreen from "@/components/loading/LoadingScreen";
-
+import ReactMarkdown from "react-markdown"; //for markdown rendering
+import remarkGfm from "remark-gfm"; //for github flavored markdown
 interface Participant {
   id: string;
   display_name: string;
@@ -103,6 +104,7 @@ body {
   background-color: #f0f0f0;
 }`,
     any: `// Write your code here...`,
+    markdown: `# Welcome to CodeRoom!`,
   };
 
   const handleLanguageChange = (lang: string) => {
@@ -135,7 +137,7 @@ body {
         data: { user },
       } = await supabase.auth.getUser();
       setCurrentUser(user);
-      setIsLoading(true);
+      // setIsLoading(true);
       const { data: room, error: roomError } = await supabase
         .from("rooms")
         .select("*")
@@ -358,9 +360,9 @@ body {
       });
     }
   };
-if (isLoading) {
-  return <LoadingScreen />;
-}
+// if (isLoading) {
+//   return <LoadingScreen />;
+// }
 
   return (
     <div className="min-h-screen bg-background">
@@ -406,6 +408,7 @@ if (isLoading) {
                     <SelectItem value="cpp">C++</SelectItem>
                     <SelectItem value="html">HTML</SelectItem>
                     <SelectItem value="css">CSS</SelectItem>
+                    <SelectItem value="markdown">Markdown (Docs/Table View)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -445,22 +448,52 @@ if (isLoading) {
 
           <div className="flex-1 p-4">
             <Card className="h-full bg-code-bg border-code-border">
-              <Editor
-                height="100%"
-                language={language === "any" ? "javascript" : language}
-                theme="vs-dark"
-                value={
-                  (content && content[language]) ??
-                  defaultCodeTemplates[language]
-                }
-                onChange={(value) => setContent(language, value ?? "")}
-                options={{
-                  fontSize: 14,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                }}
-              />
+              {language === "markdown" ? (
+                <div className="flex h-full">
+                  {/* Markdown Editor */}
+                  <div className="w-1/2 border-r border-border p-3 bg-[#1e1e1e] text-white flex flex-col">
+                    <h3 className="text-sm font-semibold mb-2">
+                      ✏️ Markdown Editor
+                    </h3>
+                    <textarea
+                      value={
+                        (content && content[language]) ??
+                        defaultCodeTemplates[language]
+                      }
+                      onChange={(e) => setContent(language, e.target.value)}
+                      className="flex-1 w-full resize-none bg-[#252526] text-white p-3 rounded-md font-mono text-sm outline-none border border-gray-700 focus:border-gray-500"
+                      placeholder="Write Markdown content here..."
+                    />
+                  </div>
+
+                  {/* Markdown Preview */}
+                  <div className="w-1/2 p-3 overflow-auto bg-white text-black rounded-r-md">
+                    <h3 className="text-sm font-semibold mb-2">👁️ Preview</h3>
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {content?.[language] ?? ""}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Editor
+                  height="100%"
+                  language={language === "any" ? "javascript" : language}
+                  theme="vs-dark"
+                  value={
+                    (content && content[language]) ??
+                    defaultCodeTemplates[language]
+                  }
+                  onChange={(value) => setContent(language, value ?? "")}
+                  options={{
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                  }}
+                />
+              )}
             </Card>
           </div>
         </main>

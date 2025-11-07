@@ -112,3 +112,23 @@ All colors MUST be HSL.
   }
 }
 
+/* Add smooth styling for markdown content */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.prose th,
+.prose td {
+  border: 1px solid #130b0b;
+  padding: 8px;
+}
+.prose th {
+  background-color: #547ed3;
+  font-weight: 600;
+}
+.prose code {
+  background-color: #160101;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
