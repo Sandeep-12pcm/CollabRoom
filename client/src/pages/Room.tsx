@@ -22,6 +22,9 @@ import { set } from "date-fns";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import ReactMarkdown from "react-markdown"; //for markdown rendering
 import remarkGfm from "remark-gfm"; //for github flavored markdown
+import remarkBreaks from "remark-breaks";
+import rehypeRaw from "rehype-raw";
+
 interface Participant {
   id: string;
   display_name: string;
@@ -53,6 +56,8 @@ const Room = () => {
   const { toast } = useToast();
   const collaborative = useCollaborativePage(activePageId, id);
   const content = collaborative?.content ?? "";
+  // const { editingUser } = collaborative?.editingUser ?? {};
+  const { editingUser } = collaborative;
   const setContent = collaborative?.setContent ?? (() => {});
   const activePage = pages.find((p) => p.id === activePageId);
   const defaultCodeTemplates: Record<string, string> = {
@@ -222,7 +227,7 @@ body {
           }
         )
         .subscribe();
-        // setIsLoading(false);
+      // setIsLoading(false);
     };
     fetchRoom();
     return () => {
@@ -360,9 +365,9 @@ body {
       });
     }
   };
-// if (isLoading) {
-//   return <LoadingScreen />;
-// }
+  // if (isLoading) {
+  //   return <LoadingScreen />;
+  // }
 
   return (
     <div className="min-h-screen bg-background">
@@ -408,7 +413,9 @@ body {
                     <SelectItem value="cpp">C++</SelectItem>
                     <SelectItem value="html">HTML</SelectItem>
                     <SelectItem value="css">CSS</SelectItem>
-                    <SelectItem value="markdown">Markdown (Docs/Table View)</SelectItem>
+                    <SelectItem value="markdown">
+                      Markdown (Docs/Table View)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -450,19 +457,48 @@ body {
             <Card className="h-full bg-code-bg border-code-border">
               {language === "markdown" ? (
                 <div className="flex h-full">
-                  {/* Markdown Editor */}
+                  {/* Markdown Collaborative Editor */}
                   <div className="w-1/2 border-r border-border p-3 bg-[#1e1e1e] text-white flex flex-col">
-                    <h3 className="text-sm font-semibold mb-2">
-                      ✏️ Markdown Editor
-                    </h3>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-semibold">
+                        ✏️ Markdown Editor (Collaborative)
+                      </h3>
+                      {editingUser && (
+                        <span className="text-xs text-amber-400">
+                          Currently being edited by {editingUser.display_name}
+                        </span>
+                      )}
+                    </div>
+
                     <textarea
                       value={
                         (content && content[language]) ??
                         defaultCodeTemplates[language]
                       }
-                      onChange={(e) => setContent(language, e.target.value)}
-                      className="flex-1 w-full resize-none bg-[#252526] text-white p-3 rounded-md font-mono text-sm outline-none border border-gray-700 focus:border-gray-500"
-                      placeholder="Write Markdown content here..."
+                      onChange={(e) => {
+                        if (
+                          !editingUser ||
+                          editingUser.user_id === collaborative.socket?.id
+                        ) {
+                          setContent(language, e.target.value);
+                        }
+                      }}
+                      disabled={
+                        editingUser &&
+                        editingUser.user_id !== collaborative.socket?.id
+                      }
+                      className={`flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border ${
+                        editingUser &&
+                        editingUser.user_id !== collaborative.socket?.id
+                          ? "bg-gray-800 text-gray-400 cursor-not-allowed"
+                          : "bg-[#252526] text-white border-gray-700 focus:border-gray-500"
+                      }`}
+                      placeholder={
+                        editingUser &&
+                        editingUser.user_id !== collaborative.socket?.id
+                          ? `${editingUser.display_name} is editing...`
+                          : "Write Markdown collaboratively..."
+                      }
                     />
                   </div>
 
@@ -470,7 +506,10 @@ body {
                   <div className="w-1/2 p-3 overflow-auto bg-white text-black rounded-r-md">
                     <h3 className="text-sm font-semibold mb-2">👁️ Preview</h3>
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                        rehypePlugins={[rehypeRaw]}
+                      >
                         {content?.[language] ?? ""}
                       </ReactMarkdown>
                     </div>

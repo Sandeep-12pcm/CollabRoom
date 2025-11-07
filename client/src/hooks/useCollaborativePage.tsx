@@ -19,7 +19,10 @@ interface Cursor {
   color?: string;
 }
 
-export function useCollaborativePage(pageId: string | null, roomId?: string | null) {
+export function useCollaborativePage(
+  pageId: string | null,
+  roomId?: string | null
+) {
   const [content, setContent] = useState<Record<string, string>>({});
   const [title, setTitle] = useState<string>("");
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -31,6 +34,11 @@ export function useCollaborativePage(pageId: string | null, roomId?: string | nu
   const lastLocalChangeRef = useRef<string>(""); // JSON string of last content
   const isMountedRef = useRef(true);
   const { toast } = useToast();
+  const [editingUser, setEditingUser] = useState<{
+    user_id: string;
+    display_name: string;
+  } | null>(null);
+  const editingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 1. Load initial content + title
   useEffect(() => {
@@ -161,7 +169,10 @@ export function useCollaborativePage(pageId: string | null, roomId?: string | nu
       });
 
       socket.on("participant-joined", (p: Participant) => {
-        setParticipants((ps) => [...ps.filter((x) => x.user_id !== p.user_id), p]);
+        setParticipants((ps) => [
+          ...ps.filter((x) => x.user_id !== p.user_id),
+          p,
+        ]);
       });
 
       socket.on("participant-left", (p: Participant) => {
@@ -171,6 +182,14 @@ export function useCollaborativePage(pageId: string | null, roomId?: string | nu
           delete copy[p.user_id];
           return copy;
         });
+      });
+      socket.on("editing-started", ({ user_id, display_name }) => {
+        setEditingUser({ user_id, display_name });
+        console.log("Editing started:", { user_id, display_name });
+      });
+
+      socket.on("editing-stopped", () => {
+        setEditingUser(null);
       });
 
       socket.on("disconnect", (reason: any) => {
@@ -183,57 +202,87 @@ export function useCollaborativePage(pageId: string | null, roomId?: string | nu
       try {
         socketRef.current?.emit("leave-page", pageId);
         socketRef.current?.disconnect();
-      } catch {}
+      } catch {
+        // ignore
+      }
       socketRef.current = null;
     };
   }, [pageId, roomId]);
 
+
   // 4. Emit throttled
-  const emitContentChangeThrottled = useCallback(
-    (nextContent: Record<string, string>) => {
-      const jsonStr = JSON.stringify(nextContent);
-      const now = Date.now();
-      const last = lastEmitRef.current || 0;
+const emitContentChangeThrottled = useCallback(
+  (nextContent: Record<string, string>) => {
+    const jsonStr = JSON.stringify(nextContent);
+    const now = Date.now();
+    const last = lastEmitRef.current || 0;
+    if (socketRef.current) {
       if (now - last >= EMIT_THROTTLE_MS) {
-        socketRef.current?.emit("content-change", { pageId, content: jsonStr });
+        socketRef.current.emit("content-change", { pageId, content: jsonStr });
         lastEmitRef.current = now;
       } else {
         const wait = EMIT_THROTTLE_MS - (now - last);
         window.setTimeout(() => {
-          socketRef.current?.emit("content-change", { pageId, content: jsonStr });
+          socketRef.current?.emit("content-change", {
+            pageId,
+            content: jsonStr,
+          });
           lastEmitRef.current = Date.now();
         }, wait);
       }
-    },
-    [pageId]
-  );
+    }
+  },
+  [pageId]
+);
 
-  // 5. Debounced save
-  const scheduleSave = useCallback(
-    (nextContent: Record<string, string>) => {
-      if (saveTimerRef.current) {
-        window.clearTimeout(saveTimerRef.current);
-      }
-      const jsonStr = JSON.stringify(nextContent);
-      saveTimerRef.current = window.setTimeout(() => {
-        socketRef.current?.emit("save-page", { pageId, content: jsonStr });
-        saveTimerRef.current = null;
-      }, SAVE_DEBOUNCE_MS);
-    },
-    [pageId]
-  );
+// 5. Debounced save
+const scheduleSave = useCallback(
+  (nextContent: Record<string, string>) => {
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    const jsonStr = JSON.stringify(nextContent);
+    saveTimerRef.current = window.setTimeout(() => {
+      socketRef.current?.emit("save-page", { pageId, content: jsonStr });
+      saveTimerRef.current = null;
+    }, SAVE_DEBOUNCE_MS);
+  },
+  [pageId]
+);
 
-  // 6. Setter from editor (per-language)
-  const setContentFromEditor = useCallback(
-    (lang: string, code: string) => {
-      const newContent = { ...content, [lang]: code };
-      setContent(newContent);
-      lastLocalChangeRef.current = JSON.stringify(newContent);
-      emitContentChangeThrottled(newContent);
-      scheduleSave(newContent);
-    },
-    [content, emitContentChangeThrottled, scheduleSave]
-  );
+// 6. Setter from editor (per-language)
+const setContentFromEditor = useCallback(
+  async (lang: string, code: string) => {
+    const newContent = { ...content, [lang]: code };
+    setContent(newContent);
+    lastLocalChangeRef.current = JSON.stringify(newContent);
+    console.log("setContentFromEditor called");
+    // 🔥 Editing lock logic (only runs when socket exists)
+    if (socketRef.current) {
+      console.log("✅ Socket connected, executing editing lock logic");
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+      socketRef.current.emit("editing-started", {
+        pageId,
+        user_id: user?.id,
+        display_name:
+          user?.user_metadata?.display_name ||
+          user?.email ||
+          "Someone",
+      });
+
+      if (editingTimerRef.current) clearTimeout(editingTimerRef.current);
+      editingTimerRef.current = setTimeout(() => {
+        socketRef.current?.emit("editing-stopped", { pageId });
+      }, 5000);
+    }
+    else{
+      console.log("❌Socket not connected, skipping editing lock logic");
+    }
+
+    emitContentChangeThrottled(newContent);
+    scheduleSave(newContent);
+  },
+  [content, emitContentChangeThrottled, scheduleSave, pageId]
+);
 
   // 7. Save on beforeunload
   useEffect(() => {
@@ -294,6 +343,7 @@ export function useCollaborativePage(pageId: string | null, roomId?: string | nu
     title,
     updateTitle,
     participants,
+    editingUser,
     cursors,
     saveNow,
     socket: socketRef.current,

@@ -80,6 +80,31 @@ io.on("connection", (socket) => {
     }
   });
 
+    // 🔒 Track who is editing (in-memory, simple map)
+  const currentEditors = new Map<string, { user_id: string; display_name: string }>();
+
+  // When a user starts editing
+  socket.on("editing-started", ({ pageId, user_id, display_name }) => {
+    if (!pageId || !user_id) return;
+    currentEditors.set(pageId, { user_id, display_name });
+    console.log(`🟢 ${display_name} started editing page ${pageId}`);
+    // Notify everyone else in that page room
+    socket.to(pageId).emit("editing-started", { user_id, display_name });
+  });
+
+  // When a user stops editing
+  socket.on("editing-stopped", ({ pageId }) => {
+    if (!pageId) return;
+    const prev = currentEditors.get(pageId);
+    if (prev) {
+      console.log(`🔵 ${prev.display_name} stopped editing page ${pageId}`);
+      currentEditors.delete(pageId);
+    }
+    // Notify everyone else
+    socket.to(pageId).emit("editing-stopped", { pageId });
+  });
+
+  // leaving page room
   socket.on("leave-page", (pageId: string) => {
     socket.leave(pageId);
     // you can optionally mark last_seen or remove presence here
@@ -116,9 +141,17 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("disconnect", () => {
+    socket.on("disconnect", () => {
     console.log("socket disconnected", user?.id);
-    // optionally update last_seen or remove participant
+
+    // Auto release edit lock if they were editing
+    for (const [pageId, editor] of currentEditors.entries()) {
+      if (editor.user_id === user?.id) {
+        currentEditors.delete(pageId);
+        io.to(pageId).emit("editing-stopped", { pageId });
+        console.log(`🔴 Released edit lock for ${editor.display_name} on ${pageId}`);
+      }
+    }
   });
 });
 
