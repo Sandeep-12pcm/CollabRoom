@@ -7,7 +7,8 @@ import Index from "./pages/Index";
 import Room from "./pages/Room";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-
+import Loading from "./components/loading/Loading";
+import { Navbar } from "./components/Navbar";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -18,6 +19,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/loading" element={<Loading />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/room/:id" element={<Room />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

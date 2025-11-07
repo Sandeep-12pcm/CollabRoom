@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { useCollaborativePage } from "@/hooks/useCollaborativePage";
 import {
@@ -18,6 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel, User } from "@supabase/supabase-js";
 import Sidebar from "@/components/Sidebar";
 import Editor from "@monaco-editor/react";
+import { set } from "date-fns";
+import LoadingScreen from "@/components/loading/LoadingScreen";
 
 interface Participant {
   id: string;
@@ -45,6 +47,7 @@ const Room = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isJoining, setIsJoining] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [roomOwnerId, setRoomOwnerId] = useState<string | null>(null);
   const { toast } = useToast();
   const collaborative = useCollaborativePage(activePageId, id);
@@ -132,7 +135,7 @@ body {
         data: { user },
       } = await supabase.auth.getUser();
       setCurrentUser(user);
-
+      setIsLoading(true);
       const { data: room, error: roomError } = await supabase
         .from("rooms")
         .select("*")
@@ -217,10 +220,9 @@ body {
           }
         )
         .subscribe();
+        // setIsLoading(false);
     };
-
     fetchRoom();
-
     return () => {
       if (channel) supabase.removeChannel(channel);
     };
@@ -356,6 +358,9 @@ body {
       });
     }
   };
+if (isLoading) {
+  return <LoadingScreen />;
+}
 
   return (
     <div className="min-h-screen bg-background">
