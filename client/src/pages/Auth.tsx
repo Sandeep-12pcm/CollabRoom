@@ -16,35 +16,64 @@ import { supabase } from "@/integrations/supabase/client";
 import { Code2 } from "lucide-react";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState<boolean>(true);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [displayName, setDisplayName] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // ✅ 1. Check if already logged in or update profile on Google login
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/");
-      }
-    });
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) navigate("/");
+    };
+    checkSession();
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        navigate("/");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          const user = session.user;
+          const displayName =
+            user.user_metadata?.name || user.user_metadata?.display_name || "Developer";
+
+          // 🔧 Check or insert into 'users' table
+          const { data: existingProfile } = await supabase
+            .from("users")
+            .select("id")
+            .eq("id", user.id)
+            .single();
+
+          if (!existingProfile) {
+            await supabase.from("users").insert({
+              id: user.id,
+              email: user.email,
+              display_name: displayName,
+              avatar_url: user.user_metadata?.picture || null,
+              created_at: new Date(),
+            });
+          } else {
+            // optional: sync updated name or avatar
+            await supabase
+              .from("users")
+              .update({
+                display_name: displayName,
+                avatar_url: user.user_metadata?.picture || null,
+              })
+              .eq("id", user.id);
+          }
+
+          navigate("/");
+        }
       }
-    });
+    );
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // ✅ 2. Email/Password Auth
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -55,12 +84,11 @@ const Auth = () => {
           email,
           password,
         });
-
         if (error) throw error;
 
         toast({
           title: "Welcome back!",
-          description: "You've successfully signed in.",
+          description: "Signed in successfully.",
         });
       } else {
         const { error } = await supabase.auth.signUp({
@@ -68,35 +96,58 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              display_name: displayName,
-            },
+            data: { display_name: displayName },
           },
         });
-
         if (error) throw error;
 
         toast({
           title: "Account created!",
-          description: "Please check your email to confirm your account.",
+          description: "Check your email to confirm your account.",
         });
       }
     } catch (error) {
-      if (error instanceof Error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ 3. Supabase Google OAuth only (no extra popup)
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) console.error("Google login error:", error);
+  };
+
+  // ✅ 4. Render the official button look (UI only, no Google script)
+  const GoogleButton = () => (
+    <button
+      onClick={handleGoogleLogin}
+      className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-md py-2 hover:bg-gray-50 transition"
+    >
+      <img
+        src="https://developers.google.com/identity/images/g-logo.png"
+        alt="Google Logo"
+        className="w-5 h-5"
+      />
+      <span className="text-gray-700 font-medium">
+        Sign in with Google
+      </span>
+    </button>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <div className="pt-20 px-4 flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 flex flex-col items-center">
@@ -112,6 +163,7 @@ const Auth = () => {
                 : "Sign up to start collaborating"}
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleAuth} className="space-y-4">
               {!isLogin && (
@@ -123,7 +175,7 @@ const Auth = () => {
                     placeholder="Your name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    required={!isLogin}
+                    required
                   />
                 </div>
               )}
@@ -168,6 +220,15 @@ const Auth = () => {
                   : "Already have an account? Sign in"}
               </Button>
             </form>
+
+            <div className="flex items-center my-6">
+              <div className="flex-grow border-t border-muted"></div>
+              <span className="mx-3 text-muted-foreground text-sm">or</span>
+              <div className="flex-grow border-t border-muted"></div>
+            </div>
+
+            {/* ✅ Google Button (only UI, triggers Supabase OAuth) */}
+            <GoogleButton />
           </CardContent>
         </Card>
       </div>

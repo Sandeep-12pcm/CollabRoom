@@ -167,6 +167,7 @@ body {
 
       if (user && !isJoining) {
         setIsJoining(true);
+        console.log("Joining room participants for user:", user);
         const displayName =
           user.user_metadata?.display_name ||
           user.email?.split("@")[0] ||
