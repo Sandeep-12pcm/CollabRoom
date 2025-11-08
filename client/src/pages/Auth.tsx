@@ -78,7 +78,7 @@ const Auth = () => {
 
         toast({
           title: "Account created!",
-          description: "You can now start creating rooms.",
+          description: "Please check your email to confirm your account.",
         });
       }
     } catch (error) {

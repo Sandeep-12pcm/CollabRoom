@@ -493,6 +493,11 @@ body {
                           Currently being edited by {editingUser.display_name}
                         </span>
                       )}
+                      {!editingUser && (
+                        <span className="text-xs text-green-400">
+                          You can edit now!
+                        </span>
+                      )}
                     </div>
 
                     <textarea
