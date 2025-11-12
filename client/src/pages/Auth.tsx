@@ -24,51 +24,60 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // ✅ 1. Check if already logged in or update profile on Google login
+  // ✅ 1. Check session & sync profile for OAuth users
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) navigate("/");
     };
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === "SIGNED_IN" && session) {
-          const user = session.user;
-          const displayName =
-            user.user_metadata?.name || user.user_metadata?.display_name || "Developer";
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        const user = session.user;
+        const displayName =
+          user.user_metadata?.name ||
+          user.user_metadata?.full_name ||
+          user.user_metadata?.user_name ||
+          "Developer";
 
-          // 🔧 Check or insert into 'users' table
-          const { data: existingProfile } = await supabase
+        const { data: existingProfile } = await supabase
+          .from("users")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+
+        if (!existingProfile) {
+          await supabase.from("users").insert({
+            id: user.id,
+            email: user.email,
+            display_name: displayName,
+            avatar_url:
+              user.user_metadata?.avatar_url ||
+              user.user_metadata?.picture ||
+              null,
+            created_at: new Date(),
+          });
+        } else {
+          await supabase
             .from("users")
-            .select("id")
-            .eq("id", user.id)
-            .single();
-
-          if (!existingProfile) {
-            await supabase.from("users").insert({
-              id: user.id,
-              email: user.email,
+            .update({
               display_name: displayName,
-              avatar_url: user.user_metadata?.picture || null,
-              created_at: new Date(),
-            });
-          } else {
-            // optional: sync updated name or avatar
-            await supabase
-              .from("users")
-              .update({
-                display_name: displayName,
-                avatar_url: user.user_metadata?.picture || null,
-              })
-              .eq("id", user.id);
-          }
-
-          navigate("/");
+              avatar_url:
+                user.user_metadata?.avatar_url ||
+                user.user_metadata?.picture ||
+                null,
+            })
+            .eq("id", user.id);
         }
+
+        navigate("/");
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -85,7 +94,6 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
-
         toast({
           title: "Welcome back!",
           description: "Signed in successfully.",
@@ -100,7 +108,6 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-
         toast({
           title: "Account created!",
           description: "Check your email to confirm your account.",
@@ -117,7 +124,7 @@ const Auth = () => {
     }
   };
 
-  // ✅ 3. Supabase Google OAuth only (no extra popup)
+  // ✅ 3. Supabase Google OAuth
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -128,7 +135,18 @@ const Auth = () => {
     if (error) console.error("Google login error:", error);
   };
 
-  // ✅ 4. Render the official button look (UI only, no Google script)
+  // ✅ 4. Supabase GitHub OAuth
+  const handleGithubLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) console.error("GitHub login error:", error);
+  };
+
+  // ✅ 5. OAuth Button Components
   const GoogleButton = () => (
     <button
       onClick={handleGoogleLogin}
@@ -139,12 +157,25 @@ const Auth = () => {
         alt="Google Logo"
         className="w-5 h-5"
       />
-      <span className="text-gray-700 font-medium">
-        Sign in with Google
-      </span>
+      <span className="text-gray-700 font-medium">Sign in with Google</span>
     </button>
   );
 
+  const GithubButton = () => (
+    <button
+      onClick={handleGithubLogin}
+      className="w-full flex items-center justify-center gap-3 bg-[#24292f] text-white rounded-md py-2 hover:bg-[#1f2428] transition"
+    >
+      <img
+        src="https://cdn-icons-png.flaticon.com/512/25/25231.png"
+        alt="GitHub Logo"
+        className="w-5 h-5 invert"
+      />
+      <span className="font-medium">Sign in with GitHub</span>
+    </button>
+  );
+
+  // ✅ 6. Render UI
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -227,8 +258,10 @@ const Auth = () => {
               <div className="flex-grow border-t border-muted"></div>
             </div>
 
-            {/* ✅ Google Button (only UI, triggers Supabase OAuth) */}
-            <GoogleButton />
+            <div className="space-y-3">
+              <GoogleButton />
+              <GithubButton />
+            </div>
           </CardContent>
         </Card>
       </div>
