@@ -1,0 +1,279 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Sun, Moon, Home, Send, RotateCcw, Mail, Github, MessageSquare } from "lucide-react";
+
+const ContactForm: React.FC = () => {
+  const navigate = useNavigate();
+
+  // form state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [problem, setProblem] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const canSubmit = name.trim() && email.trim() && problem.trim();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+
+    if (!canSubmit) {
+      setError("Please fill in all fields before submitting.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Dummy success (replace with your backend endpoint later)
+      await new Promise((res) => setTimeout(res, 1000));
+      setMessage("✅ Thank you! Your message has been sent successfully.");
+      setName("");
+      setEmail("");
+      setProblem("");
+    } catch (err: any) {
+      setError("Something went wrong. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      className={`min-h-screen flex flex-col items-center justify-center px-4 py-12 transition-colors duration-500 ${
+        darkMode ? "bg-[#0e0e14] text-gray-100" : "bg-[#f9f9fb] text-gray-900"
+      }`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8, ease: "easeInOut" }}
+    >
+      {/* Floating Background Glow */}
+      <motion.div
+        className="absolute inset-0 -z-10 blur-3xl"
+        animate={{
+          background: [
+            "radial-gradient(circle at 20% 30%, rgba(147,197,253,0.1), transparent 60%), radial-gradient(circle at 80% 70%, rgba(236,72,153,0.1), transparent 60%)",
+            "radial-gradient(circle at 30% 60%, rgba(147,197,253,0.15), transparent 60%), radial-gradient(circle at 70% 40%, rgba(236,72,153,0.15), transparent 60%)",
+          ],
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Header */}
+      <motion.div
+        className="flex items-center justify-between w-full max-w-2xl mb-6"
+        initial={{ y: -30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+      >
+        <button
+          onClick={() => navigate("/")}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all duration-300 ${
+            darkMode
+              ? "border-gray-700 text-gray-300 hover:bg-gray-800"
+              : "border-gray-300 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          <Home className="w-4 h-4" />
+          Back Home
+        </button>
+
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-all duration-300 ${
+            darkMode
+              ? "border-gray-700 text-gray-300 hover:bg-gray-800"
+              : "border-gray-300 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          {darkMode ? (
+            <>
+              <Sun className="w-4 h-4 text-yellow-400" /> Light
+            </>
+          ) : (
+            <>
+              <Moon className="w-4 h-4 text-blue-500" /> Dark
+            </>
+          )}
+        </button>
+      </motion.div>
+
+      {/* Contact Info Section */}
+      <motion.div
+        className={`w-full max-w-2xl mb-6 rounded-2xl p-6 text-sm border backdrop-blur-xl ${
+          darkMode
+            ? "bg-[#1a1a24]/90 border-[#2a2a40]"
+            : "bg-white/80 border-gray-200"
+        }`}
+        initial={{ y: 15, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          Contact DevRoom Team
+        </h2>
+
+        <div className="space-y-2">
+          <p className="flex items-center gap-2">
+            <Mail className="w-4 h-4 text-primary" />{" "}
+            <a href="mailto:sandeep12pcm@gmail.com" className="hover:underline">
+              soladhraharshal@gmail.com
+            </a>
+          </p>
+          <p className="flex items-center gap-2">
+            <Github className="w-4 h-4 text-primary" />{" "}
+            <a
+              href="https://github.com/Sandeep-12pcm"
+              target="_blank"
+              className="hover:underline"
+            >
+              github.com/Sandeep-12pcm
+            </a>
+          </p>
+          <p className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-primary" /> For quick support, drop a message anytime!
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Form Card */}
+      <motion.form
+        onSubmit={handleSubmit}
+        className={`relative w-full max-w-2xl rounded-2xl shadow-2xl border backdrop-blur-xl p-8 transition-all duration-500 ${
+          darkMode
+            ? "bg-[#1a1a24]/90 border-[#2a2a40]"
+            : "bg-white/80 border-gray-200"
+        }`}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+      >
+        <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          Contact Us
+        </h2>
+        <p className="text-center text-muted-foreground mb-6 text-sm">
+          Facing an issue or have a question? Fill the form below and we’ll get back to you soon.
+        </p>
+
+        <div className="space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-xs font-medium opacity-80 mb-1">Name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your name"
+              className={`w-full rounded-md px-3 py-2 text-sm transition border focus:outline-none focus:ring-1 ${
+                darkMode
+                  ? "bg-[#111218] border-[#2d2d40] text-gray-100 focus:ring-primary/50"
+                  : "bg-gray-100 border-gray-300 text-gray-900 focus:ring-primary/40"
+              }`}
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-xs font-medium opacity-80 mb-1">Email</label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              placeholder="you@domain.com"
+              className={`w-full rounded-md px-3 py-2 text-sm transition border focus:outline-none focus:ring-1 ${
+                darkMode
+                  ? "bg-[#111218] border-[#2d2d40] text-gray-100 focus:ring-primary/50"
+                  : "bg-gray-100 border-gray-300 text-gray-900 focus:ring-primary/40"
+              }`}
+            />
+          </div>
+
+          {/* Problem */}
+          <div>
+            <label className="block text-xs font-medium opacity-80 mb-1">Problem</label>
+            <textarea
+              value={problem}
+              onChange={(e) => setProblem(e.target.value)}
+              rows={6}
+              placeholder="Describe your issue or query..."
+              className={`w-full rounded-md px-3 py-2 text-sm resize-y transition border focus:outline-none focus:ring-1 ${
+                darkMode
+                  ? "bg-[#0f1115] border-[#2d2d40] text-gray-100 focus:ring-primary/50"
+                  : "bg-gray-100 border-gray-300 text-gray-900 focus:ring-primary/40"
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* Messages */}
+        {error && (
+          <motion.div
+            className="text-sm text-red-500 mt-4 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {error}
+          </motion.div>
+        )}
+        {message && (
+          <motion.div
+            className="text-sm text-green-500 mt-4 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {message}
+          </motion.div>
+        )}
+
+        {/* Buttons */}
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <motion.button
+            type="submit"
+            disabled={!canSubmit || loading}
+            whileHover={{ scale: canSubmit ? 1.05 : 1 }}
+            whileTap={{ scale: 0.98 }}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-md font-semibold shadow-md transition-all ${
+              canSubmit
+                ? "bg-gradient-to-r from-primary to-accent text-black hover:opacity-90"
+                : "bg-gray-500/30 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {loading ? (
+              <>
+                <motion.div className="w-4 h-4 border-2 border-t-transparent border-black rounded-full animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" /> Submit
+              </>
+            )}
+          </motion.button>
+
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              setName("");
+              setEmail("");
+              setProblem("");
+              setError(null);
+              setMessage(null);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md border text-sm transition ${
+              darkMode
+                ? "border-gray-600 text-gray-300 hover:bg-gray-800"
+                : "border-gray-300 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            <RotateCcw className="w-4 h-4" /> Cancel
+          </motion.button>
+        </div>
+      </motion.form>
+    </motion.div>
+  );
+};
+
+export default ContactForm;
