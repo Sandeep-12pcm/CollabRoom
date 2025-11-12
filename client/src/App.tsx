@@ -11,6 +11,7 @@ import Loading from "./components/loading/Loading";
 import { FeedbackForm } from "./pages/FeedbackForm";
 import ProfilePage from "./pages/ProfilePage";
 import { Navbar } from "./components/Navbar";
+import ContactForm from "./pages/ContactForm";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/room/:id" element={<Room />} />
           <Route path="/feedback" element={< FeedbackForm />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/contact" element={<ContactForm/>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
