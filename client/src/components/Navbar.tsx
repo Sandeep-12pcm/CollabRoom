@@ -10,6 +10,7 @@ export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const navigate = useNavigate();
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
@@ -46,19 +47,12 @@ export const Navbar = () => {
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
-            {/* <Link
-              to="/"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              Home
-            </Link> */}
             <button
               onClick={() => {
                 const section = document.getElementById("home");
                 if (section) {
                   section.scrollIntoView({ behavior: "smooth" });
                 } else {
-                  // if user is on another route, go home first, then scroll
                   navigate("/");
                   setTimeout(() => {
                     const section = document.getElementById("features");
@@ -67,32 +61,23 @@ export const Navbar = () => {
                 }
               }}
             >
-              <div
-                className="text-foreground hover:text-primary transition-colors"
-              >
+              <div className="text-foreground hover:text-primary transition-colors">
                 Home
               </div>
             </button>
+
             <button onClick={() => joinDemoRoom(navigate)}>
-              <div
-                className="text-foreground hover:text-primary transition-colors"
-              >
+              <div className="text-foreground hover:text-primary transition-colors">
                 Demo Room
               </div>
             </button>
-            {/* <Link
-              to="#features"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              Features
-            </Link> */}
+
             <button
               onClick={() => {
                 const section = document.getElementById("features");
                 if (section) {
                   section.scrollIntoView({ behavior: "smooth" });
                 } else {
-                  // if user is on another route, go home first, then scroll
                   navigate("/");
                   setTimeout(() => {
                     const section = document.getElementById("features");
@@ -101,14 +86,21 @@ export const Navbar = () => {
                 }
               }}
             >
-              <div
-                className="text-foreground hover:text-primary transition-colors"
-              >
-
+              <div className="text-foreground hover:text-primary transition-colors">
                 Features
               </div>
             </button>
+
+            {/* ✅ Added Feedback Link */}
+            <Link
+              to="/feedback"
+              className="text-foreground hover:text-primary transition-colors"
+            >
+              Feedback
+            </Link>
+
             <ThemeToggle />
+
             {isLoggedIn ? (
               <Button
                 variant="default"
@@ -150,6 +142,7 @@ export const Navbar = () => {
               >
                 Home
               </Link>
+
               <Link
                 to="/room/demo"
                 className="text-foreground hover:text-primary transition-colors py-2"
@@ -157,6 +150,7 @@ export const Navbar = () => {
               >
                 Demo Room
               </Link>
+
               <Link
                 to="#features"
                 className="text-foreground hover:text-primary transition-colors py-2"
@@ -164,6 +158,16 @@ export const Navbar = () => {
               >
                 Features
               </Link>
+
+              {/* ✅ Added Feedback in Mobile Menu */}
+              <Link
+                to="/feedback"
+                className="text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Feedback
+              </Link>
+
               {isLoggedIn ? (
                 <Button
                   onClick={() => {
