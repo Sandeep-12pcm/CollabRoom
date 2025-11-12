@@ -8,7 +8,6 @@ import Room from "./pages/Room";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Loading from "./components/loading/Loading";
-import { Navbar } from "./components/Navbar";
 const queryClient = new QueryClient();
 
 const App = () => (
