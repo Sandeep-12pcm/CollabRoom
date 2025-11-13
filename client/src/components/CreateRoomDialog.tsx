@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import createRoom from "@/utils/createRoom";
 
 interface CreateRoomDialogProps {
   children?: ReactNode; // ✅ optional custom trigger
@@ -108,6 +109,7 @@ export const CreateRoomDialog = ({ children }: CreateRoomDialogProps) => {
         </DialogHeader>
 
         <form onSubmit={handleCreateRoom} className="space-y-4">
+        {/* <form onSubmit={createRoom(roomName: roomName,)} className="space-y-4"> */}
           <div className="space-y-2">
             <Label htmlFor="roomName">Room Name</Label>
             <Input
