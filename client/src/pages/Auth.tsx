@@ -46,13 +46,13 @@ const Auth = () => {
           "Developer";
 
         const { data: existingProfile } = await supabase
-          .from("users")
+          .from("profiles")
           .select("id")
           .eq("id", user.id)
           .single();
 
         if (!existingProfile) {
-          await supabase.from("users").insert({
+          await supabase.from("profiles").insert({
             id: user.id,
             email: user.email,
             display_name: displayName,
@@ -64,7 +64,7 @@ const Auth = () => {
           });
         } else {
           await supabase
-            .from("users")
+            .from("profiles")
             .update({
               display_name: displayName,
               avatar_url:

@@ -1,9 +1,3 @@
-/* ProfilePage.tsx
-   - Add to your routes (e.g. /profile)
-   - Requires: supabase client exported from "@/lib/supabaseClient"
-   - Uses Tailwind + framer-motion + lucide-react + shadcn-like components (adjust imports if you use other UI libs)
-*/
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -22,9 +16,6 @@ import { Button } from "@/components/ui/button"; // optional shadcn button - rep
 import { Card } from "@/components/ui/card"; // optional
 import { useToast } from "@/hooks/use-toast"; // optional toast; replace with your toast or console.log
 
-/* -------------------------
-   Types (adjust to your DB)
-   ------------------------- */
 type Profile = {
   id: string;
   email?: string;
@@ -37,7 +28,7 @@ type Profile = {
 
 type Room = {
   id: string;
-  title: string;
+  name: string;
   created_at?: string;
   expiry_hours?: number | null;
 };
@@ -54,7 +45,7 @@ const fmtDate = (iso?: string | null) =>
 export default function ProfilePage() {
   const nav = useNavigate();
   const { toast } = useToast ? useToast() : { toast: (t: any) => console.log(t) }; // fallback
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -78,26 +69,24 @@ export default function ProfilePage() {
 
   /* Auth check -> redirect to /login if not logged in */
   useEffect(() => {
+
     const check = async () => {
       setLoading(true);
-      // Supabase: get session user
-      // NOTE: this uses Supabase v2/api. If you use v1, adjust: supabase.auth.user()
       const {
         data: { user: suser },
         error,
       } = await supabase.auth.getUser();
       if (error || !suser) {
-        // not logged in -> redirect to login
         nav("/login");
         return;
       }
+      console.log("found user: ",suser);
       setUser(suser);
 
-      // fetch profile row from `profiles` table (you must have this table)
-      // TODO: ensure your profiles table has fields: id (auth id), name, avatar_url, email, is_pro, joined_at, last_login
+      // fetch profile
       const { data: profileData, error: pErr } = await supabase
         .from("profiles")
-        .select(`id, name, avatar_url, email, is_pro, joined_at, last_login`)
+        .select("*")
         .eq("id", suser.id)
         .maybeSingle();
 
@@ -109,6 +98,7 @@ export default function ProfilePage() {
           variant: "destructive",
         });
       } else {
+        console.log("profile data", profileData);
         setProfile(profileData || { id: suser.id, email: suser.email });
         setEditName(profileData?.name || "");
       }
@@ -117,7 +107,7 @@ export default function ProfilePage() {
       // TODO: update rooms table/fields to match: id, title, created_at, created_by, expiry_hours
       const { data: roomData, error: rErr } = await supabase
         .from("rooms")
-        .select("id, title, created_at, expiry_hours")
+        .select("id, name, created_at, expiry_hours")
         .eq("created_by", suser.id)
         .order("created_at", { ascending: false });
 
@@ -136,10 +126,7 @@ export default function ProfilePage() {
     };
 
     check();
-    // optional: real-time subscribe to profile/rooms changes with supabase channel
-    // (left out to keep it simple; ask if you want it)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [nav, toast]);
 
   /* Avatar preview */
   useEffect(() => {
@@ -165,14 +152,14 @@ export default function ProfilePage() {
 
       if (file) {
         // NOTE: customize bucket name and path
-        const filePath = `avatars/${profile?.id}-${Date.now()}-${file.name}`;
+        const filePath = `profile-pictures/${profile?.id}-${Date.now()}-${file.name}`;
         const { data: upData, error: upErr } = await supabase.storage
-          .from("avatars") // <<-- ensure you have a bucket named 'avatars' OR change this
+          .from("profile-pictures") 
           .upload(filePath, file, { cacheControl: "3600", upsert: false });
 
         if (upErr) throw upErr;
         const { data: publicURLData } = supabase.storage
-          .from("avatars")
+          .from("profile-pictures")
           .getPublicUrl(filePath);
         avatar_url = publicURLData.publicUrl;
       }
@@ -359,7 +346,7 @@ export default function ProfilePage() {
 
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">{profile?.name || "Anonymous"}</h2>
+                    <h2 className="text-xl font-semibold">{user?.user_metadata.display_name || user?.user_metadata.name || "Anonymous"}</h2>
                     {profile?.is_pro ? (
                       <div className="flex items-center gap-1 text-yellow-300">
                         <Crown className="w-4 h-4" />
@@ -369,7 +356,7 @@ export default function ProfilePage() {
                       <div className="text-slate-400 text-xs px-2 py-0.5 rounded bg-white/3">Free</div>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{profile?.email}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
 
@@ -377,11 +364,11 @@ export default function ProfilePage() {
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <div className="p-3 bg-white/2 rounded-lg">
                   <div className="text-xs text-muted-foreground">Joined</div>
-                  <div className="text-sm font-medium">{fmtDate(profile?.joined_at)}</div>
+                  <div className="text-sm font-medium">{fmtDate(user?.confirmed_at)}</div>
                 </div>
                 <div className="p-3 bg-white/2 rounded-lg">
                   <div className="text-xs text-muted-foreground">Last active</div>
-                  <div className="text-sm font-medium">{fmtDate(profile?.last_login)}</div>
+                  <div className="text-sm font-medium">{fmtDate(user?.last_sign_in_at)}</div>
                 </div>
               </div>
 
