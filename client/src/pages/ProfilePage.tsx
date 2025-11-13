@@ -10,12 +10,13 @@ import {
   ArrowLeft,
   UploadCloud,
   CheckCircle2,
+  RocketIcon,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";// <<--- CHANGE: point this to your Supabase client
-import { Button } from "@/components/ui/button"; // optional shadcn button - replace if you don't have it
-import { Card } from "@/components/ui/card"; // optional
-import { useToast } from "@/hooks/use-toast"; // optional toast; replace with your toast or console.log
-
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { CreateRoomDialog } from "@/components/CreateRoomDialog";
 type Profile = {
   id: string;
   email?: string;
@@ -44,7 +45,9 @@ const fmtDate = (iso?: string | null) =>
    ------------------------- */
 export default function ProfilePage() {
   const nav = useNavigate();
-  const { toast } = useToast ? useToast() : { toast: (t: any) => console.log(t) }; // fallback
+  const { toast } = useToast
+    ? useToast()
+    : { toast: (t: any) => console.log(t) }; // fallback
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -69,7 +72,6 @@ export default function ProfilePage() {
 
   /* Auth check -> redirect to /login if not logged in */
   useEffect(() => {
-
     const check = async () => {
       setLoading(true);
       const {
@@ -80,7 +82,7 @@ export default function ProfilePage() {
         nav("/login");
         return;
       }
-      console.log("found user: ",suser);
+      console.log("found user: ", suser);
       setUser(suser);
 
       // fetch profile
@@ -97,14 +99,37 @@ export default function ProfilePage() {
           description: pErr.message || "Check console",
           variant: "destructive",
         });
+      } else if (!profileData) {
+        console.log("no profile data, creating one");
+        // create profile row
+        const { data: newProfileData, error: npErr } = await supabase
+          .from("profiles")
+          .insert({
+            id: suser.id,
+            email: suser.email,
+            name:
+              suser.user_metadata.display_name ||
+              suser.user_metadata.name ||
+              null,
+          })
+          .select()
+          .maybeSingle();
+        if (npErr) {
+          console.error("create profile error", npErr);
+          toast({
+            title: "Unable to create profile",
+            description: npErr.message || "Check console",
+            variant: "destructive",
+          });
+        } else {
+          setProfile(newProfileData || { id: suser.id, email: suser.email });
+          setEditName(newProfileData?.name || "");
+        }
       } else {
         console.log("profile data", profileData);
         setProfile(profileData || { id: suser.id, email: suser.email });
         setEditName(profileData?.name || "");
       }
-
-      // fetch rooms created by this user
-      // TODO: update rooms table/fields to match: id, title, created_at, created_by, expiry_hours
       const { data: roomData, error: rErr } = await supabase
         .from("rooms")
         .select("id, name, created_at, expiry_hours")
@@ -152,9 +177,11 @@ export default function ProfilePage() {
 
       if (file) {
         // NOTE: customize bucket name and path
-        const filePath = `profile-pictures/${profile?.id}-${Date.now()}-${file.name}`;
+        const filePath = `profile-pictures/${profile?.id}-${Date.now()}-${
+          file.name
+        }`;
         const { data: upData, error: upErr } = await supabase.storage
-          .from("profile-pictures") 
+          .from("profile-pictures")
           .upload(filePath, file, { cacheControl: "3600", upsert: false });
 
         if (upErr) throw upErr;
@@ -219,7 +246,10 @@ export default function ProfilePage() {
     try {
       if (doDelete) {
         // immediate delete
-        const { error } = await supabase.from("rooms").delete().eq("id", roomId);
+        const { error } = await supabase
+          .from("rooms")
+          .delete()
+          .eq("id", roomId);
         if (error) throw error;
         setRooms((rs) => rs.filter((r) => r.id !== roomId));
         toast({ title: "Room deleted" });
@@ -232,7 +262,9 @@ export default function ProfilePage() {
           .eq("id", roomId);
         if (error) throw error;
         setRooms((rs) =>
-          rs.map((r) => (r.id === roomId ? { ...r, expiry_hours: expiryHours } : r))
+          rs.map((r) =>
+            r.id === roomId ? { ...r, expiry_hours: expiryHours } : r
+          )
         );
         toast({ title: `Retention set: ${expiryHours} hours` });
       }
@@ -293,19 +325,29 @@ export default function ProfilePage() {
               className="p-2 rounded-md hover:bg-white/5 transition"
               title="Toggle theme"
             >
-              {theme === "dark" ? <SunMedium className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {theme === "dark" ? (
+                <SunMedium className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
             </button>
 
             {/* Profile icon -> route to profile */}
             <Link to="/profile" className="relative">
               <div
                 className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 ${
-                  profile?.is_pro ? "border-yellow-400 shadow-[0_0_12px_rgba(255,200,60,0.12)]" : "border-slate-600"
+                  profile?.is_pro
+                    ? "border-yellow-400 shadow-[0_0_12px_rgba(255,200,60,0.12)]"
+                    : "border-slate-600"
                 } bg-[#0f1724]`}
                 title="Profile"
               >
                 {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                  <img
+                    src={profile.avatar_url}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <User className="w-5 h-5 text-slate-300" />
                 )}
@@ -335,7 +377,11 @@ export default function ProfilePage() {
                   } shadow-md`}
                 >
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                    <img
+                      src={profile.avatar_url}
+                      alt="avatar"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
                       <User className="w-8 h-8 text-white/80" />
@@ -346,14 +392,20 @@ export default function ProfilePage() {
 
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">{user?.user_metadata.display_name || user?.user_metadata.name || "Anonymous"}</h2>
+                    <h2 className="text-xl font-semibold">
+                      {user?.user_metadata.display_name ||
+                        user?.user_metadata.name ||
+                        "Anonymous"}
+                    </h2>
                     {profile?.is_pro ? (
                       <div className="flex items-center gap-1 text-yellow-300">
                         <Crown className="w-4 h-4" />
                         <span className="text-xs font-medium">Pro</span>
                       </div>
                     ) : (
-                      <div className="text-slate-400 text-xs px-2 py-0.5 rounded bg-white/3">Free</div>
+                      <div className="text-slate-400 text-xs px-2 py-0.5 rounded bg-white/3">
+                        Free
+                      </div>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
@@ -364,17 +416,25 @@ export default function ProfilePage() {
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <div className="p-3 bg-white/2 rounded-lg">
                   <div className="text-xs text-muted-foreground">Joined</div>
-                  <div className="text-sm font-medium">{fmtDate(user?.confirmed_at)}</div>
+                  <div className="text-sm font-medium">
+                    {fmtDate(user?.confirmed_at)}
+                  </div>
                 </div>
                 <div className="p-3 bg-white/2 rounded-lg">
-                  <div className="text-xs text-muted-foreground">Last active</div>
-                  <div className="text-sm font-medium">{fmtDate(user?.last_sign_in_at)}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Last active
+                  </div>
+                  <div className="text-sm font-medium">
+                    {fmtDate(user?.last_sign_in_at)}
+                  </div>
                 </div>
               </div>
 
               {/* Edit form */}
               <div className="mt-6 space-y-3">
-                <label className="block text-xs text-muted-foreground">Display name</label>
+                <label className="block text-xs text-muted-foreground">
+                  Display name
+                </label>
                 <input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
@@ -382,7 +442,9 @@ export default function ProfilePage() {
                 />
 
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-2">Avatar</label>
+                  <label className="block text-xs text-muted-foreground mb-2">
+                    Avatar
+                  </label>
                   <div className="flex items-center gap-3">
                     <Button
                       size="sm"
@@ -403,7 +465,13 @@ export default function ProfilePage() {
                       }}
                       className="hidden"
                     />
-                    {previewUrl && <img src={previewUrl} alt="preview" className="w-12 h-12 rounded-md object-cover" />}
+                    {previewUrl && (
+                      <img
+                        src={previewUrl}
+                        alt="preview"
+                        className="w-12 h-12 rounded-md object-cover"
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -429,7 +497,9 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-medium">Pro Subscription</div>
-                    <div className="text-xs text-muted-foreground">Unlock longer retention and premium features</div>
+                    <div className="text-xs text-muted-foreground">
+                      Unlock longer retention and premium features
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {!profile?.is_pro ? (
@@ -462,7 +532,9 @@ export default function ProfilePage() {
             <Card className="p-4 rounded-2xl bg-[#0f1724] border border-[#1f2937] shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Your Rooms</h3>
-                <div className="text-sm text-muted-foreground">Total: {rooms.length}</div>
+                <div className="text-sm text-muted-foreground">
+                  Total: {rooms.length}
+                </div>
               </div>
 
               {/* room list */}
@@ -471,7 +543,13 @@ export default function ProfilePage() {
                   <div className="py-8 text-center text-muted-foreground">
                     You haven't created any rooms yet.
                     <div className="mt-3">
-                      <Button onClick={() => nav("/create-room")}>Create your first room</Button>
+                      <CreateRoomDialog>
+                        <Button size="lg" className="gap-2">
+                          <span className="flex items-center gap-2">
+                            <RocketIcon /> Create your first room
+                          </span>
+                        </Button>
+                      </CreateRoomDialog>
                     </div>
                   </div>
                 )}
@@ -488,7 +566,11 @@ export default function ProfilePage() {
                       <div className="font-medium">{r.title}</div>
                       <div className="text-xs text-muted-foreground">
                         Created: {fmtDate(r.created_at)} • Retention:{" "}
-                        {r.expiry_hours ? `${r.expiry_hours}h` : profile?.is_pro ? "No expiry" : "24h (default)"}
+                        {r.expiry_hours
+                          ? `${r.expiry_hours}h`
+                          : profile?.is_pro
+                          ? "No expiry"
+                          : "24h (default)"}
                       </div>
                     </div>
 
@@ -536,17 +618,27 @@ export default function ProfilePage() {
                   >
                     <h4 className="text-lg font-semibold">Delete room</h4>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Are you sure you want to delete this room? This action is permanent.
+                      Are you sure you want to delete this room? This action is
+                      permanent.
                     </p>
 
                     <div className="mt-4 flex items-center gap-2">
                       <Button
-                        onClick={() => handleSetExpiryOrDelete(confirmDeleteId, undefined, true)}
+                        onClick={() =>
+                          handleSetExpiryOrDelete(
+                            confirmDeleteId,
+                            undefined,
+                            true
+                          )
+                        }
                         className="bg-red-600"
                       >
                         Delete permanently
                       </Button>
-                      <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => setConfirmDeleteId(null)}
+                      >
                         Cancel
                       </Button>
                     </div>
