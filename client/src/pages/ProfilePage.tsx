@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -10,155 +10,193 @@ import {
   ArrowLeft,
   UploadCloud,
   CheckCircle2,
-  RocketIcon,
+  Rocket,
+  Loader2,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client"; // <-- Make sure this points to your initialized Supabase client
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { CreateRoomDialog } from "@/components/CreateRoomDialog";
 import LoadingScreen from "@/components/loading/LoadingScreen";
+
+// ----------------------
+// Types
+// ----------------------
 type Profile = {
   id: string;
-  email?: string;
-  name?: string;
-  avatar_url?: string;
-  is_pro?: boolean;
+  email?: string | null;
+  name?: string | null;
+  avatar_url?: string | null;
+  is_pro?: boolean | null;
   joined_at?: string | null;
   last_login?: string | null;
 };
 
 type Room = {
   id: string;
-  name: string;
-  created_at?: string;
+  room_code?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  name?: string | null;
   expiry_hours?: number | null;
 };
 
-/* -------------------------
-   Helper: format date
-   ------------------------- */
-const fmtDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString() : "—";
+// ----------------------
+// Helpers
+// ----------------------
+const fmtDate = (iso?: string | null) => (iso ? new Date(iso).toLocaleString() : "—");
 
-/* -------------------------
-   Main Component
-   ------------------------- */
-export default function ProfilePage() {
-  const nav = useNavigate();
-  const { toast } = useToast
-    ? useToast()
-    : { toast: (t: any) => console.log(t) }; // fallback
-  const [loading, setLoading] = useState(false);
+const generateRoomCode = (length = 6) => {
+  const digits = "0123456789";
+  let code = "";
+  for (let i = 0; i < length; i++) code += digits[Math.floor(Math.random() * digits.length)];
+  return code;
+};
+
+// ----------------------
+// Hook: useProfile
+// centralizes Supabase logic for Profile + Rooms
+// ----------------------
+export function useProfile() {
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [editName, setEditName] = useState("");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">(
-    (localStorage.getItem("theme") as "dark" | "light") || "dark"
-  );
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  /* Dark / Light theme apply */
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === "dark") root.classList.add("dark");
-    else root.classList.remove("dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  /* Auth check -> redirect to /login if not logged in */
-  useEffect(() => {
-    const check = async () => {
-      setLoading(true);
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
       const {
         data: { user: suser },
-        error,
+        error: authError,
       } = await supabase.auth.getUser();
-      if (error || !suser) {
-        nav("/login");
+      if (authError || !suser) {
+        setUser(null);
+        setProfile(null);
+        setRooms([]);
+        setLoading(false);
         return;
       }
-      console.log("found user: ", suser);
       setUser(suser);
 
-      // fetch profile
-      const { data: profileData, error: pErr } = await supabase
+      // profiles table: id, name, avatar_url, email, is_pro, joined_at, last_login
+      const { data: pData, error: pErr } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, name, email, avatar_url, is_pro, joined_at, last_login")
         .eq("id", suser.id)
-        .maybeSingle();
+        .maybeSingle(); // safe if no row yet
 
-      if (pErr) {
-        console.error("fetch profile error", pErr);
-        toast({
-          title: "Unable to load profile",
-          description: pErr.message || "Check console",
-          variant: "destructive",
-        });
-      } else if (!profileData) {
-        console.log("no profile data, creating one");
-        // create profile row
-        const { data: newProfileData, error: npErr } = await supabase
+      if (pErr) throw pErr;
+
+      if (!pData) {
+        // create blank profile row if not present
+        const { data: newP, error: insertErr } = await supabase
           .from("profiles")
           .insert({
             id: suser.id,
             email: suser.email,
-            name:
-              suser.user_metadata.display_name ||
-              suser.user_metadata.name ||
-              null,
-            avatar_url:
-              suser.user_metadata.avatar_url ||
-              suser.user_metadata.picture ||
-              null,
+            name: suser.user_metadata?.name || suser.user_metadata?.display_name || null,
+            avatar_url: suser.user_metadata?.avatar_url || suser.user_metadata?.picture || null,
           })
           .select()
           .maybeSingle();
-        if (npErr) {
-          console.error("create profile error", npErr);
-          toast({
-            title: "Unable to create profile",
-            description: npErr.message || "Check console",
-            variant: "destructive",
-          });
-        } else {
-          setProfile(newProfileData || { id: suser.id, email: suser.email });
-          setEditName(newProfileData?.name || "");
-        }
+        if (insertErr) throw insertErr;
+        setProfile(newP || null);
       } else {
-        console.log("profile data", profileData);
-        setProfile(profileData || { id: suser.id, email: suser.email });
-        setEditName(profileData?.name || "");
+        setProfile(pData as Profile);
       }
-      const { data: roomData, error: rErr } = await supabase
+
+      // rooms table: id, room_code, created_at, updated_at, name, expiry_hours
+      const { data: rData, error: rErr } = await supabase
         .from("rooms")
-        .select("id, name, created_at, expiry_hours")
+        .select("id, room_code, created_at, updated_at, name, expiry_hours")
         .eq("created_by", suser.id)
         .order("created_at", { ascending: false });
 
-      if (rErr) {
-        console.error("rooms fetch error", rErr);
-        toast({
-          title: "Unable to load rooms",
-          description: rErr.message || "Check console",
-          variant: "destructive",
-        });
-      } else {
-        setRooms(roomData || []);
-      }
-
+      if (rErr) throw rErr;
+      setRooms(rData || []);
+    } catch (err) {
+      console.error("useProfile fetchAll error", err);
+      // do not toast here - let callers handle it
+    } finally {
       setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAll();
+
+    // real-time listener for rooms changes for this user
+    let subscription: any;
+    (async () => {
+      const {
+        data: { user: suser },
+      } = await supabase.auth.getUser();
+      if (!suser) return;
+      subscription = supabase
+        .channel("public:rooms")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "rooms", filter: `created_by=eq.${suser.id}` }, (payload) => {
+          setRooms((r) => [payload.new, ...r]);
+        })
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `created_by=eq.${suser.id}` }, (payload) => {
+          setRooms((r) => r.map((it) => (it.id === payload.new.id ? payload.new : it)));
+        })
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "rooms", filter: `created_by=eq.${suser.id}` }, (payload) => {
+          setRooms((r) => r.filter((it) => it.id !== payload.old.id));
+        })
+        .subscribe();
+    })();
+
+    return () => {
+      try {
+        if (subscription) supabase.removeChannel(subscription);
+      } catch (e) {}
     };
+  }, [fetchAll]);
 
-    check();
-  }, [nav, toast]);
+  return { loading, user, profile, rooms, refresh: fetchAll, setProfile, setRooms };
+}
 
-  /* Avatar preview */
+// ----------------------
+// Utility: uploadAvatar
+// - uses Supabase storage bucket named 'profile-pictures'
+// - IMPORTANT: ensure the bucket exists and has proper policies
+// ----------------------
+export async function uploadAvatar(profileId: string, file: File) {
+  // customize bucket name if different
+  const bucket = "profile-pictures";
+  const filePath = `avatars/${profileId}/${Date.now()}-${file.name}`;
+
+  const { data, error: uploadErr } = await supabase.storage.from(bucket).upload(filePath, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
+  if (uploadErr) throw uploadErr;
+
+  const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+  return urlData.publicUrl;
+}
+
+// ----------------------
+// Component: ProfilePage (default export)
+// ----------------------
+export default function ProfilePage() {
+  const { loading, user, profile, rooms, refresh, setProfile, setRooms } = useProfile();
+  const { toast } = useToast ? useToast() : { toast: (t: any) => console.log(t) };
+  const navigate = useNavigate();
+
+  const [editName, setEditName] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [theme, setTheme] = useState<"dark" | "light">((localStorage.getItem("theme") as "dark" | "light") || "dark");
+
+  useEffect(() => {
+    setEditName(profile?.name || "");
+  }, [profile]);
+
   useEffect(() => {
     if (!avatarFile) {
       setPreviewUrl(null);
@@ -169,71 +207,13 @@ export default function ProfilePage() {
     return () => URL.revokeObjectURL(url);
   }, [avatarFile]);
 
-  /* -------------------------
-     Profile update handlers
-     ------------------------- */
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-  const uploadAvatarAndSave = async (file: File | null, nameVal: string) => {
-    // This function demonstrates upload to Supabase storage and update profile row.
-    // If you don't use Supabase storage, replace with your own upload endpoint.
-    setSavingProfile(true);
-    try {
-      let avatar_url = profile?.avatar_url || null;
-
-      if (file) {
-        // NOTE: customize bucket name and path
-        const filePath = `profile-pictures/${profile?.id}-${Date.now()}-${
-          file.name
-        }`;
-        const { data: upData, error: upErr } = await supabase.storage
-          .from("profile-pictures")
-          .upload(filePath, file, { cacheControl: "3600", upsert: false });
-
-        if (upErr) throw upErr;
-        const { data: publicURLData } = supabase.storage
-          .from("profile-pictures")
-          .getPublicUrl(filePath);
-        avatar_url = publicURLData.publicUrl;
-      }
-
-      // update profile row
-      const { error: updateErr } = await supabase
-        .from("profiles")
-        .update({
-          name: nameVal,
-          avatar_url,
-          // you can also update last_login or other fields
-        })
-        .eq("id", profile?.id);
-
-      if (updateErr) throw updateErr;
-
-      // refresh local
-      setProfile((p) => (p ? { ...p, name: nameVal, avatar_url } : p));
-      toast({ title: "Profile saved" });
-    } catch (err: any) {
-      console.error(err);
-      toast({
-        title: "Save failed",
-        description: err?.message || "See console",
-        variant: "destructive",
-      });
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  /* Save changes (name + avatar) */
-  const handleSaveProfile = async () => {
-    await uploadAvatarAndSave(avatarFile, editName);
-    setAvatarFile(null);
-  };
-
-  /* -------------------------
-     Rooms: delete / retention
-     ------------------------- */
-
-  // retentionOptions: free user only 24h; pro user multiple options
   const retentionOptions = profile?.is_pro
     ? [
         { label: "72 hours", hours: 72 },
@@ -242,411 +222,218 @@ export default function ProfilePage() {
       ]
     : [{ label: "24 hours", hours: 24 }];
 
-  // Set expiry for a room (update expiry_hours) OR delete
-  const handleSetExpiryOrDelete = async (
-    roomId: string,
-    expiryHours?: number,
-    doDelete = false
-  ) => {
+  // Save profile (name + avatar)
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    setSaving(true);
+    try {
+      let avatar_url = profile.avatar_url || null;
+      if (avatarFile) {
+        avatar_url = await uploadAvatar(profile.id, avatarFile);
+      }
+      const { error } = await supabase
+        .from("profiles")
+        .update({ name: editName || null, avatar_url })
+        .eq("id", profile.id);
+      if (error) throw error;
+      setProfile({ ...(profile as Profile), name: editName || null, avatar_url });
+      setAvatarFile(null);
+      toast({ title: "Profile saved" });
+    } catch (err: any) {
+      console.error("save profile error", err);
+      toast({ title: "Save failed", description: err?.message || String(err), variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Delete or set expiry for a room
+  const handleSetExpiryOrDelete = async (roomId: string, expiryHours?: number | null, doDelete = false) => {
     try {
       if (doDelete) {
-        // immediate delete
-        const { error } = await supabase
-          .from("rooms")
-          .delete()
-          .eq("id", roomId);
+        const { error } = await supabase.from("rooms").delete().eq("id", roomId);
         if (error) throw error;
-        setRooms((rs) => rs.filter((r) => r.id !== roomId));
+        setRooms((r) => r.filter((it) => it.id !== roomId));
         toast({ title: "Room deleted" });
-        return;
       } else {
-        // set expiry_hours so server-side process can auto-delete later
-        const { error } = await supabase
-          .from("rooms")
-          .update({ expiry_hours: expiryHours })
-          .eq("id", roomId);
+        const { error } = await supabase.from("rooms").update({ expiry_hours: expiryHours }).eq("id", roomId);
         if (error) throw error;
-        setRooms((rs) =>
-          rs.map((r) =>
-            r.id === roomId ? { ...r, expiry_hours: expiryHours } : r
-          )
-        );
-        toast({ title: `Retention set: ${expiryHours} hours` });
+        setRooms((r) => r.map((it) => (it.id === roomId ? { ...it, expiry_hours: expiryHours } : it)));
+        toast({ title: `Retention set: ${expiryHours ?? "default"} hours` });
       }
     } catch (err: any) {
-      console.error(err);
-      toast({
-        title: "Action failed",
-        description: err?.message || "Check console",
-        variant: "destructive",
-      });
+      console.error("room action error", err);
+      toast({ title: "Action failed", description: err?.message || String(err), variant: "destructive" });
     } finally {
       setConfirmDeleteId(null);
     }
   };
 
-  /* -------------------------
-     UI - if loading show skeleton
-     ------------------------- */
-  if (loading)
-    return (
-      // <div className="min-h-screen flex items-center justify-center bg-background dark:bg-[#0B1020]">
-      //   <div className="text-center text-muted-foreground">
-      //     <div className="animate-pulse w-64 h-64 rounded-full bg-zinc-800/40 mx-auto mb-6" />
-      //     <p className="text-sm">Loading profile…</p>
-      //   </div>
-      // </div>
-      <LoadingScreen />
-    );
+  // Create room helper (client-side quick create)
+  const handleCreateRoom = async () => {
+    if (!user) return navigate("/login");
+    try {
+      const code = generateRoomCode(6);
+      const { data, error } = await supabase
+        .from("rooms")
+        .insert({ name: `New Room`, room_code: code, created_by: user.id })
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      toast({ title: "Room created", description: `Code ${code}` });
+      // navigate to new room
+      if (data?.id) navigate(`/room/${data.id}`);
+    } catch (err: any) {
+      console.error("create room error", err);
+      toast({ title: "Create failed", description: err?.message || String(err), variant: "destructive" });
+    }
+  };
 
-  /* -------------------------
-     Main render
-     ------------------------- */
+  if (loading) return <LoadingScreen />;
+  if (!user) return <div className="min-h-screen flex items-center justify-center">Not authenticated</div>;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0B1020] to-[#081024] dark:from-[#080810] dark:to-[#05060a] text-slate-100">
-      {/* NAVBAR */}
-      <header className="sticky top-0 z-30 backdrop-blur bg-black/20 border-b border-border">
-        <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-b from-[#0B1020] to-[#081024] text-slate-100">
+      {/* Header */}
+      <header className="sticky top-0 backdrop-blur bg-black/20 border-b border-border z-20">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => nav(-1)}
-              className="p-2 rounded-md hover:bg-white/5 transition"
-              title="Go back"
-            >
+            <button onClick={() => navigate(-1)} className="p-2 rounded-md hover:bg-white/5">
               <ArrowLeft className="w-5 h-5" />
             </button>
-
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold tracking-wide">DevRoom</span>
+              <span className="font-semibold">DevRoom</span>
             </Link>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Theme toggle */}
-            <button
-              onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-              className="p-2 rounded-md hover:bg-white/5 transition"
-              title="Toggle theme"
-            >
-              {theme === "dark" ? (
-                <SunMedium className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
+            <button onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} className="p-2 rounded-md hover:bg-white/5">
+              {theme === "dark" ? <SunMedium className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
-            {/* Profile icon -> route to profile */}
             <Link to="/profile" className="relative">
-              <div
-                className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 ${
-                  profile?.is_pro
-                    ? "border-yellow-400 shadow-[0_0_12px_rgba(255,200,60,0.12)]"
-                    : "border-slate-600"
-                } bg-[#0f1724]`}
-                title="Profile"
-              >
-                {profile?.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt="avatar"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-5 h-5 text-slate-300" />
-                )}
-                {profile?.is_pro && (
-                  <span className="absolute -bottom-0.5 right-0 transform translate-x-1/2 translate-y-1/2 bg-gradient-to-br from-yellow-400 to-amber-500 p-1 rounded-full shadow" />
-                )}
+              <div className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 ${profile?.is_pro ? "border-yellow-400" : "border-slate-600"}`}>
+                {profile?.avatar_url ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-300" />}
+                {profile?.is_pro && <span className="absolute -bottom-0.5 right-0 bg-gradient-to-br from-yellow-400 to-amber-500 p-1 rounded-full shadow" />}
               </div>
             </Link>
           </div>
-        </nav>
+        </div>
       </header>
 
-      {/* PAGE CONTENT */}
       <main className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left: Profile Card */}
-          <motion.div
-            initial={{ y: 12, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.28 }}
-          >
-            <Card className="p-6 rounded-2xl bg-[#11121a] border border-[#1f2937] shadow-xl">
+          {/* Left column */}
+          <motion.div initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.28 }}>
+            <Card className="p-6 rounded-2xl bg-[#11121a]">
               <div className="flex items-center gap-4">
-                <div
-                  className={`relative w-24 h-24 rounded-full overflow-hidden flex items-center justify-center border-4 ${
-                    profile?.is_pro ? "border-yellow-400" : "border-slate-600"
-                  } shadow-md`}
-                >
-                  {profile?.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt="avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                      <User className="w-8 h-8 text-white/80" />
-                    </div>
-                  )}
-                  {/* pro ring glow */}
+                <div className={`relative w-24 h-24 rounded-full overflow-hidden border-4 ${profile?.is_pro ? "border-yellow-400" : "border-slate-600"}`}>
+                  {profile?.avatar_url ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center"><User className="w-8 h-8 text-white/80" /></div>}
                 </div>
 
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">
-                      {user?.user_metadata.display_name ||
-                        user?.user_metadata.name ||
-                        "Anonymous"}
-                    </h2>
-                    {profile?.is_pro ? (
-                      <div className="flex items-center gap-1 text-yellow-300">
-                        <Crown className="w-4 h-4" />
-                        <span className="text-xs font-medium">Pro</span>
-                      </div>
-                    ) : (
-                      <div className="text-slate-400 text-xs px-2 py-0.5 rounded bg-white/3">
-                        Free
-                      </div>
-                    )}
+                    <h2 className="text-xl font-semibold">{profile?.name || "Anonymous"}</h2>
+                    {profile?.is_pro ? <div className="flex items-center gap-1 text-yellow-300"><Crown className="w-4 h-4" /><span className="text-xs">Pro</span></div> : <div className="text-xs px-2 py-0.5 rounded bg-white/3">Free</div>}
                   </div>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  <p className="text-sm text-muted-foreground">{profile?.email}</p>
                 </div>
               </div>
 
-              {/* Stats */}
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <div className="p-3 bg-white/2 rounded-lg">
                   <div className="text-xs text-muted-foreground">Joined</div>
-                  <div className="text-sm font-medium">
-                    {fmtDate(user?.confirmed_at)}
-                  </div>
+                  <div className="text-sm font-medium">{fmtDate(profile?.joined_at)}</div>
                 </div>
                 <div className="p-3 bg-white/2 rounded-lg">
-                  <div className="text-xs text-muted-foreground">
-                    Last active
-                  </div>
-                  <div className="text-sm font-medium">
-                    {fmtDate(user?.last_sign_in_at)}
-                  </div>
+                  <div className="text-xs text-muted-foreground">Last active</div>
+                  <div className="text-sm font-medium">{fmtDate(profile?.last_login)}</div>
                 </div>
               </div>
 
-              {/* Edit form */}
+              {/* Edit section */}
               <div className="mt-6 space-y-3">
-                <label className="block text-xs text-muted-foreground">
-                  Display name
-                </label>
-                <input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-transparent border border-[#2a2a3a] rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-                />
+                <label className="block text-xs text-muted-foreground">Display name</label>
+                <input value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-transparent border border-[#2a2a3a] rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary" />
 
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-2">
-                    Avatar
-                  </label>
+                  <label className="block text-xs text-muted-foreground mb-2">Avatar</label>
                   <div className="flex items-center gap-3">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-2"
-                    >
-                      <UploadCloud className="w-4 h-4" />
-                      Upload
-                    </Button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0] || null;
-                        setAvatarFile(f);
-                      }}
-                      className="hidden"
-                    />
-                    {previewUrl && (
-                      <img
-                        src={previewUrl}
-                        alt="preview"
-                        className="w-12 h-12 rounded-md object-cover"
-                      />
-                    )}
+                    <Button size="sm" variant="ghost" onClick={() => fileRef.current?.click()} className="flex items-center gap-2"><UploadCloud className="w-4 h-4" /> Upload</Button>
+                    <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} className="hidden" />
+                    {previewUrl && <img src={previewUrl} alt="preview" className="w-12 h-12 rounded-md object-cover" />}
                   </div>
                 </div>
 
                 <div className="flex gap-2 mt-2">
-                  <Button onClick={handleSaveProfile} disabled={savingProfile}>
-                    {savingProfile ? "Saving…" : "Save profile"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditName(profile?.name || "");
-                      setAvatarFile(null);
-                      setPreviewUrl(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
+                  <Button onClick={handleSaveProfile} disabled={saving}>{saving ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin"/> Saving</span> : "Save profile"}</Button>
+                  <Button variant="outline" onClick={() => { setEditName(profile?.name || ""); setAvatarFile(null); setPreviewUrl(null); }}>Cancel</Button>
                 </div>
               </div>
 
-              {/* Pro CTA */}
               <div className="mt-6 border-t border-[#222] pt-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-medium">Pro Subscription</div>
-                    <div className="text-xs text-muted-foreground">
-                      Unlock longer retention and premium features
-                    </div>
+                    <div className="text-xs text-muted-foreground">Unlock longer retention and premium features</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {!profile?.is_pro ? (
-                      <Button onClick={() => nav("/subscribe")}>Upgrade</Button>
-                    ) : (
-                      <div className="flex items-center gap-2 text-sm text-yellow-300">
-                        <CheckCircle2 className="w-4 h-4" /> Active
-                      </div>
-                    )}
+                    {!profile?.is_pro ? <Button onClick={() => navigate("/subscribe")}>Upgrade</Button> : <div className="flex items-center gap-2 text-yellow-300"><CheckCircle2 className="w-4 h-4"/> Active</div>}
                   </div>
                 </div>
               </div>
 
-              {/* Contact */}
-              <div className="mt-4 text-sm">
-                <Link to="/contact" className="text-primary hover:underline">
-                  Contact support / feedback
-                </Link>
-              </div>
+              <div className="mt-4 text-sm"><Link to="/contact" className="text-primary hover:underline">Contact support / feedback</Link></div>
             </Card>
           </motion.div>
 
-          {/* Middle: Rooms list */}
-          <motion.div
-            initial={{ y: 12, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.32 }}
-            className="lg:col-span-2"
-          >
-            <Card className="p-4 rounded-2xl bg-[#0f1724] border border-[#1f2937] shadow-xl">
+          {/* Right: Rooms list */}
+          <motion.div initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.28 }} className="lg:col-span-2">
+            <Card className="p-4 rounded-2xl bg-[#0f1724]">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Your Rooms</h3>
-                <div className="text-sm text-muted-foreground">
-                  Total: {rooms.length}
-                </div>
+                <div className="text-sm text-muted-foreground">Total: {rooms.length}</div>
               </div>
 
-              {/* room list */}
               <div className="space-y-3">
-                {rooms.length === 0 && (
+                {rooms.length === 0 ? (
                   <div className="py-8 text-center text-muted-foreground">
                     You haven't created any rooms yet.
-                    <div className="mt-3">
-                      <CreateRoomDialog>
-                        <Button size="lg" className="gap-2">
-                          <span className="flex items-center gap-2">
-                            <RocketIcon /> Create your first room
-                          </span>
-                        </Button>
-                      </CreateRoomDialog>
-                    </div>
+                    <div className="mt-3"><Button onClick={handleCreateRoom} className="gap-2"><Rocket className="w-4 h-4"/> Create your first room</Button></div>
                   </div>
-                )}
-
-                {rooms.map((r) => (
-                  <motion.div
-                    key={r.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.18 }}
-                    className="flex items-center justify-between p-3 rounded-lg bg-white/3 border border-[#23232b]"
-                  >
-                    <div>
-                      <div className="font-medium">{r.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Created: {fmtDate(r.created_at)} • Retention:{" "}
-                        {r.expiry_hours
-                          ? `${r.expiry_hours}h`
-                          : profile?.is_pro
-                          ? "No expiry"
-                          : "24h (default)"}
+                ) : (
+                  rooms.map((r) => (
+                    <motion.div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-white/3 border border-[#23232b]">
+                      <div>
+                        <div className="font-medium">{r.name || r.room_code}</div>
+                        <div className="text-xs text-muted-foreground">Created: {fmtDate(r.created_at)} • Retention: {r.expiry_hours ? `${r.expiry_hours}h` : profile?.is_pro ? "No expiry" : "24h (default)"}</div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      {/* retention dropdown */}
-                      <div className="relative">
-                        <select
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            handleSetExpiryOrDelete(r.id, val, false);
-                          }}
-                          value={r.expiry_hours ?? ""}
-                          className="bg-[#0b1220] border border-[#222733] px-2 py-1 rounded text-sm"
-                        >
+                      <div className="flex items-center gap-2">
+                        <select onChange={(e) => handleSetExpiryOrDelete(r.id, Number(e.target.value) || null, false)} value={r.expiry_hours ?? ""} className="bg-[#0b1220] border border-[#222733] px-2 py-1 rounded text-sm">
                           <option value="">Default / No change</option>
-                          {retentionOptions.map((opt) => (
-                            <option key={opt.hours} value={opt.hours}>
-                              {opt.label}
-                            </option>
-                          ))}
+                          {retentionOptions.map((opt) => <option key={opt.hours} value={opt.hours}>{opt.label}</option>)}
                         </select>
-                      </div>
 
-                      {/* delete (confirm flow) */}
-                      <button
-                        onClick={() => setConfirmDeleteId(r.id)}
-                        className="p-2 rounded-md hover:bg-red-600/20 transition text-red-400"
-                        title="Delete room"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
+                        <button onClick={() => setConfirmDeleteId(r.id)} className="p-2 rounded-md hover:bg-red-600/20 text-red-400" title="Delete room"><Trash2 className="w-4 h-4"/></button>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
               </div>
 
-              {/* Delete confirmation modal (simple) */}
+              {/* Delete modal */}
               {confirmDeleteId && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                  <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-[#0b1220] rounded-xl p-6 w-[95%] max-w-md border border-[#2a2a3a] shadow-xl"
-                  >
+                  <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#0b1220] rounded-xl p-6 w-[95%] max-w-md border border-[#2a2a3a] shadow-xl">
                     <h4 className="text-lg font-semibold">Delete room</h4>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Are you sure you want to delete this room? This action is
-                      permanent.
-                    </p>
-
+                    <p className="text-sm text-muted-foreground mt-2">Are you sure you want to delete this room? This action is permanent.</p>
                     <div className="mt-4 flex items-center gap-2">
-                      <Button
-                        onClick={() =>
-                          handleSetExpiryOrDelete(
-                            confirmDeleteId,
-                            undefined,
-                            true
-                          )
-                        }
-                        className="bg-red-600"
-                      >
-                        Delete permanently
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setConfirmDeleteId(null)}
-                      >
-                        Cancel
-                      </Button>
+                      <Button onClick={() => handleSetExpiryOrDelete(confirmDeleteId, undefined, true)} className="bg-red-600">Delete permanently</Button>
+                      <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>Cancel</Button>
                     </div>
                   </motion.div>
                 </div>
@@ -658,3 +445,12 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+/*
+  NOTES & TODOs:
+  - Make sure your Supabase client import (top) points to the initialized client in your project.
+  - Ensure the storage bucket "profile-pictures" exists and is reachable; update bucket name in uploadAvatar if different.
+  - Security: validate file sizes / types before upload in production.
+  - Server-side: implement a scheduled job (CRON / Supabase edge function) to delete rooms whose expiry_hours have passed.
+  - This single-file approach keeps everything together for easy copy/paste; for production, split into smaller components/hook files.
+*/
