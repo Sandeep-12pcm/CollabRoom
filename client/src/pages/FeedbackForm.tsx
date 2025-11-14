@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sun, Moon, Home, Send, RotateCcw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const FeedbackForm: React.FC = () => {
   const navigate = useNavigate();
@@ -31,28 +32,15 @@ export const FeedbackForm: React.FC = () => {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim(),
-          review: review.trim(),
-          from: "Yourself",
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || `Failed: ${res.status}`);
-      }
-
+      const {data, error: feedbackError} = await supabase
+        .from("feedbacks")
+        .insert([{ name, email, review }]);
       setMessage("✅ Thank you! Your feedback has been submitted successfully.");
       setName("");
       setEmail("");
       setReview("");
-    } catch (err: any) {
-      setError(err?.message || "Something went wrong. Please try again.");
+    } catch (feedbackError: any) {
+      setError(feedbackError?.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
