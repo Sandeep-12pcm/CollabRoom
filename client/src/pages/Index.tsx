@@ -9,6 +9,7 @@ import { CreateRoomDialog } from "@/components/CreateRoomDialog";
 import { JoinRoomDialog } from "@/components/JoinRoomDialog";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import AmbientBackground from "@/components/AmbientBackground";
+import { SubscriptionDialog } from "@/components/SubscriptionDialog";
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -75,6 +76,8 @@ const Index = () => {
           </section>
 
           <TrustSection />
+          {/* SUBSCRIPTION BUTTON + POPUP */}
+          <SubscriptionDialog />
         </main>
         <Footer />
       </motion.div>
