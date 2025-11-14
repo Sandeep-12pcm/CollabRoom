@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sun, Moon, Home, Send, RotateCcw, Mail, Github, MessageSquare } from "lucide-react";
-
+import {supabase} from "@/integrations/supabase/client";
 const ContactForm: React.FC = () => {
   const navigate = useNavigate();
 
@@ -30,12 +30,15 @@ const ContactForm: React.FC = () => {
     setLoading(true);
     try {
       // Dummy success (replace with your backend endpoint later)
+      const {data, error: submitError} = await supabase
+        .from('contacts')
+        .insert([{ name, email, problem }]);
       await new Promise((res) => setTimeout(res, 1000));
       setMessage("✅ Thank you! Your message has been sent successfully.");
       setName("");
       setEmail("");
       setProblem("");
-    } catch (err: any) {
+    } catch (submitError: any) {
       setError("Something went wrong. Please try again later.");
     } finally {
       setLoading(false);
