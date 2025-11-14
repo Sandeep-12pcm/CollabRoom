@@ -76,7 +76,7 @@ export const Navbar = () => {
                 else {
                   navigate("/");
                   setTimeout(() => {
-                    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                    document.getElementById("home")?.scrollIntoView({ behavior: "smooth" });
                   }, 300);
                 }
               }}
