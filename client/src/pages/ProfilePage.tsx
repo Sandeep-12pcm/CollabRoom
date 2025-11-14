@@ -97,10 +97,13 @@ export function useProfile() {
             email: suser.email,
             name: suser.user_metadata?.name || suser.user_metadata?.display_name || null,
             avatar_url: suser.user_metadata?.avatar_url || suser.user_metadata?.picture || null,
+            joined_at: suser.created_at,
           })
           .select()
           .maybeSingle();
         if (insertErr) throw insertErr;
+        console.log("No profile found; created new profile.", suser);
+        console.log("Created new profile for user:", newP);
         setProfile(newP || null);
       } else {
         setProfile(pData as Profile);
@@ -330,6 +333,7 @@ export default function ProfilePage() {
           <motion.div initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.28 }}>
             <Card className="p-6 rounded-2xl bg-[#11121a]">
               <div className="flex items-center gap-4">
+                {/* Profile picture */}
                 <div className={`relative w-24 h-24 rounded-full overflow-hidden border-4 ${profile?.is_pro ? "border-yellow-400" : "border-slate-600"}`}>
                   {profile?.avatar_url ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center"><User className="w-8 h-8 text-white/80" /></div>}
                 </div>
@@ -350,7 +354,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="p-3 bg-white/2 rounded-lg">
                   <div className="text-xs text-muted-foreground">Last active</div>
-                  <div className="text-sm font-medium">{fmtDate(profile?.last_login)}</div>
+                  <div className="text-sm font-medium">{fmtDate(user?.last_sign_in_at)}</div>
                 </div>
               </div>
 
