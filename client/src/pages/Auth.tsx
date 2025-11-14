@@ -52,16 +52,20 @@ const Auth = () => {
           .single();
 
         if (!existingProfile) {
-          await supabase.from("profiles").insert({
-            id: user.id,
-            email: user.email,
-            display_name: displayName,
-            avatar_url:
+          try{
+            await supabase.from("profiles").insert({
+              id: user.id,
+              email: user.email,
+              display_name: displayName,
+              avatar_url:
               user.user_metadata?.avatar_url ||
               user.user_metadata?.picture ||
               null,
-            created_at: new Date(),
-          });
+              created_at: new Date(),
+            });
+          } catch (error) {
+            console.error("Error creating profile:", error);
+          }
         } else {
           await supabase
             .from("profiles")

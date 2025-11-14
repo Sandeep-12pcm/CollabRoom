@@ -112,6 +112,10 @@ export default function ProfilePage() {
               suser.user_metadata.display_name ||
               suser.user_metadata.name ||
               null,
+            avatar_url:
+              suser.user_metadata.avatar_url ||
+              suser.user_metadata.picture ||
+              null,
           })
           .select()
           .maybeSingle();
