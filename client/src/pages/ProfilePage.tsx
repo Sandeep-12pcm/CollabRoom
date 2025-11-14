@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CreateRoomDialog } from "@/components/CreateRoomDialog";
+import LoadingScreen from "@/components/loading/LoadingScreen";
 type Profile = {
   id: string;
   email?: string;
@@ -285,12 +286,13 @@ export default function ProfilePage() {
      ------------------------- */
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background dark:bg-[#0B1020]">
-        <div className="text-center text-muted-foreground">
-          <div className="animate-pulse w-64 h-64 rounded-full bg-zinc-800/40 mx-auto mb-6" />
-          <p className="text-sm">Loading profile…</p>
-        </div>
-      </div>
+      // <div className="min-h-screen flex items-center justify-center bg-background dark:bg-[#0B1020]">
+      //   <div className="text-center text-muted-foreground">
+      //     <div className="animate-pulse w-64 h-64 rounded-full bg-zinc-800/40 mx-auto mb-6" />
+      //     <p className="text-sm">Loading profile…</p>
+      //   </div>
+      // </div>
+      <LoadingScreen />
     );
 
   /* -------------------------
