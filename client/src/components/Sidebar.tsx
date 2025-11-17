@@ -46,7 +46,7 @@ export default function Sidebar({
   pages,
   setPages,
   activePage,
-  participants,
+  participants, 
   currentUser,
   navigate,
   handleCopy,

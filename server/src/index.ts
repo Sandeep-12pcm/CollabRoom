@@ -28,6 +28,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: CLIENT_ORIGIN, methods: ["GET", "POST"] },
 });
+const currentEditors = new Map<string, { user_id: string; display_name: string }>();
 
 /**
  * Authenticate socket using Supabase access token sent in the handshake:
@@ -81,7 +82,6 @@ io.on("connection", (socket) => {
   });
 
     // 🔒 Track who is editing (in-memory, simple map)
-  const currentEditors = new Map<string, { user_id: string; display_name: string }>();
 
   // When a user starts editing
   socket.on("editing-started", ({ pageId, user_id, display_name }) => {

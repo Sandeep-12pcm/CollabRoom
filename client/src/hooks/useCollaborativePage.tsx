@@ -34,6 +34,7 @@ export function useCollaborativePage(
   const lastLocalChangeRef = useRef<string>(""); // JSON string of last content
   const isMountedRef = useRef(true);
   const { toast } = useToast();
+  const currentUserRef = useRef<any>(null);
   const [editingUser, setEditingUser] = useState<{
     user_id: string;
     display_name: string;
@@ -209,80 +210,83 @@ export function useCollaborativePage(
     };
   }, [pageId, roomId]);
 
-
   // 4. Emit throttled
-const emitContentChangeThrottled = useCallback(
-  (nextContent: Record<string, string>) => {
-    const jsonStr = JSON.stringify(nextContent);
-    const now = Date.now();
-    const last = lastEmitRef.current || 0;
-    if (socketRef.current) {
-      if (now - last >= EMIT_THROTTLE_MS) {
-        socketRef.current.emit("content-change", { pageId, content: jsonStr });
-        lastEmitRef.current = now;
-      } else {
-        const wait = EMIT_THROTTLE_MS - (now - last);
-        window.setTimeout(() => {
-          socketRef.current?.emit("content-change", {
+  const emitContentChangeThrottled = useCallback(
+    (nextContent: Record<string, string>) => {
+      const jsonStr = JSON.stringify(nextContent);
+      const now = Date.now();
+      const last = lastEmitRef.current || 0;
+      if (socketRef.current) {
+        if (now - last >= EMIT_THROTTLE_MS) {
+          socketRef.current.emit("content-change", {
             pageId,
             content: jsonStr,
           });
-          lastEmitRef.current = Date.now();
-        }, wait);
+          lastEmitRef.current = now;
+        } else {
+          const wait = EMIT_THROTTLE_MS - (now - last);
+          window.setTimeout(() => {
+            socketRef.current?.emit("content-change", {
+              pageId,
+              content: jsonStr,
+            });
+            lastEmitRef.current = Date.now();
+          }, wait);
+        }
       }
-    }
-  },
-  [pageId]
-);
+    },
+    [pageId]
+  );
 
-// 5. Debounced save
-const scheduleSave = useCallback(
-  (nextContent: Record<string, string>) => {
-    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-    const jsonStr = JSON.stringify(nextContent);
-    saveTimerRef.current = window.setTimeout(() => {
-      socketRef.current?.emit("save-page", { pageId, content: jsonStr });
-      saveTimerRef.current = null;
-    }, SAVE_DEBOUNCE_MS);
-  },
-  [pageId]
-);
+  // 5. Debounced save
+  const scheduleSave = useCallback(
+    (nextContent: Record<string, string>) => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+      const jsonStr = JSON.stringify(nextContent);
+      saveTimerRef.current = window.setTimeout(() => {
+        socketRef.current?.emit("save-page", { pageId, content: jsonStr });
+        saveTimerRef.current = null;
+      }, SAVE_DEBOUNCE_MS);
+    },
+    [pageId]
+  );
 
-// 6. Setter from editor (per-language)
-const setContentFromEditor = useCallback(
-  async (lang: string, code: string) => {
-    const newContent = { ...content, [lang]: code };
-    setContent(newContent);
-    lastLocalChangeRef.current = JSON.stringify(newContent);
-    console.log("setContentFromEditor called");
-    // 🔥 Editing lock logic (only runs when socket exists)
-    if (socketRef.current) {
-      console.log("✅ Socket connected, executing editing lock logic");
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      socketRef.current.emit("editing-started", {
-        pageId,
-        user_id: user?.id,
-        display_name:
-          user?.user_metadata?.display_name ||
-          user?.email ||
-          "Someone",
-      });
+  // 6. Setter from editor (per-language)
+  const setContentFromEditor = useCallback(
+    async (lang: string, code: string) => {
+//       if (!editingUser || editingUser.user_id !== user?.id) {
+//   socketRef.current.emit("editing-started", { ... });
+// }
 
-      if (editingTimerRef.current) clearTimeout(editingTimerRef.current);
-      editingTimerRef.current = setTimeout(() => {
-        socketRef.current?.emit("editing-stopped", { pageId });
-      }, 5000);
-    }
-    else{
-      console.log("❌Socket not connected, skipping editing lock logic");
-    }
+      const newContent = { ...content, [lang]: code };
+      setContent(newContent);
+      lastLocalChangeRef.current = JSON.stringify(newContent);
+      console.log("setContentFromEditor called");
+      // 🔥 Editing lock logic (only runs when socket exists)
+      if (socketRef.current) {
+        console.log("✅ Socket connected, executing editing lock logic");
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user;
+        socketRef.current.emit("editing-started", {
+          pageId,
+          user_id: user?.id,
+          display_name:
+            user?.user_metadata?.display_name || user?.email || "Someone",
+        });
 
-    emitContentChangeThrottled(newContent);
-    scheduleSave(newContent);
-  },
-  [content, emitContentChangeThrottled, scheduleSave, pageId]
-);
+        if (editingTimerRef.current) clearTimeout(editingTimerRef.current);
+        editingTimerRef.current = setTimeout(() => {
+          socketRef.current?.emit("editing-stopped", { pageId });
+        }, 5000);
+      } else {
+        console.log("❌Socket not connected, skipping editing lock logic");
+      }
+
+      emitContentChangeThrottled(newContent);
+      scheduleSave(newContent);
+    },
+    [content, emitContentChangeThrottled, scheduleSave, pageId]
+  );
 
   // 7. Save on beforeunload
   useEffect(() => {
