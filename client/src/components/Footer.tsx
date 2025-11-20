@@ -88,7 +88,7 @@ export const Footer = () => {
                 <Code2 className="h-6 w-6 text-white" />
               </motion.div>
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">
-                DevRoom
+                CollabRoom
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -150,11 +150,11 @@ export const Footer = () => {
               transition={{ duration: 2, repeat: Infinity }}
               className="text-xs font-mono text-muted-foreground"
             >
-              &gt; Connection stable • syncing DevRoom workspace...
+              &gt; Connection stable • syncing CollabRoom workspace...
             </motion.p>
             <p className="text-sm text-foreground">
               © {new Date().getFullYear()}{" "}
-              <span className="text-primary font-semibold">DevRoom</span>. All rights reserved.
+              <span className="text-primary font-semibold">CollabRoom</span>. All rights reserved.
             </p>
           </div>
         </div>

@@ -64,14 +64,14 @@ export const TrustSection = () => {
         
         <div className="mt-16 text-center">
           <p className="text-lg text-muted-foreground mb-4">
-            "DevRoom has completely transformed how our team collaborates on code. 
+            "CollabRoom has completely transformed how our team collaborates on code. 
             The real-time updates and clean interface make it indispensable."
           </p>
           <div className="flex items-center justify-center gap-2">
             <div className="w-10 h-10 rounded-full bg-gradient-primary" />
             <div className="text-left">
               <div className="font-semibold text-foreground">Harshal Soladhra</div>
-              <div className="text-sm text-muted-foreground">Lead Developer at DevRoom</div>
+              <div className="text-sm text-muted-foreground">Lead Developer at CollabRoom</div>
             </div>
           </div>
         </div>

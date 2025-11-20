@@ -55,10 +55,12 @@ export const JoinRoomDialog = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" variant="outline" className="gap-2">
-          <Users className="h-5 w-5" />
-          Join Room
-        </Button>
+        <div id="join-room-trigger">
+          <Button size="lg" variant="outline" className="gap-2">
+            <Users className="h-5 w-5" />
+            Join Room
+          </Button>
+        </div>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -77,6 +79,19 @@ export const JoinRoomDialog = () => {
               onChange={(e) => setRoomCode(e.target.value)}
               required
             />
+          </div>
+          <div className="pt-2 text-center text-sm text-muted-foreground">
+            <span>Want to create a room?</span>{" "}
+            <button
+              type="button"
+              className="text-primary hover:underline font-medium"
+              onClick={() => {
+                setOpen(false);
+                document.getElementById("create-room-trigger")?.click();
+              }}
+            >
+              Create a new room
+            </button>
           </div>
           <Button type="submit" className="w-full">
             Join Room

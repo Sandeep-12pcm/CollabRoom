@@ -55,25 +55,6 @@ export const Hero = () => {
                 Watch Demo
               </Button>
             </div>
-
-            {/* {/*  */}
-            <div className="flex items-center gap-8 mt-12">
-              <div>
-                {/* <div className="text-3xl font-bold text-foreground">50K+</div> */}
-                <div className="text-sm text-muted-foreground">
-                  Active Developers
-                </div>
-              </div>
-              <div className="h-12 w-px bg-border" />
-              <div>
-                {/* <div className="text-3xl font-bold text-foreground">1M+</div> */}
-                {/* <div className="text-sm text-muted-foreground">Code Snippets Shared</div> */}
-                <div className="text-sm text-muted-foreground">
-                  Share Code Snippets
-                </div>
-              </div>
-            </div>
-            {/* */}
           </div>
 
           <div className="relative animate-fade-in hidden lg:block">

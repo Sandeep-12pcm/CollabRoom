@@ -10,7 +10,6 @@ import NotFound from "./pages/NotFound";
 import Loading from "./components/loading/Loading";
 import { FeedbackForm } from "./pages/FeedbackForm";
 import ProfilePage from "./pages/ProfilePage";
-import { Navbar } from "./components/Navbar";
 import ContactForm from "./pages/ContactForm";
 const queryClient = new QueryClient();
 
@@ -22,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/home" element={<Index />} />
           <Route path="/loading" element={<Loading />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/room/:id" element={<Room />} />

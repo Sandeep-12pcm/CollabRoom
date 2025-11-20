@@ -1,38 +1,44 @@
-import { useEffect, useState } from "react";
+// src/pages/Landing.tsx
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import { Navbar } from "@/components/Navbar";
-import { Hero } from "@/components/Hero";
-import { Features } from "@/components/Features";
-import { TrustSection } from "@/components/TrustSection";
-import { Footer } from "@/components/Footer";
-import { CreateRoomDialog } from "@/components/CreateRoomDialog";
-import { JoinRoomDialog } from "@/components/JoinRoomDialog";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import AmbientBackground from "@/components/AmbientBackground";
-import { SubscriptionDialog } from "@/components/SubscriptionDialog";
-const Index = () => {
-  const [isLoading, setIsLoading] = useState(true);
+import { Footer } from "@/components/Footer";
 
-  // Simulate initialization or fetch
+// New honest sections (from the components we generated)
+import { Hero } from "@/components/Hero";
+import { Features } from "@/components/Features";
+import { UseCases } from "@/components/UseCases";
+import { WhyCollabRoom } from "@/components/WhyCollabRoom";
+import { TechStack } from "@/components/TechStack";
+import { FinalCTA } from "@/components/FinalCTA";
+
+// Optional dialogs you already use elsewhere (keeps behavior identical)
+import { CreateRoomDialog } from "@/components/CreateRoomDialog";
+import { JoinRoomDialog } from "@/components/JoinRoomDialog";
+import { SubscriptionDialog } from "@/components/SubscriptionDialog";
+
+const Landing: React.FC = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // small initialization delay to show your loading screen smoothly
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000); // Adjust as needed
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setIsLoading(false), 800); // tweak if needed
+    return () => clearTimeout(t);
   }, []);
-  
 
   return (
-    <div id="home" className="min-h-screen relative overflow-hidden">
-      
-      {/* AnimatePresence handles mount/unmount animations */}
+    <div id="home" className="min-h-screen relative overflow-hidden bg-background">
+      {/* Loading overlay */}
       <AnimatePresence>
         {isLoading && (
           <motion.div
             key="loading"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.7, ease: "easeInOut" }}
             className="absolute inset-0 z-50 bg-background"
           >
             <LoadingScreen />
@@ -40,34 +46,52 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      {/* Main content fades in after loading */}
+      {/* Main content */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoading ? 0 : 1 }}
-        transition={{ duration: 1.2, ease: "easeInOut" }}
+        transition={{ duration: 1.0, ease: "easeInOut" }}
       >
         <Navbar />
-        <main className="mt-10">
+
+        <main className="mt-16">
+          {/* HERO */}
           <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
             <AmbientBackground />
             <Hero />
           </section>
-          <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-            <AmbientBackground />
+
+          {/* FEATURES */}
+          <section className="relative">
             <Features />
           </section>
 
-          <section className="py-16 px-4">
-            <div className="max-w-4xl mx-auto text-center space-y-8">
-              <div>
-                <h2 className="text-3xl font-bold mb-4 text-foreground">
-                  Start Collaborating Now
-                </h2>
-                <p className="text-muted-foreground text-lg">
-                  Create a new room or join an existing one to start coding
-                  together
-                </p>
-              </div>
+          {/* USE CASES */}
+          <section className="relative">
+            <UseCases />
+          </section>
+
+          {/* WHY COLLABROOM */}
+          <section className="relative">
+            <WhyCollabRoom />
+          </section>
+
+          {/* TECH STACK / SECURITY */}
+          <section className="relative">
+            <TechStack />
+          </section>
+
+          {/* FINAL CTA */}
+          <section className="relative">
+            <FinalCTA />
+          </section>
+
+          {/* Small interactive area for Create/Join buttons (keeps previous UX) */}
+          <section className="py-12 px-4">
+            <div className="max-w-4xl mx-auto text-center space-y-6">
+              <p className="text-muted-foreground">
+                Want to try it now? Create a room or join the demo room — no sign up required.
+              </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <CreateRoomDialog />
                 <JoinRoomDialog />
@@ -75,14 +99,14 @@ const Index = () => {
             </div>
           </section>
 
-          <TrustSection />
-          {/* SUBSCRIPTION BUTTON + POPUP */}
+          {/* Optional subscription / early access dialog */}
           <SubscriptionDialog />
         </main>
+
         <Footer />
       </motion.div>
     </div>
   );
 };
 
-export default Index;
+export default Landing;

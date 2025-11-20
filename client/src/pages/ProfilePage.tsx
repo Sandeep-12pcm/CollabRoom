@@ -420,7 +420,7 @@ export default function ProfilePage() {
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold">DevRoom</span>
+              <span className="font-semibold">CollabRoom</span>
             </Link>
           </div>
 

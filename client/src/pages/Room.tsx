@@ -65,23 +65,23 @@ const Room = () => {
     javascript: `// Write your code here...
 
 function example() {
-  console.log('Hello, DevRoom!');
+  console.log('Hello, CollabRoom!');
 }`,
     typescript: `// Write your code here...
 
 function example(): void {
-  console.log('Hello, DevRoom!');
+  console.log('Hello, CollabRoom!');
 }`,
     python: `# Write your code here...
 
 def example():
-    print("Hello, DevRoom!")`,
+  print("Hello, CollabRoom!")`,
     java: `// Write your code here...
 
 public class Example {
-    public static void main(String[] args) {
-        System.out.println("Hello, DevRoom!");
-    }
+  public static void main(String[] args) {
+      System.out.println("Hello, CollabRoom!");
+  }
 }`,
     cpp: `// Write your code here...
 
@@ -89,7 +89,7 @@ public class Example {
 using namespace std;
 
 int main() {
-    cout << "Hello, DevRoom!" << endl;
+    cout << "Hello, CollabRoom!" << endl;
     return 0;
 }`,
     html: `<!-- Write your code here... -->
@@ -97,10 +97,10 @@ int main() {
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hello DevRoom</title>
+    <title>Hello CollabRoom</title>
   </head>
   <body>
-    <h1>Hello, DevRoom!</h1>
+    <h1>Hello, CollabRoom!</h1>
   </body>
 </html>`,
     css: `/* Write your code here... */

@@ -29,14 +29,16 @@ export const CreateRoomDialog = ({ children }: CreateRoomDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children ? (
-          children
-        ) : (
-          <Button size="lg" className="gap-2">
-            <Plus className="h-5 w-5" />
-            Create Room
-          </Button>
-        )}
+        <div id="create-room-trigger">
+          {children ? (
+            children
+          ) : (
+            <Button size="lg" className="gap-2">
+              <Plus className="h-5 w-5" />
+              Create Room
+            </Button>
+          )}
+        </div>
       </DialogTrigger>
 
       <DialogContent>
@@ -70,6 +72,21 @@ export const CreateRoomDialog = ({ children }: CreateRoomDialogProps) => {
               required
             />
           </div>
+          <div className="pt-2 text-center text-sm text-muted-foreground">
+            <span>Have a code?</span>{" "}
+            <button
+              type="button"
+              className="text-primary hover:underline font-medium"
+              onClick={() => {
+                setOpen(false);
+                // Open JoinRoomDialog?
+                document.getElementById("join-room-trigger")?.click();
+              }}
+            >
+              Join a room
+            </button>
+          </div>
+
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating..." : "Create Room"}
           </Button>

@@ -116,7 +116,7 @@ const ContactForm: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Contact DevRoom Team
+          Contact CollabRoom Team
         </h2>
 
         <div className="space-y-2">

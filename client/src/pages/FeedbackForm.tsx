@@ -124,7 +124,7 @@ export const FeedbackForm: React.FC = () => {
           Share Your Feedback
         </motion.h2>
         <p className="text-center text-muted-foreground mb-6 text-sm">
-          Your thoughts help us improve DevRoom. Thank you for taking the time!
+          Your thoughts help us improve CollabRoom. Thank you for taking the time!
         </p>
 
         {/* Fields */}
