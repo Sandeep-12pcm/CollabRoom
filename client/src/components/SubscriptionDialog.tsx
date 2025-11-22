@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-
+import ComingSoon from "@/components/loading/ComingSoon";
 export const SubscriptionDialog = () => {
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [commingsoon, setCommingSoon] = useState(false);
+  const [email, setEmail] = useState("");
 
   const navigate = useNavigate();
 
@@ -70,7 +72,10 @@ export const SubscriptionDialog = () => {
       {/* CENTER GOLDEN GLOW BUTTON */}
       <div className="flex justify-center mt-12 mb-20">
         <motion.button
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setCommingSoon(true);
+            setOpen(true);
+          }}
           className="relative px-10 py-4 text-lg font-semibold rounded-xl text-black dark:text-white bg-gradient-to-r from-yellow-400 to-yellow-00 shadow-xl"
         >
           {/* Glowing + blinking border */}
@@ -99,75 +104,101 @@ export const SubscriptionDialog = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
             >
-              {/* Close Button */}
-              <button
-                onClick={() => setOpen(false)}
-                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              {commingsoon ? (
+                // 👉 Show Coming Soon inside modal
+                <div className="w-full h-full relative">
+                  <ComingSoon />
 
-              <h2 className="text-3xl font-bold text-center mb-2 text-foreground">
-                Choose Your Plan
-              </h2>
-              <p className="text-center text-muted-foreground mb-10">
-                Upgrade now and unlock premium CollabRoom features.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {plans.map((plan, index) => (
-                  <motion.div
-                    key={index}
-                    className="rounded-xl p-6 border border-border bg-card/80 shadow-lg hover:shadow-2xl transition-all relative overflow-hidden"
-                    whileHover={{ scale: 1.02 }}
+                  {/* Close Button */}
+                  <button
+                    onClick={() => {
+                      setCommingSoon(false);
+                      setOpen(false);
+                    }}
+                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
                   >
-                    {/* Plan Icon */}
-                    <div
-                      className={`w-16 h-16 mb-4 rounded-xl flex items-center justify-center text-4xl bg-gradient-to-br ${plan.gradient}`}
-                    >
-                      {plan.icon}
-                    </div>
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              ) : (
+                // 👉 Main subscription UI
+                <>
+                  {/* Close Button */}
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      setCommingSoon(false);
+                    }}
+                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
 
-                    {/* Plan Name */}
-                    <h3 className="text-xl font-bold mb-2 text-foreground">
-                      {plan.name} Plan
-                    </h3>
+                  <h2 className="text-3xl font-bold text-center mb-2 text-foreground">
+                    Choose Your Plan
+                  </h2>
 
-                    {/* Price */}
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold text-primary">
-                        ₹{plan.price}
-                      </span>
-                      <span className="ml-3 line-through text-muted-foreground">
-                        ₹{plan.original}
-                      </span>
+                  <p className="text-center text-muted-foreground mb-10">
+                    Upgrade now and unlock premium CollabRoom features.
+                  </p>
 
-                      <div className="text-green-400 font-semibold text-sm mt-1">
-                        Save{" "}
-                        {Math.round(
-                          ((plan.original - plan.price) / plan.original) * 100
-                        )}
-                        % 🎉
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {plans.map((plan, index) => (
+                      <motion.div
+                        key={index}
+                        className="rounded-xl p-6 border border-border bg-card/80 shadow-lg hover:shadow-2xl transition-all relative overflow-hidden"
+                        whileHover={{ scale: 1.02 }}
+                      >
+                        {/* Plan Icon */}
+                        <div
+                          className={`w-16 h-16 mb-4 rounded-xl flex items-center justify-center text-4xl bg-gradient-to-br ${plan.gradient}`}
+                        >
+                          {plan.icon}
+                        </div>
 
-                    {/* Features */}
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      {plan.features.map((feature, i) => (
-                        <li key={i}>{feature}</li>
-                      ))}
-                    </ul>
+                        {/* Plan Name */}
+                        <h3 className="text-xl font-bold mb-2 text-foreground">
+                          {plan.name} Plan
+                        </h3>
 
-                    {/* CLICK TO SUBSCRIBE */}
-                    <button
-                      onClick={handleSubscribe}
-                      className="mt-6 w-full py-2 rounded-lg bg-gradient-to-r from-primary to-accent text-black font-semibold hover:opacity-90 transition"
-                    >
-                      Subscribe Now
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
+                        {/* Price */}
+                        <div className="mb-4">
+                          <span className="text-3xl font-bold text-primary">
+                            ₹{plan.price}
+                          </span>
+                          <span className="ml-3 line-through text-muted-foreground">
+                            ₹{plan.original}
+                          </span>
+
+                          <div className="text-green-400 font-semibold text-sm mt-1">
+                            Save{" "}
+                            {Math.round(
+                              ((plan.original - plan.price) / plan.original) *
+                                100
+                            )}
+                            % 🎉
+                          </div>
+                        </div>
+
+                        {/* Features */}
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                          {plan.features.map((feature, i) => (
+                            <li key={i}>{feature}</li>
+                          ))}
+                        </ul>
+
+                        {/* SUBSCRIBE BUTTON */}
+                        <button
+                          onClick={handleSubscribe}
+                          className="mt-6 w-full py-2 rounded-lg bg-gradient-to-r from-primary to-accent text-black font-semibold hover:opacity-90 transition"
+                        >
+                          Subscribe Now
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -13,10 +13,14 @@ import {
   Rocket,
   Loader2,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client"; // <-- Make sure this points to your initialized Supabase client
+import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
+import { X } from "lucide-react";
+import ComingSoon from "@/components/loading/ComingSoon";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { AnimatePresence } from "framer-motion";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 
 // ----------------------
@@ -59,151 +63,6 @@ const generateRoomCode = (length = 6) => {
 // Hook: useProfile
 // centralizes Supabase logic for Profile + Rooms
 // ----------------------
-export function useProfile() {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
-
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const {
-        data: { user: suser },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (authError || !suser) {
-        setUser(null);
-        setProfile(null);
-        setRooms([]);
-        setLoading(false);
-        return;
-      }
-      setUser(suser);
-
-      // profiles table: id, name, avatar_url, email, is_pro, joined_at, last_login
-      const { data: pData, error: pErr } = await supabase
-        .from("profiles")
-        .select("id, name, email, avatar_url, is_pro, joined_at, last_login")
-        .eq("id", suser.id)
-        .maybeSingle(); // safe if no row yet
-
-      if (pErr) throw pErr;
-
-      if (!pData) {
-        // create blank profile row if not present
-        const { data: newP, error: insertErr } = await supabase
-          .from("profiles")
-          .insert({
-            id: suser.id,
-            email: suser.email,
-            name:
-              suser.user_metadata?.name ||
-              suser.user_metadata?.display_name ||
-              null,
-            avatar_url:
-              suser.user_metadata?.avatar_url ||
-              suser.user_metadata?.picture ||
-              null,
-            joined_at: suser.created_at,
-          })
-          .select()
-          .maybeSingle();
-        if (insertErr) throw insertErr;
-        console.log("No profile found; created new profile.", suser);
-        console.log("Created new profile for user:", newP);
-        setProfile(newP || null);
-      } else {
-        setProfile(pData as Profile);
-      }
-
-      // rooms table: id, room_code, created_at, updated_at, name, expiry_hours
-      const { data: rData, error: rErr } = await supabase
-        .from("rooms")
-        .select("id, room_code, created_at, updated_at, name, expiry_hours")
-        .eq("created_by", suser.id)
-        .order("created_at", { ascending: false });
-
-      if (rErr) throw rErr;
-      setRooms(rData || []);
-    } catch (err) {
-      console.error("useProfile fetchAll error", err);
-      // do not toast here - let callers handle it
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-
-    // real-time listener for rooms changes for this user
-    let subscription: any;
-    (async () => {
-      const {
-        data: { user: suser },
-      } = await supabase.auth.getUser();
-      if (!suser) return;
-      subscription = supabase
-        .channel("public:rooms")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "rooms",
-            filter: `created_by=eq.${suser.id}`,
-          },
-          (payload) => {
-            setRooms((r) => [payload.new, ...r]);
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "rooms",
-            filter: `created_by=eq.${suser.id}`,
-          },
-          (payload) => {
-            setRooms((r) =>
-              r.map((it) => (it.id === payload.new.id ? payload.new : it))
-            );
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "DELETE",
-            schema: "public",
-            table: "rooms",
-            filter: `created_by=eq.${suser.id}`,
-          },
-          (payload) => {
-            setRooms((r) => r.filter((it) => it.id !== payload.old.id));
-          }
-        )
-        .subscribe();
-    })();
-
-    return () => {
-      try {
-        if (subscription) supabase.removeChannel(subscription);
-      } catch (e) {}
-    };
-  }, [fetchAll]);
-
-  return {
-    loading,
-    user,
-    profile,
-    rooms,
-    refresh: fetchAll,
-    setProfile,
-    setRooms,
-  };
-}
 
 // ----------------------
 // Utility: uploadAvatar
@@ -249,6 +108,7 @@ export default function ProfilePage() {
   const [theme, setTheme] = useState<"dark" | "light">(
     (localStorage.getItem("theme") as "dark" | "light") || "dark"
   );
+  const [comingSoon, setComingSoon] = useState(false);
 
   useEffect(() => {
     setEditName(profile?.name || "");
@@ -390,24 +250,41 @@ export default function ProfilePage() {
 
   return (
     // <div className="min-h-screen bg-gradient-to-b from-[#0B1020] to-[#081024] text-slate-100">
-    <div
-      className="
-  min-h-screen 
-  text-gray-900 dark:text-slate-100
-  bg-gray-50 dark:bg-gradient-to-b dark:from-[#0B1020] dark:to-[#081024]
-"
-    >
+    <div className="min-h-screen text-gray-900 dark:text-slate-100 bg-gray-50 dark:bg-gradient-to-b dark:from-[#0B1020] dark:to-[#081024]">
+      {comingSoon && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            {/* Modal Box */}
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl"
+            >
+              {/* Coming soon page */}
+              <ComingSoon />
+
+              {/* Close button */}
+              <button
+                onClick={() => setComingSoon(false)}
+                className="absolute top-4 right-4 text-white hover:text-primary transition"
+              >
+                <X className="w-7 h-7 drop-shadow-lg" />
+              </button>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      )}
+
       {/* Header */}
       {/* <header className="sticky top-0 backdrop-blur bg-black/20 border-b border-border z-20"> */}
-      <header
-        className="
-  sticky top-0 
-  backdrop-blur 
-  bg-white/60 dark:bg-black/20 
-  border-b border-gray-200 dark:border-border
-  z-20
-"
-      >
+      <header className="sticky top-0 backdrop-blur bg-white/60 dark:bg-black/20 border-b border-gray-200 dark:border-border z-20">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -606,7 +483,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {!profile?.is_pro ? (
-                      <Button onClick={() => navigate("/subscribe")}>
+                      <Button onClick={() => setComingSoon(true)}>
                         Upgrade
                       </Button>
                     ) : (
@@ -617,7 +494,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-
               <div className="mt-4 text-sm">
                 <Link to="/contact" className="text-primary hover:underline">
                   Contact support / feedback

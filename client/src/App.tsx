@@ -7,10 +7,11 @@ import Index from "./pages/Index";
 import Room from "./pages/Room";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import Loading from "./components/loading/Loading";
+import CommingSoon from "./components/loading/ComingSoon";
 import { FeedbackForm } from "./pages/FeedbackForm";
 import ProfilePage from "./pages/ProfilePage";
 import ContactForm from "./pages/ContactForm";
+import ComingSoon from "./components/loading/ComingSoon";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -22,7 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/home" element={<Index />} />
-          <Route path="/loading" element={<Loading />} />
+          <Route path="/comingsoon" element={<ComingSoon />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/room/:id" element={<Room />} />
           <Route path="/feedback" element={< FeedbackForm />} />
