@@ -54,7 +54,7 @@ const Landing: React.FC = () => {
       >
         <Navbar />
 
-        <main className="mt-16">
+        <main className="mt-1">
           {/* HERO */}
           <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
             <AmbientBackground />
@@ -83,11 +83,11 @@ const Landing: React.FC = () => {
 
           {/* FINAL CTA */}
           <section className="relative">
-            <FinalCTA />
+            {/* <FinalCTA /> */}
           </section>
 
           {/* Small interactive area for Create/Join buttons (keeps previous UX) */}
-          <section className="py-12 px-4">
+          <section className="py-1 px-4">
             <div className="max-w-4xl mx-auto text-center space-y-6">
               <p className="text-muted-foreground">
                 Want to try it now? Create a room or join the demo room — no sign up required.
