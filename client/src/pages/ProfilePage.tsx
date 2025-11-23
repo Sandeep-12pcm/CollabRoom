@@ -640,11 +640,3 @@ export default function ProfilePage() {
   );
 }
 
-/*
-  NOTES & TODOs:
-  - Make sure your Supabase client import (top) points to the initialized client in your project.
-  - Ensure the storage bucket "profile-pictures" exists and is reachable; update bucket name in uploadAvatar if different.
-  - Security: validate file sizes / types before upload in production.
-  - Server-side: implement a scheduled job (CRON / Supabase edge function) to delete rooms whose expiry_hours have passed.
-  - This single-file approach keeps everything together for easy copy/paste; for production, split into smaller components/hook files.
-*/

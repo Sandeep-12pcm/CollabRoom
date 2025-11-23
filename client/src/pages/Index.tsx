@@ -30,7 +30,10 @@ const Landing: React.FC = () => {
   }, []);
 
   return (
-    <div id="home" className="min-h-screen relative overflow-hidden bg-background">
+    <div
+      id="home"
+      className="min-h-screen relative overflow-hidden bg-background"
+    >
       {/* Loading overlay */}
       <AnimatePresence>
         {isLoading && (
@@ -82,15 +85,18 @@ const Landing: React.FC = () => {
           </section>
 
           {/* FINAL CTA */}
-          <section className="relative">
-            {/* <FinalCTA /> */}
-          </section>
-
+          {/* <section className="relative"> */}
+          {/* </section>  */}
           {/* Small interactive area for Create/Join buttons (keeps previous UX) */}
-          <section className="py-1 px-4">
+          <section className="py-20 text-center px-4">
             <div className="max-w-4xl mx-auto text-center space-y-6">
+              <h2 className="text-4xl font-bold mb-6">
+                Start Collaborating in Seconds
+              </h2>
+
               <p className="text-muted-foreground">
-                Want to try it now? Create a room or join the demo room — no sign up required.
+                Want to try it now? Create a room or join the demo room — no
+                sign up required.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <CreateRoomDialog />
@@ -98,7 +104,6 @@ const Landing: React.FC = () => {
               </div>
             </div>
           </section>
-
           {/* Optional subscription / early access dialog */}
           <SubscriptionDialog />
         </main>
