@@ -30,10 +30,7 @@ const io = new Server(server, {
 });
 const currentEditors = new Map<string, { user_id: string; display_name: string }>();
 
-/**
- * Authenticate socket using Supabase access token sent in the handshake:
- * client passes: io(SOCKET_URL, { auth: { token: access_token } })
- */
+
 io.use(async (socket, next) => {
   try {
     const token =

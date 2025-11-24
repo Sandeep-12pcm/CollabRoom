@@ -52,7 +52,6 @@ export default function Sidebar({
   handleCopy,
   shareRoom,
   addPage,
-  // deletePage,
   setActivePage,
   showDeletePopup,
   setShowDeletePopup,
@@ -196,11 +195,14 @@ export default function Sidebar({
   // Delete a page from the backend and update UI
   const deletePage = async (pageId: string) => {
     if (!pageId) return;
-    // optional confirm
+    if (!currentUser) {
+      toast.warning("Login to delete pages.");
+      return;
+    }
 
     setDeletingPageIds((s) => ({ ...s, [pageId]: true }));
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("pages")
         .delete()
         .eq("id", pageId)

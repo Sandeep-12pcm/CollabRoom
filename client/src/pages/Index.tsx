@@ -13,7 +13,6 @@ import { Features } from "@/components/Features";
 import { UseCases } from "@/components/UseCases";
 import { WhyCollabRoom } from "@/components/WhyCollabRoom";
 import { TechStack } from "@/components/TechStack";
-import { FinalCTA } from "@/components/FinalCTA";
 
 // Optional dialogs you already use elsewhere (keeps behavior identical)
 import { CreateRoomDialog } from "@/components/CreateRoomDialog";

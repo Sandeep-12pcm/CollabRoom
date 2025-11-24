@@ -113,7 +113,6 @@ body {
     markdown: `# Welcome to CodeRoom!`,
   };
 
-
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang);
     setContent(
@@ -169,8 +168,8 @@ body {
         setIsJoining(true);
         console.log("Joining room participants for user:", user);
         const displayName =
-          user.user_metadata?.display_name ||
-          user.email?.split("@")[0] ||
+          user.user_metadata?.display_name || user.user_metadata?.full_name ||
+          
           "Anonymous";
         const { error: part_error } = await supabase
           .from("room_participants")
@@ -290,6 +289,14 @@ body {
 
   const addPage = async () => {
     if (!id) return;
+    if (!currentUser) {
+      toast({
+        title: "Not Logged In",
+        description: "You must be logged in to add a page",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from("pages")
@@ -342,6 +349,14 @@ body {
 
   const deleteRoom = async () => {
     if (!id) return;
+    if (!currentUser || currentUser.id !== roomOwnerId) {
+      toast({
+        title: "Not Authorized",
+        description: "You must be the room owner to delete this room",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       await supabase.from("room_participants").delete().eq("room_id", id);
       await supabase.from("pages").delete().eq("room_id", id);
@@ -368,205 +383,203 @@ body {
       });
     }
   };
-  // if (isLoading) {
-  //   return <LoadingScreen />;
-  // }
-
-  // Simulate initialization or fetch
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 1000); // Adjust as needed
-      return () => clearTimeout(timer);
-    }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000); // Adjust as needed
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-16 flex h-screen">
-        <Sidebar
-          roomId={id!}
-          roomName={roomName}
-          roomCode={roomCode}
-          participants={participants}
-          currentUser={currentUser}
-          navigate={navigate}
-          handleCopy={handleCopy}
-          shareRoom={shareRoom}
-          addPage={addPage}
-          pages={pages}
-          setPages={setPages}
-          activePage={activePageId}
-          setActivePage={setActivePageId}
-          showDeletePopup={showDeletePopup}
-          setShowDeletePopup={setShowDeletePopup}
-          deleteRoom={deleteRoom}
-          setRoomName={setRoomName}
-        />
-
-        {/* AnimatePresence handles mount/unmount animations */}
-      <AnimatePresence>
-        {isLoading && (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="absolute inset-0 z-50 bg-background"
-          >
-            <LoadingScreen />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-        <main className="flex-1 flex flex-col relative">
-          <div className="p-4 border-b border-border bg-card">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-4">
-                <h2 className="font-semibold text-foreground">
-                  {activePage?.title || "Untitled Page"}
-                </h2>
-                <Select value={language} onValueChange={handleLanguageChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="javascript">JavaScript</SelectItem>
-                    <SelectItem value="typescript">TypeScript</SelectItem>
-                    <SelectItem value="python">Python</SelectItem>
-                    <SelectItem value="java">Java</SelectItem>
-                    <SelectItem value="cpp">C++</SelectItem>
-                    <SelectItem value="html">HTML</SelectItem>
-                    <SelectItem value="css">CSS</SelectItem>
-                    <SelectItem value="markdown">
-                      Markdown (Docs/Table View)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button
-                onClick={async () => {
-                  await navigator.clipboard.writeText(content[language] ?? "");
-                  setCopied(true);
-                  toast({
-                    title: "Copied!",
-                    description: "Code copied to clipboard",
-                  });
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-                className={`transition-all duration-300 ${
-                  copied
-                    ? "bg-success hover:bg-success"
-                    : "bg-primary hover:bg-primary/90"
-                }`}
+      <div className="pt-16 flex flex-row h-screen overflow-hidden">
+        <Navbar />
+        <div className=" md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border">
+          <Sidebar
+            roomId={id!}
+            roomName={roomName}
+            roomCode={roomCode}
+            participants={participants}
+            currentUser={currentUser}
+            navigate={navigate}
+            handleCopy={handleCopy}
+            shareRoom={shareRoom}
+            addPage={addPage}
+            pages={pages}
+            setPages={setPages}
+            activePage={activePageId}
+            setActivePage={setActivePageId}
+            showDeletePopup={showDeletePopup}
+            setShowDeletePopup={setShowDeletePopup}
+            deleteRoom={deleteRoom}
+            setRoomName={setRoomName}
+          />
+          </div>
+          {/* AnimatePresence handles mount/unmount animations */}
+          <AnimatePresence>
+            {isLoading && (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
+                className="absolute inset-0 z-50 bg-background"
               >
-                {copied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy Code
-                  </>
-                )}
-              </Button>
+                <LoadingScreen />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <main className="flex-1 flex flex-col relative overflow-hidden">
+            <div className="p-4 border-b border-border bg-card">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-4">
+                  <h2 className="font-semibold text-foreground">
+                    {activePage?.title || "Untitled Page"}
+                  </h2>
+                  <Select value={language} onValueChange={handleLanguageChange}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any</SelectItem>
+                      <SelectItem value="javascript">JavaScript</SelectItem>
+                      <SelectItem value="typescript">TypeScript</SelectItem>
+                      <SelectItem value="python">Python</SelectItem>
+                      <SelectItem value="java">Java</SelectItem>
+                      <SelectItem value="cpp">C++</SelectItem>
+                      <SelectItem value="html">HTML</SelectItem>
+                      <SelectItem value="css">CSS</SelectItem>
+                      <SelectItem value="markdown">
+                        Markdown (Docs/Table View)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(
+                      content[language] ?? ""
+                    );
+                    setCopied(true);
+                    toast({
+                      title: "Copied!",
+                      description: "Code copied to clipboard",
+                    });
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className={`transition-all duration-300 ${
+                    copied
+                      ? "bg-success hover:bg-success"
+                      : "bg-primary hover:bg-primary/90"
+                  }`}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Code
+                    </>
+                  )}
+                </Button>
+              </div>
+                  
+              <AIAssistant code={content[language] ?? ""} language={language} />
             </div>
 
-            <AIAssistant code={content[language] ?? ""} language={language} />
-          </div>
+            <div className="flex-1 p-4">
+              <Card className="h-full bg-code-bg border-code-border">
+                {language === "markdown" ? (
+                  <div className="flex flex-col md:flex-row h-full">
+                    {/* Markdown Collaborative Editor */}
+                    <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-border p-3 bg-[#1e1e1e] text-white flex flex-col">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-sm font-semibold">
+                          ✏️ Markdown Editor (Collaborative)
+                        </h3>
+                        {editingUser && (
+                          <span className="text-xs text-amber-400">
+                            Currently being edited by {editingUser.display_name}
+                          </span>
+                        )}
+                        {!editingUser && (
+                          <span className="text-xs text-green-400">
+                            You can edit now!
+                          </span>
+                        )}
+                      </div>
 
-          <div className="flex-1 p-4">
-            <Card className="h-full bg-code-bg border-code-border">
-              {language === "markdown" ? (
-                <div className="flex h-full">
-                  {/* Markdown Collaborative Editor */}
-                  <div className="w-1/2 border-r border-border p-3 bg-[#1e1e1e] text-white flex flex-col">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-sm font-semibold">
-                        ✏️ Markdown Editor (Collaborative)
-                      </h3>
-                      {editingUser && (
-                        <span className="text-xs text-amber-400">
-                          Currently being edited by {editingUser.display_name}
-                        </span>
-                      )}
-                      {!editingUser && (
-                        <span className="text-xs text-green-400">
-                          You can edit now!
-                        </span>
-                      )}
-                    </div>
-
-                    <textarea
-                      value={
-                        (content && content[language]) ??
-                        defaultCodeTemplates[language]
-                      }
-                      onChange={(e) => {
-                        if (
-                          !editingUser ||
-                          editingUser.user_id === collaborative.socket?.id
-                        ) {
-                          setContent(language, e.target.value);
+                      <textarea
+                        value={
+                          (content && content[language]) ??
+                          defaultCodeTemplates[language]
                         }
-                      }}
-                      disabled={
-                        editingUser &&
-                        editingUser.user_id !== collaborative.socket?.id
-                      }
-                      className={`flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border ${
-                        editingUser &&
-                        editingUser.user_id !== collaborative.socket?.id
-                          ? "bg-gray-800 text-gray-400 cursor-not-allowed"
-                          : "bg-[#252526] text-white border-gray-700 focus:border-gray-500"
-                      }`}
-                      placeholder={
-                        editingUser &&
-                        editingUser.user_id !== collaborative.socket?.id
-                          ? `${editingUser.display_name} is editing...`
-                          : "Write Markdown collaboratively..."
-                      }
-                    />
-                  </div>
+                        onChange={(e) => {
+                          if (
+                            !editingUser ||
+                            editingUser.user_id === collaborative.socket?.id
+                          ) {
+                            setContent(language, e.target.value);
+                          }
+                        }}
+                        disabled={
+                          editingUser &&
+                          editingUser.user_id !== collaborative.socket?.id
+                        }
+                        className={`flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border ${
+                          editingUser &&
+                          editingUser.user_id !== collaborative.socket?.id
+                            ? "bg-gray-800 text-gray-400 cursor-not-allowed"
+                            : "bg-[#252526] text-white border-gray-700 focus:border-gray-500"
+                        }`}
+                        placeholder={
+                          editingUser &&
+                          editingUser.user_id !== collaborative.socket?.id
+                            ? `${editingUser.display_name} is editing...`
+                            : "Write Markdown collaboratively..."
+                        }
+                      />
+                    </div>
 
-                  {/* Markdown Preview */}
-                  <div className="w-1/2 p-3 overflow-auto bg-white text-black rounded-r-md">
-                    <h3 className="text-sm font-semibold mb-2">👁️ Preview</h3>
-                    <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm, remarkBreaks]}
-                        rehypePlugins={[rehypeRaw]}
-                      >
-                        {content?.[language] ?? ""}
-                      </ReactMarkdown>
+                    {/* Markdown Preview */}
+                    <div className="w-full md:w-1/2 p-3 overflow-auto bg-white text-black rounded-b-md md:rounded-r-md">
+                      <h3 className="text-sm font-semibold mb-2">👁️ Preview</h3>
+                      <div className="prose prose-sm max-w-none">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm, remarkBreaks]}
+                          rehypePlugins={[rehypeRaw]}
+                        >
+                          {content?.[language] ?? ""}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <Editor
-                  height="100%"
-                  language={language === "any" ? "javascript" : language}
-                  theme="vs-dark"
-                  value={
-                    (content && content[language]) ??
-                    defaultCodeTemplates[language]
-                  }
-                  onChange={(value) => setContent(language, value ?? "")}
-                  options={{
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                  }}
-                />
-              )}
-            </Card>
-          </div>
-        </main>
+                ) : (
+                  <Editor
+                    height="100%"
+                    language={language === "any" ? "javascript" : language}
+                    theme="vs-dark"
+                    value={
+                      (content && content[language]) ??
+                      defaultCodeTemplates[language]
+                    }
+                    onChange={(value) => setContent(language, value ?? "")}
+                    options={{
+                      fontSize: 14,
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                    }}
+                  />
+                )}
+              </Card>
+            </div>
+          </main>
       </div>
     </div>
   );
