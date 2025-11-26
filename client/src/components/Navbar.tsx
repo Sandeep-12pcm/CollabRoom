@@ -59,12 +59,17 @@ export const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* === Logo === */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="p-2 bg-gradient-primary rounded-lg transition-transform duration-300 group-hover:scale-110">
+            {/* <div className="p-2 bg-gradient-primary rounded-lg transition-transform duration-300 group-hover:scale-110">
               <Code2 className="h-6 w-6 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               CollabRoom
-            </span>
+            </span> */}
+            <img
+              src="/nav_collavroom.png"
+              alt="CollabRoom Logo"
+              className="h-full w-28 object-contain"
+            />
           </Link>
 
           {/* === Desktop Menu === */}
