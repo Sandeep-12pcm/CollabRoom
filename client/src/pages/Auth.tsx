@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Code2 } from "lucide-react";
-import { Footer } from "react-day-picker";
+import { Footer } from "@/components/Footer";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -188,8 +188,8 @@ const Auth = () => {
       <div className="pt-20 px-4 flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 flex flex-col items-center">
-            <div >
-            {/* <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-2"> */}
+            <div>
+              {/* <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-2"> */}
               {/* <Code2 className="h-6 w-6 text-primary-foreground" />
                */}
               <img
@@ -278,7 +278,9 @@ const Auth = () => {
           </CardContent>
         </Card>
       </div>
-      {/* <Footer /> */}
+      <div className="mt-8">
+        <Footer />
+      </div>
     </div>
   );
 };
