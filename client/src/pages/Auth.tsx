@@ -52,15 +52,15 @@ const Auth = () => {
           .single();
 
         if (!existingProfile) {
-          try{
+          try {
             await supabase.from("profiles").insert({
               id: user.id,
               email: user.email,
               display_name: displayName,
               avatar_url:
-              user.user_metadata?.avatar_url ||
-              user.user_metadata?.picture ||
-              null,
+                user.user_metadata?.avatar_url ||
+                user.user_metadata?.picture ||
+                null,
               created_at: new Date(),
             });
           } catch (error) {
@@ -186,8 +186,15 @@ const Auth = () => {
       <div className="pt-20 px-4 flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 flex flex-col items-center">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-2">
-              <Code2 className="h-6 w-6 text-primary-foreground" />
+            <div >
+            {/* <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-2"> */}
+              {/* <Code2 className="h-6 w-6 text-primary-foreground" />
+               */}
+              <img
+                src="/nav_collavroom.png"
+                alt="CollabRoom Logo"
+                className="h-full w-28 object-contain"
+              />
             </div>
             <CardTitle className="text-2xl">
               {isLogin ? "Welcome back" : "Create account"}
