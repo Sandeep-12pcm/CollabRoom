@@ -164,7 +164,7 @@ export default function ProfilePage() {
       setAvatarFile(null);
       toast({ title: "Profile saved" });
     } catch (err: any) {
-      console.error("save profile error", err);
+      // console.error("save profile error", err);
       toast({
         title: "Save failed",
         description: err?.message || String(err),
@@ -205,7 +205,7 @@ export default function ProfilePage() {
         toast({ title: `Retention set: ${expiryHours ?? "default"} hours` });
       }
     } catch (err: any) {
-      console.error("room action error", err);
+      // console.error("room action error", err);
       toast({
         title: "Action failed",
         description: err?.message || String(err),
@@ -231,7 +231,7 @@ export default function ProfilePage() {
       // navigate to new room
       if (data?.id) navigate(`/room/${data.id}`);
     } catch (err: any) {
-      console.error("create room error", err);
+      // console.error("create room error", err);
       toast({
         title: "Create failed",
         description: err?.message || String(err),

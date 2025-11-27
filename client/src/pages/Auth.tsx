@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Code2 } from "lucide-react";
+import { Footer } from "react-day-picker";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -64,7 +65,8 @@ const Auth = () => {
               created_at: new Date(),
             });
           } catch (error) {
-            console.error("Error creating profile:", error);
+            // console.error("Error creating profile:", error);
+            return;
           }
         } else {
           await supabase
@@ -136,7 +138,7 @@ const Auth = () => {
         redirectTo: `${window.location.origin}`,
       },
     });
-    if (error) console.error("Google login error:", error);
+    // if (error) console.error("Google login error:", error);
   };
 
   // ✅ 4. Supabase GitHub OAuth
@@ -147,7 +149,7 @@ const Auth = () => {
         redirectTo: `${window.location.origin}`,
       },
     });
-    if (error) console.error("GitHub login error:", error);
+    // if (error) console.error("GitHub login error:", error);
   };
 
   // ✅ 5. OAuth Button Components
@@ -276,6 +278,7 @@ const Auth = () => {
           </CardContent>
         </Card>
       </div>
+      {/* <Footer /> */}
     </div>
   );
 };

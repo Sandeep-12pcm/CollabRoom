@@ -10,7 +10,7 @@ const NotFound = () => {
   const [countdown, setCountdown] = useState(10); // seconds to redirect
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    // console.error("404 Error: User attempted to access non-existent route:", location.pathname);
 
     const interval = setInterval(() => {
       setCountdown((prev) => {
