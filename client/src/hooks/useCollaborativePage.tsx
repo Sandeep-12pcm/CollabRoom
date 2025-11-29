@@ -25,6 +25,7 @@ export function useCollaborativePage(
 ) {
   const [content, setContent] = useState<Record<string, string>>({});
   const [title, setTitle] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("javascript");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [cursors, setCursors] = useState<Record<string, Cursor>>({});
   const socketRef = useRef<Socket | null>(null);
@@ -50,9 +51,9 @@ export function useCollaborativePage(
     (async () => {
       const { data: page, error } = await supabase
         .from("pages")
-        .select("id,title,content,created_by")
+        .select("id,title,content,created_by,selected_language")
         .eq("id", pageId)
-        .maybeSingle();
+        .maybeSingle() as any;
 
       if (!page || error) {
         toast({ title: "Load error", description: "Failed to load page." });
@@ -72,6 +73,9 @@ export function useCollaborativePage(
       if (!isMountedRef.current) return;
       setContent(parsed);
       setTitle(page.title ?? "");
+      if (page.selected_language) {
+        setSelectedLanguage(page.selected_language);
+      }
       lastLocalChangeRef.current = JSON.stringify(parsed);
     })();
 
@@ -108,6 +112,9 @@ export function useCollaborativePage(
             }
             if (newRow.title && newRow.title !== title) {
               setTitle(newRow.title);
+            }
+            if (newRow.selected_language && newRow.selected_language !== selectedLanguage) {
+              setSelectedLanguage(newRow.selected_language);
             }
           } else if (ev === "DELETE") {
             toast({
@@ -263,6 +270,7 @@ export function useCollaborativePage(
   const setContentFromEditor = useCallback(
     async (lang: string, code: string) => {
 
+      const newContent = { ...content, [lang]: code };
       setContent(newContent);
       lastLocalChangeRef.current = JSON.stringify(newContent);
       console.log("setContentFromEditor called");
@@ -351,6 +359,29 @@ export function useCollaborativePage(
     [pageId, toast]
   );
 
+  /**
+   * Update the selected language.
+   */
+  const updateLanguage = useCallback(
+    async (lang: string) => {
+      setSelectedLanguage(lang);
+      try {
+        const { error } = await supabase
+          .from("pages")
+          .update({ selected_language: lang, updated_at: new Date().toISOString() } as any)
+          .eq("id", pageId);
+        if (error) throw error;
+      } catch {
+        toast({
+          title: "Save failed",
+          description: "Could not update language",
+          variant: "destructive",
+        });
+      }
+    },
+    [pageId, toast]
+  );
+
   return {
     content, // JSON { lang: code }
     setContent: setContentFromEditor,
@@ -361,5 +392,7 @@ export function useCollaborativePage(
     cursors,
     saveNow,
     socket: socketRef.current,
+    selectedLanguage,
+    updateLanguage,
   };
 }

@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Terminal } from "lucide-react";
 
@@ -17,11 +18,13 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   title = "Delete Confirmation",
   message = "Are you sure you want to delete this page? This action cannot be undone.",
 }) => {
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50"
+          className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-[9999]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -51,7 +54,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <h2 className="text-lg font-semibold text-[#F38BA8] mb-3">
                 ⚠️ {title}
               </h2>
-              <pre className="text-sm text-[#A6ADC8] bg-[#2D2D3A] p-3 rounded-md border border-[#3E3E55] overflow-x-auto">
+              <pre className="text-sm text-[#A6ADC8] bg-[#2D2D3A] p-3 rounded-md border border-[#3E3E55] overflow-x-auto whitespace-pre-wrap">
 {`// System Message:
 "${message}"`}
               </pre>
@@ -77,7 +80,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

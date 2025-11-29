@@ -13,7 +13,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Code2 } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
 
@@ -195,7 +194,6 @@ const Auth = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 flex flex-col items-center">
             <div>
-              <Code2 className="h-6 w-6 text-primary-foreground" />
               <img
                 src="/nav_collavroom.png"
                 alt="CollabRoom Logo"

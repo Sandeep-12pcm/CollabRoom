@@ -57,7 +57,6 @@ const Room = () => {
   const [pages, setPages] = useState<Page[]>([]);
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [language, setLanguage] = useState("javascript");
   const [copied, setCopied] = useState(false);
   const [roomName, setRoomName] = useState("Loading...");
   const [roomCode, setRoomCode] = useState("");
@@ -72,8 +71,9 @@ const Room = () => {
   const content = collaborative?.content ?? "";
   const isMobile = useIsMobile();
 
-  const { editingUser } = collaborative;
+  const { editingUser, selectedLanguage, updateLanguage } = collaborative;
   const setContent = collaborative?.setContent ?? (() => {});
+  const language = selectedLanguage || "javascript";
   const activePage = pages.find((p) => p.id === activePageId);
   const defaultCodeTemplates: Record<string, string> = {
     javascript: `// Write your code here...
@@ -128,14 +128,11 @@ body {
   };
 
   const handleLanguageChange = (lang: string) => {
-    setLanguage(lang);
-    setContent(
-      (prev) => ({
-        ...prev,
-        [lang]: prev[lang] ?? defaultCodeTemplates[lang],
-      }),
-      true // Pass the second argument as required by setContent
-    );
+    updateLanguage(lang);
+    // If content for this language doesn't exist, initialize it
+    if (!content?.[lang]) {
+      setContent(lang, defaultCodeTemplates[lang] || "");
+    }
   };
 
   /**
@@ -197,8 +194,7 @@ body {
               last_seen: new Date().toISOString(),
             },
             {
-              onConflict: ["room_id", "user_id"], // <--- key here
-              returning: "representation", // optional: returns the inserted/updated row
+              onConflict: "room_id, user_id",
             }
           );
 
@@ -302,7 +298,7 @@ body {
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => { supabase.removeChannel(channel); };
   }, [id]);
 
   const addPage = async () => {
@@ -316,11 +312,20 @@ body {
       return;
     }
     try {
+      // Calculate next page number
+      const pageNumbers = pages
+        .map((p) => {
+          const match = p.title?.match(/^Page (\d+)$/);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter((n) => !isNaN(n));
+      const nextNum = pageNumbers.length > 0 ? Math.max(...pageNumbers) + 1 : 1;
+
       const { data, error } = await supabase
         .from("pages")
         .insert({
           room_id: id,
-          title: `Page ${pages.length + 1}`,
+          title: `Page ${nextNum}`,
           content: JSON.stringify({
             [language]: defaultCodeTemplates[language],
           }),
@@ -436,10 +441,10 @@ body {
         title={activePage?.title || roomName || "Room"}
         description={`Collaborate in real-time in ${roomName}`}
       />
-      <div className="pt-16 flex flex-row h-screen overflow-hidden">
+      <div className="pt-16 flex flex-row min-h-screen">
         <Navbar />
         {!isMobile && (
-          <div className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border">
+          <div className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
             <Sidebar {...sidebarProps} />
           </div>
         )}
@@ -458,7 +463,7 @@ body {
             )}
           </AnimatePresence>
 
-          <main className="flex-1 flex flex-col relative overflow-hidden">
+          <main className="flex-1 flex flex-col relative">
             <div className="p-4 border-b border-border bg-card">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-4">
@@ -474,11 +479,11 @@ body {
                       </SheetContent>
                     </Sheet>
                   )}
-                  <h2 className="font-semibold text-foreground">
+                  <h2 className="font-semibold text-foreground ">
                     {activePage?.title || "Untitled Page"}
                   </h2>
                   <Select value={language} onValueChange={handleLanguageChange}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[100px] md:w-[180px]">
                       <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
@@ -513,16 +518,16 @@ body {
                     copied
                       ? "bg-success hover:bg-success"
                       : "bg-primary hover:bg-primary/90"
-                  }`}
+                  } h-8 text-xs px-2 md:h-10 md:text-sm md:px-4` }
                 >
                   {copied ? (
                     <>
-                      <Check className="h-4 w-4 mr-2" />
+                      <Check className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
                       Copied!
                     </>
                   ) : (
                     <>
-                      <Copy className="h-4 w-4 mr-2" />
+                      <Copy className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
                       Copy Code
                     </>
                   )}
@@ -601,7 +606,7 @@ body {
                   </div>
                 ) : (
                   <Editor
-                    height="100%"
+                    height="80vh"
                     language={language === "any" ? "javascript" : language}
                     theme="vs-dark"
                     value={

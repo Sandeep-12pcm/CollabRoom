@@ -112,7 +112,7 @@ export const AIAssistant = ({ code, language }: AIAssistantProps) => {
           variant="outline"
           onClick={() => callAI("explain")}
           disabled={loading}
-          className="bg-primary/10 hover:bg-primary/20 border-primary/30"
+          className="bg-primary/10 hover:bg-primary/20 border-primary/30 h-7 text-xs px-2 md:h-9 md:text-sm md:px-3"
         >
           <Sparkles className="h-4 w-4 mr-2" />
           Explain Code
@@ -122,7 +122,7 @@ export const AIAssistant = ({ code, language }: AIAssistantProps) => {
           variant="outline"
           onClick={() => callAI("fix")}
           disabled={loading}
-          className="bg-accent/10 hover:bg-accent/20 border-accent/30"
+          className="bg-accent/10 hover:bg-accent/20 border-accent/30 h-7 text-xs px-2 md:h-9 md:text-sm md:px-3"
         >
           <Sparkles className="h-4 w-4 mr-2" />
           Fix Code
@@ -132,7 +132,7 @@ export const AIAssistant = ({ code, language }: AIAssistantProps) => {
           variant="outline"
           onClick={() => callAI("optimize")}
           disabled={loading}
-          className="bg-success/10 hover:bg-success/20 border-success/30"
+          className="bg-success/10 hover:bg-success/20 border-success/30 h-7 text-xs px-2 md:h-9 md:text-sm md:px-3"
         >
           <Sparkles className="h-4 w-4 mr-2" />
           Optimize
@@ -171,7 +171,7 @@ export const AIAssistant = ({ code, language }: AIAssistantProps) => {
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeHighlight]}
                   components={{
-                    code({ inline, className, children, ...props }) {
+                    code({ inline, className, children, ...props }: any) {
                       const preRef = useRef<HTMLPreElement>(null);
 
                       if (inline) {

@@ -112,7 +112,7 @@ export default function Sidebar({
       } else {
         // Ensure unique by id
         const unique = (data ?? []).filter((v, i, a) => a.findIndex(x => x.id === v.id) === i);
-        setPages(unique);
+        setPages(unique as any);
       }
     };
 
@@ -392,7 +392,7 @@ export default function Sidebar({
         </div>
 
         {/* Pages Section */}
-        <div className="mb-4">
+        <div className="flex-1 overflow-y-auto min-h-0 mb-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-muted-foreground">Pages</h3>
             <Button size="sm" variant="ghost" onClick={addPage}>
@@ -452,15 +452,6 @@ export default function Sidebar({
                       setShowConfirm(true);
                     }}
                   />
-                  <ConfirmDialog
-                    isOpen={showConfirm}
-                    onClose={() => setShowConfirm(false)}
-                    onConfirm={() => {
-                      if (selectedPageId) deletePage(selectedPageId);
-                    }}
-                    title="Delete Page?"
-                    message="Are you sure you want to delete this page? This action cannot be undone."
-                  />
                 </div>
               </div>
             ))}
@@ -500,61 +491,48 @@ export default function Sidebar({
         </div>
       </aside>
 
-      {/* Delete confirmation popup (Admin Only) */}
-      {showDeletePopup && isAdmin && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="p-6 bg-card text-center">
-            <h3 className="text-lg font-semibold mb-3 text-foreground">Are you sure you want to delete this room?</h3>
-            <div className="flex justify-center gap-4">
-              <Button
-                variant="destructive"
-                onClick={async () => {
-                  try {
-                    if (deleteRoom) {
-                      await deleteRoom();
-                    } else if (roomId) {
-                      const { error } = await supabase.from("rooms").delete().eq("id", roomId);
-                      if (error) throw error;
-                    }
-                    setShowDeletePopup(false);
-                  } catch (err) {
-                    console.error("Failed to delete room:", err);
-                    toast.error("Failed to delete room");
-                  }
-                }}
-              >
-                Yes, Delete
-              </Button>
-              <Button variant="outline" onClick={() => setShowDeletePopup(false)}>
-                Cancel
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+      {/* Delete Room Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeletePopup}
+        onClose={() => setShowDeletePopup(false)}
+        onConfirm={async () => {
+          try {
+            if (deleteRoom) {
+              await deleteRoom();
+            } else if (roomId) {
+              const { error } = await supabase.from("rooms").delete().eq("id", roomId);
+              if (error) throw error;
+            }
+          } catch (err) {
+            console.error("Failed to delete room:", err);
+            toast.error("Failed to delete room");
+          }
+        }}
+        title="Delete Room?"
+        message="Are you sure you want to delete this room? This action cannot be undone."
+      />
 
-      {/* Exit confirmation popup (Non-Admin Only) */}
-      {showExitPopup && !isAdmin && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="p-6 bg-card text-center">
-            <h3 className="text-lg font-semibold mb-3 text-foreground">Are you sure you want to exit the room?</h3>
-            <div className="flex justify-center gap-4">
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setShowExitPopup(false);
-                  navigate("/");
-                }}
-              >
-                Yes, Exit
-              </Button>
-              <Button variant="outline" onClick={() => setShowExitPopup(false)}>
-                Cancel
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+      {/* Exit Room Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showExitPopup}
+        onClose={() => setShowExitPopup(false)}
+        onConfirm={() => {
+          navigate("/");
+        }}
+        title="Exit Room?"
+        message="Are you sure you want to exit the room?"
+      />
+
+      {/* Page Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => {
+          if (selectedPageId) deletePage(selectedPageId);
+        }}
+        title="Delete Page?"
+        message="Are you sure you want to delete this page? This action cannot be undone."
+      />
     </>
   );
 }
