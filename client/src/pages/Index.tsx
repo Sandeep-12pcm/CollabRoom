@@ -19,6 +19,8 @@ import { CreateRoomDialog } from "@/components/CreateRoomDialog";
 import { JoinRoomDialog } from "@/components/JoinRoomDialog";
 import { SubscriptionDialog } from "@/components/SubscriptionDialog";
 
+import { SEO } from "@/components/SEO";
+
 const Landing: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -33,6 +35,10 @@ const Landing: React.FC = () => {
       id="home"
       className="min-h-screen relative overflow-hidden bg-background"
     >
+      <SEO
+        title="Home"
+        description="CollabRoom is a Real-time collaborative code sharing platform for developers. Create rooms, share code snippets, and collaborate with developers instantly."
+      />
       {/* Loading overlay */}
       <AnimatePresence>
         {isLoading && (

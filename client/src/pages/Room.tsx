@@ -19,12 +19,15 @@ import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel, User } from "@supabase/supabase-js";
 import Sidebar from "@/components/Sidebar";
 import Editor from "@monaco-editor/react";
-import { set } from "date-fns";
 import LoadingScreen from "@/components/loading/LoadingScreen";
-import ReactMarkdown from "react-markdown"; //for markdown rendering
-import remarkGfm from "remark-gfm"; //for github flavored markdown
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SEO } from "@/components/SEO";
 
 interface Participant {
   id: string;
@@ -39,6 +42,15 @@ interface Page {
   created_by: string;
 }
 
+/**
+ * Room Component
+ * 
+ * Handles the real-time collaboration interface, including:
+ * - Code editor and Markdown preview
+ * - Real-time participant tracking
+ * - Page management
+ * - Chat/AI assistant integration
+ */
 const Room = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -56,8 +68,10 @@ const Room = () => {
   const [roomOwnerId, setRoomOwnerId] = useState<string | null>(null);
   const { toast } = useToast();
   const collaborative = useCollaborativePage(activePageId, id);
+
   const content = collaborative?.content ?? "";
-  // const { editingUser } = collaborative?.editingUser ?? {};
+  const isMobile = useIsMobile();
+
   const { editingUser } = collaborative;
   const setContent = collaborative?.setContent ?? (() => {});
   const activePage = pages.find((p) => p.id === activePageId);
@@ -124,7 +138,10 @@ body {
     );
   };
 
-  // ---------------- Room & participants realtime ----------------
+  /**
+   * Effect to handle room data fetching and real-time participant updates.
+   * Subscribes to 'room_participants' changes.
+   */
   useEffect(() => {
     let channel: RealtimeChannel | undefined;
 
@@ -143,7 +160,6 @@ body {
         data: { user },
       } = await supabase.auth.getUser();
       setCurrentUser(user);
-      // setIsLoading(true);
       const { data: room, error: roomError } = await supabase
         .from("rooms")
         .select("*")
@@ -187,7 +203,7 @@ body {
           );
 
         if (part_error) {
-          // console.log("room_participants error: ", part_error);
+           console.error("Failed to upsert participant:", part_error);
         }
       }
 
@@ -229,7 +245,6 @@ body {
           }
         )
         .subscribe();
-      // setIsLoading(false);
     };
     fetchRoom();
     return () => {
@@ -237,7 +252,10 @@ body {
     };
   }, [id, navigate, toast, isJoining]);
 
-  // ---------------- Pages realtime ----------------
+  /**
+   * Effect to handle pages data fetching and real-time updates.
+   * Subscribes to 'pages' changes.
+   */
   useEffect(() => {
     if (!id) return;
 
@@ -311,7 +329,6 @@ body {
         .select()
         .single();
       if (error) {
-        // console.error("Error adding page:", error);
         toast({
           title: "Error",
           description: "Failed to add page",
@@ -321,7 +338,6 @@ body {
         setActivePageId(data.id);
       }
     } catch (err) {
-      // console.error("Unexpected error adding page:", err);
       toast({
         title: "Error",
         description: "Failed to add page",
@@ -390,31 +406,43 @@ body {
     return () => clearTimeout(timer);
   }, []);
 
+  const sidebarProps = {
+    roomId: id!,
+    roomName,
+    roomCode,
+    participants,
+    currentUser,
+    navigate,
+    handleCopy,
+    shareRoom,
+    addPage,
+    pages,
+    setPages,
+    activePage: activePageId,
+    setActivePage: setActivePageId,
+    showDeletePopup,
+    setShowDeletePopup,
+    deleteRoom,
+    setRoomName,
+  };
+
+
+
+// ...
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={activePage?.title || roomName || "Room"}
+        description={`Collaborate in real-time in ${roomName}`}
+      />
       <div className="pt-16 flex flex-row h-screen overflow-hidden">
         <Navbar />
-        <div className=" md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border">
-          <Sidebar
-            roomId={id!}
-            roomName={roomName}
-            roomCode={roomCode}
-            participants={participants}
-            currentUser={currentUser}
-            navigate={navigate}
-            handleCopy={handleCopy}
-            shareRoom={shareRoom}
-            addPage={addPage}
-            pages={pages}
-            setPages={setPages}
-            activePage={activePageId}
-            setActivePage={setActivePageId}
-            showDeletePopup={showDeletePopup}
-            setShowDeletePopup={setShowDeletePopup}
-            deleteRoom={deleteRoom}
-            setRoomName={setRoomName}
-          />
+        {!isMobile && (
+          <div className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border">
+            <Sidebar {...sidebarProps} />
           </div>
+        )}
           {/* AnimatePresence handles mount/unmount animations */}
           <AnimatePresence>
             {isLoading && (
@@ -434,6 +462,18 @@ body {
             <div className="p-4 border-b border-border bg-card">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-4">
+                  {isMobile && (
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:hidden">
+                          <Menu className="h-6 w-6" />
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="left" className="p-0 w-72">
+                        <Sidebar {...sidebarProps} className="w-full h-full border-none" />
+                      </SheetContent>
+                    </Sheet>
+                  )}
                   <h2 className="font-semibold text-foreground">
                     {activePage?.title || "Untitled Page"}
                   </h2>

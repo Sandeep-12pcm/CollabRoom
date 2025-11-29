@@ -6,13 +6,19 @@ import { Code2, Menu, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { joinDemoRoom } from "@/utils/demoRoom";
 
+/**
+ * Navbar Component
+ * 
+ * Displays the top navigation bar with logo, menu links, theme toggle, and user profile/auth buttons.
+ * Handles mobile menu toggling and user session state.
+ */
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [profile, setProfile] = useState<any>(null);
   const navigate = useNavigate();
 
-  // ✅ Fetch session + profile info from Supabase
+  // Fetch session and profile info from Supabase on mount
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -21,7 +27,7 @@ export const Navbar = () => {
       setIsLoggedIn(!!session);
 
       if (session?.user) {
-        // 🟡 Fetch user's profile details (adjust your Supabase table/fields as needed)
+        // Fetch user's profile details
         const { data, error } = await supabase
           .from("profiles")
           .select("id, name, avatar_url, is_pro")
@@ -59,12 +65,6 @@ export const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* === Logo === */}
           <Link to="/" className="flex items-center gap-2 group">
-            {/* <div className="p-2 bg-gradient-primary rounded-lg transition-transform duration-300 group-hover:scale-110">
-              <Code2 className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              CollabRoom
-            </span> */}
             <img
               src="/nav_collavroom.png"
               alt="CollabRoom Logo"
@@ -124,7 +124,7 @@ export const Navbar = () => {
             {/* === Conditional Profile / Auth Buttons === */}
             {isLoggedIn ? (
               <>
-                {/* 🧑‍💻 Profile Avatar */}
+                {/* Profile Avatar */}
                 <Link to="/profile" title="Profile">
                   <div
                     className={`relative w-9 h-9 rounded-full overflow-hidden border-2 transition-transform duration-200 hover:scale-110 ${
@@ -227,7 +227,7 @@ export const Navbar = () => {
                 Contact
               </Link>
 
-              {/* ✅ Profile option in mobile */}
+              {/* Profile option in mobile */}
               {isLoggedIn && (
                 <Link
                   to="/profile"

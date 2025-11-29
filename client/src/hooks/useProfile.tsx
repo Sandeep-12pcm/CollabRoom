@@ -42,7 +42,7 @@ export function useProfile() {
       }
       setUser(suser);
 
-      // profiles table: id, name, avatar_url, email, is_pro, joined_at, last_login
+      // Fetch profile details
       const { data: pData, error: pErr } = await supabase
         .from("profiles")
         .select("id, name, email, avatar_url, is_pro, joined_at, last_login")
@@ -78,7 +78,7 @@ export function useProfile() {
         setProfile(pData as Profile);
       }
 
-      // rooms table: id, room_code, created_at, updated_at, name, expiry_hours
+      // Fetch user's rooms
       const { data: rData, error: rErr } = await supabase
         .from("rooms")
         .select("id, room_code, created_at, updated_at, name, expiry_hours")

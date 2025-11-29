@@ -46,7 +46,7 @@ export default function Sidebar({
   pages,
   setPages,
   activePage,
-  participants, 
+  participants,
   currentUser,
   navigate,
   handleCopy,
@@ -57,7 +57,8 @@ export default function Sidebar({
   setShowDeletePopup,
   deleteRoom,
   setRoomName,
-}: SidebarProps) {
+  className,
+}: SidebarProps & { className?: string }) {
   const [roomCreator, setRoomCreator] = useState<string | null>(null);
   const [deletingPageIds, setDeletingPageIds] = useState<Record<string, boolean>>({});
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
@@ -66,7 +67,6 @@ export default function Sidebar({
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
-
 
   // Fetch room creator (to show/hide delete room)
   useEffect(() => {
@@ -107,7 +107,7 @@ export default function Sidebar({
 
       if (!mounted) return;
       if (error) {
-        // console.error("Error fetching pages:", error);
+        console.error("Error fetching pages:", error);
         toast.error("Error fetching Pages")
       } else {
         // Ensure unique by id
@@ -210,7 +210,7 @@ export default function Sidebar({
         .single(); // return the deleted row (if configured)
 
       if (error) {
-        // console.error("Error deleting page:", error);
+        console.error("Error deleting page:", error);
         toast.error("Failed to delete page");
         setDeletingPageIds((s) => {
           const copy = { ...s };
@@ -239,7 +239,7 @@ export default function Sidebar({
 
       toast.success("Page deleted successfully");
     } catch (err) {
-      // console.error("Unexpected error deleting page:", err);
+      console.error("Unexpected error deleting page:", err);
       toast.error("Unexpected error deleting page");
     } finally {
       setDeletingPageIds((s) => {
@@ -266,14 +266,14 @@ export default function Sidebar({
         .single();
 
       if (error) {
-        // console.error("Error updating page title:", error);
+        console.error("Error updating page title:", error);
         toast.error("Failed to update page title.");
       } else {
         setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, title: data.title } : p)));
         toast.success("Page title updated successfully.");
       }
     } catch (err) {
-      // console.error("Unexpected error updating page title:", err);
+      console.error("Unexpected error updating page title:", err);
       toast.error("Unexpected error updating page title.");
     } finally {
       setEditingPageId(null);
@@ -298,14 +298,14 @@ export default function Sidebar({
         .eq("id", roomId);
 
       if (error) {
-        // console.error("Error updating room name:", error);
+        console.error("Error updating room name:", error);
         toast.error("Failed to update room name.");
       } else {
         setRoomName(newName);
         toast.success("Room name updated successfully.");
       }
     } catch (err) {
-      // console.error("Unexpected error updating room name:", err);
+      console.error("Unexpected error updating room name:", err);
       toast.error("Unexpected error updating room name.");
     } finally {
       setEditingRoomName(false);
@@ -316,7 +316,7 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="w-64 border-r border-border bg-card p-4">
+      <aside className={`border-r border-border bg-card p-4 flex flex-col h-full ${className}`}>
         {/* Room name + edit/delete icon (Admin Only) */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
@@ -518,7 +518,7 @@ export default function Sidebar({
                     }
                     setShowDeletePopup(false);
                   } catch (err) {
-                    // console.error("Failed to delete room:", err);
+                    console.error("Failed to delete room:", err);
                     toast.error("Failed to delete room");
                   }
                 }}

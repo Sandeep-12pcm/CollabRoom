@@ -22,10 +22,11 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatePresence } from "framer-motion";
 import LoadingScreen from "@/components/loading/LoadingScreen";
+import { SEO } from "@/components/SEO";
 
-// ----------------------
-// Types
-// ----------------------
+/**
+ * Types
+ */
 type Profile = {
   id: string;
   email?: string | null;
@@ -45,9 +46,9 @@ type Room = {
   expiry_hours?: number | null;
 };
 
-// ----------------------
-// Helpers
-// ----------------------
+/**
+ * Helpers
+ */
 const fmtDate = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString() : "—";
 
@@ -59,16 +60,16 @@ const generateRoomCode = (length = 6) => {
   return code;
 };
 
-// ----------------------
-// Hook: useProfile
-// centralizes Supabase logic for Profile + Rooms
-// ----------------------
+/**
+ * Hook: useProfile
+ * centralizes Supabase logic for Profile + Rooms
+ */
 
-// ----------------------
-// Utility: uploadAvatar
-// - uses Supabase storage bucket named 'profile-pictures'
-// - IMPORTANT: ensure the bucket exists and has proper policies
-// ----------------------
+/**
+ * Utility: uploadAvatar
+ * - uses Supabase storage bucket named 'profile-pictures'
+ * - IMPORTANT: ensure the bucket exists and has proper policies
+ */
 export async function uploadAvatar(profileId: string, file: File) {
   // customize bucket name if different
   const bucket = "profile-pictures";
@@ -88,9 +89,9 @@ export async function uploadAvatar(profileId: string, file: File) {
   return urlData.publicUrl;
 }
 
-// ----------------------
-// Component: ProfilePage (default export)
-// ----------------------
+/**
+ * Component: ProfilePage (default export)
+ */
 export default function ProfilePage() {
   const { loading, user, profile, rooms, refresh, setProfile, setRooms } =
     useProfile();
@@ -164,7 +165,7 @@ export default function ProfilePage() {
       setAvatarFile(null);
       toast({ title: "Profile saved" });
     } catch (err: any) {
-      // console.error("save profile error", err);
+      console.error("save profile error", err);
       toast({
         title: "Save failed",
         description: err?.message || String(err),
@@ -205,7 +206,7 @@ export default function ProfilePage() {
         toast({ title: `Retention set: ${expiryHours ?? "default"} hours` });
       }
     } catch (err: any) {
-      // console.error("room action error", err);
+      console.error("room action error", err);
       toast({
         title: "Action failed",
         description: err?.message || String(err),
@@ -231,7 +232,7 @@ export default function ProfilePage() {
       // navigate to new room
       if (data?.id) navigate(`/room/${data.id}`);
     } catch (err: any) {
-      // console.error("create room error", err);
+      console.error("create room error", err);
       toast({
         title: "Create failed",
         description: err?.message || String(err),
@@ -248,9 +249,16 @@ export default function ProfilePage() {
       </div>
     );
 
+
+
+// ...
+
   return (
-    // <div className="min-h-screen bg-gradient-to-b from-[#0B1020] to-[#081024] text-slate-100">
     <div className="min-h-screen text-gray-900 dark:text-slate-100 bg-gray-50 dark:bg-gradient-to-b dark:from-[#0B1020] dark:to-[#081024]">
+      <SEO
+        title={`${profile?.name || "Profile"}`}
+        description="Manage your profile and rooms on CollabRoom."
+      />
       {comingSoon && (
         <AnimatePresence>
           <motion.div
@@ -283,7 +291,6 @@ export default function ProfilePage() {
       )}
 
       {/* Header */}
-      {/* <header className="sticky top-0 backdrop-blur bg-black/20 border-b border-border z-20"> */}
       <header className="sticky top-0 backdrop-blur bg-white/60 dark:bg-black/20 border-b border-gray-200 dark:border-border z-20">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -345,7 +352,6 @@ export default function ProfilePage() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.28 }}
           >
-            {/* <Card className="p-6 rounded-2xl bg-[#11121a]"> */}
             <Card className="p-6 rounded-2xl bg-white dark:bg-[#11121a] border border-gray-200 dark:border-[#1f2937] shadow-lg">
               <div className="flex items-center gap-4">
                 {/* Profile picture */}
@@ -509,7 +515,6 @@ export default function ProfilePage() {
             transition={{ duration: 0.28 }}
             className="lg:col-span-2"
           >
-            {/* <Card className="p-4 rounded-2xl bg-[#0f1724]"> */}
             <Card
               className="
   p-4 rounded-2xl
@@ -539,7 +544,6 @@ export default function ProfilePage() {
                   rooms.map((r) => (
                     <motion.div
                       key={r.id}
-                      // className="flex items-center justify-between p-3 rounded-lg bg-white/3 border border-[#23232b]"
                       className="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-[#23232b]"
                     >
                       <div>

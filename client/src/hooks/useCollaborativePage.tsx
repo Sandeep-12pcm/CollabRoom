@@ -27,7 +27,6 @@ export function useCollaborativePage(
   const [title, setTitle] = useState<string>("");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [cursors, setCursors] = useState<Record<string, Cursor>>({});
-  // console.log("SocketURL:",SOCKET_URL);
   const socketRef = useRef<Socket | null>(null);
   const lastEmitRef = useRef<number>(0);
   const saveTimerRef = useRef<number | null>(null);
@@ -41,7 +40,9 @@ export function useCollaborativePage(
   } | null>(null);
   const editingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 1. Load initial content + title
+  /**
+   * Load initial content and title from Supabase.
+   */
   useEffect(() => {
     if (!pageId || !roomId) return;
     isMountedRef.current = true;
@@ -54,7 +55,6 @@ export function useCollaborativePage(
         .maybeSingle();
 
       if (!page || error) {
-        // console.error("Failed to load page:", error);
         toast({ title: "Load error", description: "Failed to load page." });
         return;
       }
@@ -66,7 +66,6 @@ export function useCollaborativePage(
             ? JSON.parse(page.content)
             : page.content || {};
       } catch (e) {
-        // console.warn("Invalid JSON in page content, resetting to {}", e);
         console.warn("Invalid JSON in page content, resetting to {}");
       }
 
@@ -76,7 +75,9 @@ export function useCollaborativePage(
       lastLocalChangeRef.current = JSON.stringify(parsed);
     })();
 
-    // 2. Supabase realtime subscription
+    /**
+     * Supabase realtime subscription for page updates.
+     */
     const channel = supabase
       .channel(`public:pages:page-${pageId}`)
       .on(
@@ -124,7 +125,9 @@ export function useCollaborativePage(
     };
   }, [roomId, pageId, title, toast]);
 
-  // 3. Socket.IO connection
+  /**
+   * Socket.IO connection handling.
+   */
   useEffect(() => {
     let mounted = true;
 
@@ -194,7 +197,6 @@ export function useCollaborativePage(
       });
 
       socket.on("disconnect", (reason: any) => {
-        // console.log("socket disconnected:", reason);
       });
     })();
 
@@ -210,7 +212,9 @@ export function useCollaborativePage(
     };
   }, [pageId, roomId]);
 
-  // 4. Emit throttled
+  /**
+   * Emit content changes with throttling.
+   */
   const emitContentChangeThrottled = useCallback(
     (nextContent: Record<string, string>) => {
       const jsonStr = JSON.stringify(nextContent);
@@ -238,7 +242,9 @@ export function useCollaborativePage(
     [pageId]
   );
 
-  // 5. Debounced save
+  /**
+   * Schedule a debounced save to the database.
+   */
   const scheduleSave = useCallback(
     (nextContent: Record<string, string>) => {
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
@@ -251,14 +257,12 @@ export function useCollaborativePage(
     [pageId]
   );
 
-  // 6. Setter from editor (per-language)
+  /**
+   * Update content from the editor and handle editing locks.
+   */
   const setContentFromEditor = useCallback(
     async (lang: string, code: string) => {
-//       if (!editingUser || editingUser.user_id !== user?.id) {
-//   socketRef.current.emit("editing-started", { ... });
-// }
 
-      const newContent = { ...content, [lang]: code };
       setContent(newContent);
       lastLocalChangeRef.current = JSON.stringify(newContent);
       console.log("setContentFromEditor called");
@@ -279,7 +283,7 @@ export function useCollaborativePage(
           socketRef.current?.emit("editing-stopped", { pageId });
         }, 5000);
       } else {
-        console.log("❌Socket not connected, skipping editing lock logic");
+        console.log("Socket not connected, skipping editing lock logic");
       }
 
       emitContentChangeThrottled(newContent);
@@ -288,7 +292,9 @@ export function useCollaborativePage(
     [content, emitContentChangeThrottled, scheduleSave, pageId]
   );
 
-  // 7. Save on beforeunload
+  /**
+   * Save content before unloading the page.
+   */
   useEffect(() => {
     const beforeunload = () => {
       if (saveTimerRef.current) {
@@ -308,7 +314,9 @@ export function useCollaborativePage(
     return () => window.removeEventListener("beforeunload", beforeunload);
   }, [pageId]);
 
-  // 8. Manual save
+  /**
+   * Manually trigger a save.
+   */
   const saveNow = useCallback(() => {
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current);
@@ -320,7 +328,9 @@ export function useCollaborativePage(
     });
   }, [pageId]);
 
-  // 9. Title updater
+  /**
+   * Update the page title.
+   */
   const updateTitle = useCallback(
     async (nextTitle: string) => {
       setTitle(nextTitle);

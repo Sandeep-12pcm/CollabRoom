@@ -4,10 +4,16 @@ import { motion } from "framer-motion";
 import { Sun, Moon, Home, Send, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * FeedbackForm Component
+ * 
+ * Allows users to submit feedback with name, email, and review.
+ * Supports dark/light mode toggle.
+ */
 export const FeedbackForm: React.FC = () => {
   const navigate = useNavigate();
 
-  // form states
+  // Form state variables
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [review, setReview] = useState("");
@@ -15,7 +21,7 @@ export const FeedbackForm: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // theme state
+  // Theme state variable
   const [darkMode, setDarkMode] = useState(true);
 
   const canSubmit = name.trim() && email.trim() && review.trim();

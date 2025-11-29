@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Code2 } from "lucide-react";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,7 +26,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // ✅ 1. Check session & sync profile for OAuth users
+  // Check session & sync profile for OAuth users
   useEffect(() => {
     const checkSession = async () => {
       const {
@@ -65,7 +66,7 @@ const Auth = () => {
               created_at: new Date(),
             });
           } catch (error) {
-            // console.error("Error creating profile:", error);
+            console.error("Error creating profile:", error);
             return;
           }
         } else {
@@ -77,6 +78,7 @@ const Auth = () => {
                 user.user_metadata?.avatar_url ||
                 user.user_metadata?.picture ||
                 null,
+              created_at: new Date(),
             })
             .eq("id", user.id);
         }
@@ -88,7 +90,7 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // ✅ 2. Email/Password Auth
+  // Email/Password Auth
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -130,7 +132,7 @@ const Auth = () => {
     }
   };
 
-  // ✅ 3. Supabase Google OAuth
+  // Supabase Google OAuth
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -138,10 +140,10 @@ const Auth = () => {
         redirectTo: `${window.location.origin}`,
       },
     });
-    // if (error) console.error("Google login error:", error);
+    if (error) console.error("Google login error:", error);
   };
 
-  // ✅ 4. Supabase GitHub OAuth
+  // Supabase GitHub OAuth
   const handleGithubLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
@@ -149,10 +151,10 @@ const Auth = () => {
         redirectTo: `${window.location.origin}`,
       },
     });
-    // if (error) console.error("GitHub login error:", error);
+    if (error) console.error("GitHub login error:", error);
   };
 
-  // ✅ 5. OAuth Button Components
+  // OAuth Button Components
   const GoogleButton = () => (
     <button
       onClick={handleGoogleLogin}
@@ -181,17 +183,19 @@ const Auth = () => {
     </button>
   );
 
-  // ✅ 6. Render UI
+  // Render UI
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={isLogin ? "Login" : "Sign Up"}
+        description="Sign in or create an account to start collaborating on CollabRoom."
+      />
       <Navbar />
       <div className="pt-20 px-4 flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 flex flex-col items-center">
             <div>
-              {/* <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-2"> */}
-              {/* <Code2 className="h-6 w-6 text-primary-foreground" />
-               */}
+              <Code2 className="h-6 w-6 text-primary-foreground" />
               <img
                 src="/nav_collavroom.png"
                 alt="CollabRoom Logo"
