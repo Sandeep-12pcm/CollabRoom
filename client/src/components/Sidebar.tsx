@@ -1,7 +1,6 @@
 import ConfirmDialog from "./ui/ConfirmDialog";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Share2, Plus, Users, Trash2, Copy, X, Edit2, LogOut as ExitIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "./ui/sonner";

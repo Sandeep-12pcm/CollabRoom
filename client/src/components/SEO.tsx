@@ -12,8 +12,8 @@ interface SEOProps {
 export const SEO = ({
   title,
   description,
-  keywords = "CollabRoom, coding platform, collaborative code, realtime editor, developers, share code, programming",
-  image = "/favicon.png",
+  keywords = "CollabRoom,collabe room, coding platform, collaborative code, realtime editor, developers, share code, programming, easy copy paste,coderoom, collabroom, devroom, collavroom, collab room",
+  image = "/meta_logo.png",
   url = "https://www.CollabRoom.online",
   author = "CollabRoom Team",
 }: SEOProps) => {

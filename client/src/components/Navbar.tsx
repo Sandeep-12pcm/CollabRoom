@@ -66,7 +66,7 @@ export const Navbar = () => {
           {/* === Logo === */}
           <Link to="/" className="flex items-center gap-2 group">
             <img
-              src="/nav_collavroom.png"
+              src="/nav_logo.png"
               alt="CollabRoom Logo"
               className="h-full w-28 object-contain"
             />

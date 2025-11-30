@@ -195,7 +195,7 @@ const Auth = () => {
           <CardHeader className="space-y-1 flex flex-col items-center">
             <div>
               <img
-                src="/nav_collavroom.png"
+                src="/nav_logo.png"
                 alt="CollabRoom Logo"
                 className="h-full w-28 object-contain"
               />

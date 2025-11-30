@@ -134,14 +134,14 @@ export default function ProfilePage() {
 
   const retentionOptions = profile?.is_pro
     ? [
-        { label: "72 hours", hours: 72 },
-        { label: "1 week", hours: 24 * 7 },
-        { label: "1 month", hours: 24 * 30 },
-      ]
+      { label: "72 hours", hours: 72 },
+      { label: "1 week", hours: 24 * 7 },
+      { label: "1 month", hours: 24 * 30 },
+    ]
     : [
-        { label: "24 hours", hours: 24 },
-        { label: "72 hours", hours: 72 },
-      ];
+      { label: "24 hours", hours: 24 },
+      { label: "72 hours", hours: 72 },
+    ];
 
   // Save profile (name + avatar)
   const handleSaveProfile = async () => {
@@ -251,7 +251,7 @@ export default function ProfilePage() {
 
 
 
-// ...
+  // ...
 
   return (
     <div className="min-h-screen text-gray-900 dark:text-slate-100 bg-gray-50 dark:bg-gradient-to-b dark:from-[#0B1020] dark:to-[#081024]">
@@ -322,9 +322,8 @@ export default function ProfilePage() {
 
             <Link to="/profile" className="relative">
               <div
-                className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 ${
-                  profile?.is_pro ? "border-yellow-400" : "border-slate-600"
-                }`}
+                className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 ${profile?.is_pro ? "border-yellow-400" : "border-slate-600"
+                  }`}
               >
                 {profile?.avatar_url ? (
                   <img
@@ -356,9 +355,8 @@ export default function ProfilePage() {
               <div className="flex items-center gap-4">
                 {/* Profile picture */}
                 <div
-                  className={`relative w-24 h-24 rounded-full overflow-hidden border-4 ${
-                    profile?.is_pro ? "border-yellow-400" : "border-slate-600"
-                  }`}
+                  className={`relative w-24 h-24 shrink-0 rounded-full overflow-hidden border-4 ${profile?.is_pro ? "border-yellow-400" : "border-slate-600"
+                    }`}
                 >
                   <img
                     src={profile?.avatar_url || "/default_dp.jpg"}
@@ -367,23 +365,23 @@ export default function ProfilePage() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl font-semibold truncate">
                       {profile?.name || "Anonymous"}
                     </h2>
                     {profile?.is_pro ? (
-                      <div className="flex items-center gap-1 text-yellow-300">
+                      <div className="flex items-center gap-1 text-yellow-300 shrink-0">
                         <Crown className="w-4 h-4" />
                         <span className="text-xs">Pro</span>
                       </div>
                     ) : (
-                      <div className="text-xs px-2 py-0.5 rounded bg-white/3">
+                      <div className="text-xs px-2 py-0.5 rounded bg-white/3 shrink-0">
                         Free
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground break-all">
                     {profile?.email}
                   </p>
                 </div>
@@ -505,12 +503,13 @@ export default function ProfilePage() {
                   Contact support / feedback
                 </Link>
               </div>
-            </Card>
-          </motion.div>
+            </Card >
+          </motion.div >
 
           {/* Right: Rooms list */}
-          <motion.div
-            initial={{ y: 8, opacity: 0 }}
+          < motion.div
+            initial={{ y: 8, opacity: 0 }
+            }
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.28 }}
             className="lg:col-span-2"
@@ -544,7 +543,7 @@ export default function ProfilePage() {
                   rooms.map((r) => (
                     <motion.div
                       key={r.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-[#23232b]"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-[#23232b]"
                     >
                       <div>
                         <div className="space-x-1 flex">
@@ -560,8 +559,8 @@ export default function ProfilePage() {
                           {r.expiry_hours
                             ? `${r.expiry_hours}h`
                             : profile?.is_pro
-                            ? "No expiry"
-                            : "24h (default)"}
+                              ? "No expiry"
+                              : "24h (default)"}
                         </div>
                       </div>
 
@@ -637,10 +636,10 @@ export default function ProfilePage() {
                 </div>
               )}
             </Card>
-          </motion.div>
-        </div>
-      </main>
-    </div>
+          </motion.div >
+        </div >
+      </main >
+    </div >
   );
 }
 
