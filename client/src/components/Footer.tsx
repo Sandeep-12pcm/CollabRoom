@@ -88,7 +88,7 @@ export const Footer = () => {
                 <Code2 className="h-6 w-6 text-white" />
               </motion.div>
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">
-                CollabRoom
+              <h1>CollabRoom</h1>
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">

@@ -350,7 +350,7 @@ export default function Sidebar({
                 <h2 className="text-lg font-semibold text-foreground">{roomName}</h2>
                 {isAdmin && (
                   <Edit2
-                    className="h-4 w-4 text-white cursor-pointer transition-colors hover:text-yellow-500"
+                    className="h-4 w-4 text-foreground cursor-pointer transition-colors hover:text-yellow-500"
                     onClick={() => setEditingRoomName(true)}
                   />
                 )}
@@ -358,12 +358,12 @@ export default function Sidebar({
             )}
             {isAdmin ? (
               <Trash2
-                className="h-5 w-5 text-white cursor-pointer transition-colors hover:text-red-500"
+                className="h-5 w-5 text-foreground cursor-pointer transition-colors hover:text-red-500"
                 onClick={() => setShowDeletePopup(true)}
               />
             ) : (
               <ExitIcon
-                className="h-5 w-5 text-white cursor-pointer transition-colors hover:text-red-500"
+                className="h-5 w-5 text-foreground cursor-pointer transition-colors hover:text-red-500"
                 onClick={() => setShowExitPopup(true)}
               />
             )}

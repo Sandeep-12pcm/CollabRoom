@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-illustration.png";
 import { joinDemoRoom } from "@/utils/demoRoom";
 import { useNavigate } from "react-router-dom";

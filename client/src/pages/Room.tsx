@@ -70,9 +70,10 @@ const Room = () => {
 
   const content = collaborative?.content ?? "";
   const isMobile = useIsMobile();
+  const theme = localStorage.getItem("theme") as "light" | "dark" | null;
 
   const { editingUser, selectedLanguage, updateLanguage } = collaborative;
-  const setContent = collaborative?.setContent ?? (() => {});
+  const setContent = collaborative?.setContent ?? (() => { });
   const language = selectedLanguage || "javascript";
   const activePage = pages.find((p) => p.id === activePageId);
   const defaultCodeTemplates: Record<string, string> = {
@@ -182,7 +183,7 @@ body {
         console.log("Joining room participants for user:", user);
         const displayName =
           user.user_metadata?.display_name || user.user_metadata?.full_name ||
-          
+
           "Anonymous";
         const { error: part_error } = await supabase
           .from("room_participants")
@@ -199,7 +200,7 @@ body {
           );
 
         if (part_error) {
-           console.error("Failed to upsert participant:", part_error);
+          console.error("Failed to upsert participant:", part_error);
         }
       }
 
@@ -433,7 +434,7 @@ body {
 
 
 
-// ...
+  // ...
 
   return (
     <div className="min-h-screen bg-background">
@@ -448,183 +449,181 @@ body {
             <Sidebar {...sidebarProps} />
           </div>
         )}
-          {/* AnimatePresence handles mount/unmount animations */}
-          <AnimatePresence>
-            {isLoading && (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-                className="absolute inset-0 z-50 bg-background"
-              >
-                <LoadingScreen />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* AnimatePresence handles mount/unmount animations */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
+              className="absolute inset-0 z-50 bg-background"
+            >
+              <LoadingScreen />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <main className="flex-1 flex flex-col relative">
-            <div className="p-4 border-b border-border bg-card">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-4">
-                  {isMobile && (
-                    <Sheet>
-                      <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="md:hidden">
-                          <Menu className="h-6 w-6" />
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent side="left" className="p-0 w-72">
-                        <Sidebar {...sidebarProps} className="w-full h-full border-none" />
-                      </SheetContent>
-                    </Sheet>
-                  )}
-                  <h2 className="font-semibold text-foreground ">
-                    {activePage?.title || "Untitled Page"}
-                  </h2>
-                  <Select value={language} onValueChange={handleLanguageChange}>
-                    <SelectTrigger className="w-[100px] md:w-[180px]">
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">Any</SelectItem>
-                      <SelectItem value="javascript">JavaScript</SelectItem>
-                      <SelectItem value="typescript">TypeScript</SelectItem>
-                      <SelectItem value="python">Python</SelectItem>
-                      <SelectItem value="java">Java</SelectItem>
-                      <SelectItem value="cpp">C++</SelectItem>
-                      <SelectItem value="html">HTML</SelectItem>
-                      <SelectItem value="css">CSS</SelectItem>
-                      <SelectItem value="markdown">
-                        Markdown (Docs/Table View)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(
-                      content[language] ?? ""
-                    );
-                    setCopied(true);
-                    toast({
-                      title: "Copied!",
-                      description: "Code copied to clipboard",
-                    });
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  className={`transition-all duration-300 ${
-                    copied
-                      ? "bg-success hover:bg-success"
-                      : "bg-primary hover:bg-primary/90"
-                  } h-8 text-xs px-2 md:h-10 md:text-sm md:px-4` }
-                >
-                  {copied ? (
-                    <>
-                      <Check className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
-                      Copy Code
-                    </>
-                  )}
-                </Button>
+        <main className="flex-1 flex flex-col relative">
+          <div className="p-4 border-b border-border bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-4">
+                {isMobile && (
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="md:hidden">
+                        <Menu className="h-6 w-6" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-72">
+                      <Sidebar {...sidebarProps} className="w-full h-full border-none pt-12" />
+                    </SheetContent>
+                  </Sheet>
+                )}
+                <h2 className="font-semibold text-foreground ">
+                  {activePage?.title || "Untitled Page"}
+                </h2>
+                <Select value={language} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="w-[100px] md:w-[180px]">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="typescript">TypeScript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="java">Java</SelectItem>
+                    <SelectItem value="cpp">C++</SelectItem>
+                    <SelectItem value="html">HTML</SelectItem>
+                    <SelectItem value="css">CSS</SelectItem>
+                    <SelectItem value="markdown">
+                      Markdown (Docs/Table View)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-                  
-              <AIAssistant code={content[language] ?? ""} language={language} />
+
+              <Button
+                onClick={async () => {
+                  await navigator.clipboard.writeText(
+                    content[language] ?? ""
+                  );
+                  setCopied(true);
+                  toast({
+                    title: "Copied!",
+                    description: "Code copied to clipboard",
+                  });
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className={`transition-all duration-300 ${copied
+                    ? "bg-success hover:bg-success"
+                    : "bg-primary hover:bg-primary/90"
+                  } h-8 text-xs px-2 md:h-10 md:text-sm md:px-4`}
+              >
+                {copied ? (
+                  <>
+                    <Check className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
+                    Copy Code
+                  </>
+                )}
+              </Button>
             </div>
 
-            <div className="flex-1 p-4">
-              <Card className="h-full bg-code-bg border-code-border">
-                {language === "markdown" ? (
-                  <div className="flex flex-col md:flex-row h-full">
-                    {/* Markdown Collaborative Editor */}
-                    <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-border p-3 bg-[#1e1e1e] text-white flex flex-col">
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-sm font-semibold">
-                          ✏️ Markdown Editor (Collaborative)
-                        </h3>
-                        {editingUser && (
-                          <span className="text-xs text-amber-400">
-                            Currently being edited by {editingUser.display_name}
-                          </span>
-                        )}
-                        {!editingUser && (
-                          <span className="text-xs text-green-400">
-                            You can edit now!
-                          </span>
-                        )}
-                      </div>
+            <AIAssistant code={content[language] ?? ""} language={language} />
+          </div>
 
-                      <textarea
-                        value={
-                          (content && content[language]) ??
-                          defaultCodeTemplates[language]
-                        }
-                        onChange={(e) => {
-                          if (
-                            !editingUser ||
-                            editingUser.user_id === collaborative.socket?.id
-                          ) {
-                            setContent(language, e.target.value);
-                          }
-                        }}
-                        disabled={
-                          editingUser &&
-                          editingUser.user_id !== collaborative.socket?.id
-                        }
-                        className={`flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border ${
-                          editingUser &&
-                          editingUser.user_id !== collaborative.socket?.id
-                            ? "bg-gray-800 text-gray-400 cursor-not-allowed"
-                            : "bg-[#252526] text-white border-gray-700 focus:border-gray-500"
-                        }`}
-                        placeholder={
-                          editingUser &&
-                          editingUser.user_id !== collaborative.socket?.id
-                            ? `${editingUser.display_name} is editing...`
-                            : "Write Markdown collaboratively..."
-                        }
-                      />
+          <div className="flex-1 p-4">
+            <Card className="h-full bg-code-bg border-code-border">
+              {language === "markdown" ? (
+                <div className="flex flex-col md:flex-row h-full">
+                  {/* Markdown Collaborative Editor */}
+                  <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-border p-3 bg-[#1e1e1e] text-white flex flex-col">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-semibold">
+                        ✏️ Markdown Editor (Collaborative)
+                      </h3>
+                      {editingUser && (
+                        <span className="text-xs text-amber-400">
+                          Currently being edited by {editingUser.display_name}
+                        </span>
+                      )}
+                      {!editingUser && (
+                        <span className="text-xs text-green-400">
+                          You can edit now!
+                        </span>
+                      )}
                     </div>
 
-                    {/* Markdown Preview */}
-                    <div className="w-full md:w-1/2 p-3 overflow-auto bg-white text-black rounded-b-md md:rounded-r-md">
-                      <h3 className="text-sm font-semibold mb-2">👁️ Preview</h3>
-                      <div className="prose prose-sm max-w-none">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm, remarkBreaks]}
-                          rehypePlugins={[rehypeRaw]}
-                        >
-                          {content?.[language] ?? ""}
-                        </ReactMarkdown>
-                      </div>
+                    <textarea
+                      value={
+                        (content && content[language]) ??
+                        defaultCodeTemplates[language]
+                      }
+                      onChange={(e) => {
+                        if (
+                          !editingUser ||
+                          editingUser.user_id === collaborative.socket?.id
+                        ) {
+                          setContent(language, e.target.value);
+                        }
+                      }}
+                      disabled={
+                        editingUser &&
+                        editingUser.user_id !== collaborative.socket?.id
+                      }
+                      className={`flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border ${editingUser &&
+                          editingUser.user_id !== collaborative.socket?.id
+                          ? "bg-gray-800 text-gray-400 cursor-not-allowed"
+                          : "bg-[#252526] text-white border-gray-700 focus:border-gray-500"
+                        }`}
+                      placeholder={
+                        editingUser &&
+                          editingUser.user_id !== collaborative.socket?.id
+                          ? `${editingUser.display_name} is editing...`
+                          : "Write Markdown collaboratively..."
+                      }
+                    />
+                  </div>
+
+                  {/* Markdown Preview */}
+                  <div className="w-full md:w-1/2 p-3 overflow-auto bg-white text-black rounded-b-md md:rounded-r-md">
+                    <h3 className="text-sm font-semibold mb-2">👁️ Preview</h3>
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                        rehypePlugins={[rehypeRaw]}
+                      >
+                        {content?.[language] ?? ""}
+                      </ReactMarkdown>
                     </div>
                   </div>
-                ) : (
-                  <Editor
-                    height="80vh"
-                    language={language === "any" ? "javascript" : language}
-                    theme="vs-dark"
-                    value={
-                      (content && content[language]) ??
-                      defaultCodeTemplates[language]
-                    }
-                    onChange={(value) => setContent(language, value ?? "")}
-                    options={{
-                      fontSize: 14,
-                      minimap: { enabled: false },
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                    }}
-                  />
-                )}
-              </Card>
-            </div>
-          </main>
+                </div>
+              ) : (
+                <Editor
+                  height="80vh"
+                  language={language === "any" ? "javascript" : language}
+                  theme={theme === "dark" ? "vs-dark" : "vs-light"}
+                  value={
+                    (content && content[language]) ??
+                    defaultCodeTemplates[language]
+                  }
+                  onChange={(value) => setContent(language, value ?? "")}
+                  options={{
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                  }}
+                />
+              )}
+            </Card>
+          </div>
+        </main>
       </div>
     </div>
   );

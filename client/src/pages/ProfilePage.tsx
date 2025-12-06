@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
-import { X } from "lucide-react";
+import { X, LogOut } from "lucide-react";
 import ComingSoon from "@/components/loading/ComingSoon";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -241,6 +241,11 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   if (loading) return <LoadingScreen />;
   if (!user)
     return (
@@ -320,25 +325,15 @@ export default function ProfilePage() {
               )}
             </button>
 
-            <Link to="/profile" className="relative">
-              <div
-                className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border-2 ${profile?.is_pro ? "border-yellow-400" : "border-slate-600"
-                  }`}
-              >
-                {profile?.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt="avatar"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-5 h-5 text-slate-300" />
-                )}
-                {profile?.is_pro && (
-                  <span className="absolute -bottom-0.5 right-0 bg-gradient-to-br from-yellow-400 to-amber-500 p-1 rounded-full shadow" />
-                )}
-              </div>
-            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="hidden sm:inline">Log out</span>
+            </Button>
           </div>
         </div>
       </header>
