@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Code2, Github, Twitter, Linkedin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { AdSlot } from "./AdSlot";
 
 export const Footer = () => {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ export const Footer = () => {
                 <Code2 className="h-6 w-6 text-white" />
               </motion.div>
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">
-              <h1>CollabRoom</h1>
+                <h1>CollabRoom</h1>
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -133,6 +134,11 @@ export const Footer = () => {
               </ul>
             </div>
           ))}
+        </div>
+
+        {/* Ad Slot in Footer */}
+        <div className="mb-10 w-full flex justify-center">
+          <AdSlot size="medium" format="horizontal" />
         </div>
 
         {/* === Bottom Line === */}

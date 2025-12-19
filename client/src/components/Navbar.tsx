@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Code2, Menu, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { joinDemoRoom } from "@/utils/demoRoom";
+import { useSubscription } from "@/hooks/useSubscription";
+import { AdSlot } from "./AdSlot";
 
 /**
  * Navbar Component
@@ -17,6 +19,7 @@ export const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [profile, setProfile] = useState<any>(null);
   const navigate = useNavigate();
+  const { isFree } = useSubscription();
 
   // Fetch session and profile info from Supabase on mount
   useEffect(() => {
@@ -119,6 +122,11 @@ export const Navbar = () => {
               Feedback
             </Link>
 
+            {/* Desktop Only AdSlot */}
+            <div className="hidden lg:block w-48">
+              <AdSlot size="small" format="horizontal" />
+            </div>
+
             <ThemeToggle />
 
             {/* === Conditional Profile / Auth Buttons === */}
@@ -127,11 +135,10 @@ export const Navbar = () => {
                 {/* Profile Avatar */}
                 <Link to="/profile" title="Profile">
                   <div
-                    className={`relative w-9 h-9 rounded-full overflow-hidden border-2 transition-transform duration-200 hover:scale-110 ${
-                      profile?.is_pro
-                        ? "border-yellow-400 shadow-[0_0_10px_rgba(255,215,0,0.3)]"
-                        : "border-gray-500"
-                    }`}
+                    className={`relative w-9 h-9 rounded-full overflow-hidden border-2 transition-transform duration-200 hover:scale-110 ${profile?.is_pro
+                      ? "border-yellow-400 shadow-[0_0_10px_rgba(255,215,0,0.3)]"
+                      : "border-gray-500"
+                      }`}
                   >
                     {profile?.avatar_url ? (
                       <img
