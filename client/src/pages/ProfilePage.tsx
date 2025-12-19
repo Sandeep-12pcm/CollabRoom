@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AnimatePresence } from "framer-motion";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import { SEO } from "@/components/SEO";
+import { AdSlot } from "@/components/AdSlot";
 
 /**
  * Types
@@ -591,6 +592,16 @@ export default function ProfilePage() {
                     </motion.div>
                   ))
                 )}
+              </div>
+
+              {/* Fluid Ad Slot below rooms list */}
+              <div className="mt-8 border-t border-gray-100 dark:border-white/5 pt-6">
+                <AdSlot
+                  format="fluid"
+                  layoutKey="-f7+5u+4t-da+6l"
+                  slot="1120347185"
+                  className="rounded-lg border border-dashed border-muted bg-muted/5 p-4"
+                />
               </div>
 
               {/* Delete modal */}

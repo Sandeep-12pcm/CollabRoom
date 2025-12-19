@@ -269,6 +269,11 @@ export const Navbar = () => {
                   Get Started
                 </Button>
               )}
+
+              {/* Mobile AdSlot */}
+              <div className="mt-4 pt-4 border-t border-border flex justify-center">
+                <AdSlot size="small" format="horizontal" slot="7494183840" />
+              </div>
             </div>
           </div>
         )}

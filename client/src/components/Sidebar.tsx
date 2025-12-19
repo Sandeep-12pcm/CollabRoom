@@ -148,11 +148,8 @@ export default function Sidebar({
 
             // if the deleted page was active, pick a sensible replacement
             if (activePage === oldRow.id) {
-              setActivePage((prev) => {
-                // choose first remaining page or null
-                const remaining = pages.filter((p) => p.id !== oldRow.id);
-                return remaining.length ? remaining[0].id : null;
-              });
+              const remaining = pages.filter((p) => p.id !== oldRow.id);
+              setActivePage(remaining.length ? remaining[0].id : null);
             }
           }
         }
@@ -492,7 +489,7 @@ export default function Sidebar({
 
           {/* Ad Slot at bottom */}
           <div className="mt-auto pt-4">
-            <AdSlot size="medium" format="vertical" />
+            <AdSlot size="medium" format="vertical" slot="7494183840" />
           </div>
         </div>
       </aside>

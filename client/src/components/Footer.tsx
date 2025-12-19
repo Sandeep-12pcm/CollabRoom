@@ -138,7 +138,7 @@ export const Footer = () => {
 
         {/* Ad Slot in Footer */}
         <div className="mb-10 w-full flex justify-center">
-          <AdSlot size="medium" format="horizontal" />
+          <AdSlot size="medium" format="auto" slot="3938082210" />
         </div>
 
         {/* === Bottom Line === */}

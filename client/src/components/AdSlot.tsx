@@ -4,14 +4,16 @@ import { useSubscription } from "@/hooks/useSubscription";
 type AdSlotProps = {
   size?: "small" | "medium" | "large";
   slot?: string;
-  format?: "auto" | "rectangle" | "vertical" | "horizontal";
+  format?: "auto" | "rectangle" | "vertical" | "horizontal" | "fluid";
+  layoutKey?: string;
   className?: string;
 };
 
 export const AdSlot = ({
   size = "medium",
-  slot = "2936421026889411", // Default to the client ID if no slot provided, though usually slot is different
+  slot = "", // Unique slot ID from AdSense dashboard
   format = "auto",
+  layoutKey = "",
   className = ""
 }: AdSlotProps) => {
   const { isPro } = useSubscription();
@@ -47,7 +49,8 @@ export const AdSlot = ({
         data-ad-client="ca-pub-2936421026889411"
         data-ad-slot={slot}
         data-ad-format={format}
-        data-full-width-responsive="true"
+        data-ad-layout-key={layoutKey || undefined}
+        data-full-width-responsive={format === "fluid" ? undefined : "true"}
       />
     </div>
   );
