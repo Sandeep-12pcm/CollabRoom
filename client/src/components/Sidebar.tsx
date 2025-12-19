@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Share2, Plus, Users, Trash2, Copy, X, Edit2, LogOut as ExitIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "./ui/sonner";
+import { useSubscription } from "@/hooks/useSubscription";
+import { AdSlot } from "./AdSlot";
 
 interface Participant {
   id: string;
@@ -63,7 +65,7 @@ export default function Sidebar({
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [editingRoomName, setEditingRoomName] = useState(false);
   const [showExitPopup, setShowExitPopup] = useState(false);
-
+  const { isFree } = useSubscription();
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
 
@@ -487,6 +489,11 @@ export default function Sidebar({
               </Button>
             </div>
           )}
+
+          {/* Ad Slot at bottom */}
+          <div className="mt-auto pt-4">
+            <AdSlot size="medium" format="vertical" />
+          </div>
         </div>
       </aside>
 
