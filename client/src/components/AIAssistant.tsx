@@ -1,5 +1,5 @@
 // import React from "react";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 
 // import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -103,6 +103,72 @@ export const AIAssistant = ({ code, language }: AIAssistantProps) => {
     }
   };
 
+  const remarkPlugins = useMemo(() => [remarkGfm], []);
+  const rehypePlugins = useMemo(() => [rehypeHighlight], []);
+
+  const components = useMemo(() => ({
+    code({ inline, className, children, ...props }: any) {
+      const preRef = useRef<HTMLPreElement>(null);
+
+      if (inline) {
+        return (
+          <code
+            className="bg-[#2D2D3A] px-1 py-0.5 rounded text-gray-200"
+            {...props}
+          >
+            {children}
+          </code>
+        );
+      }
+
+      const handleCopy = async () => {
+        if (preRef.current) {
+          const textToCopy = preRef.current.innerText;
+          try {
+            await navigator.clipboard.writeText(textToCopy);
+            setCopiedCode(textToCopy);
+            toast({
+              title: "Copied!",
+              description: "Code copied to clipboard",
+            });
+            setTimeout(() => setCopiedCode(null), 2000);
+          } catch {
+            toast({
+              title: "Copy failed",
+              description: "Could not copy code to clipboard",
+              variant: "destructive",
+            });
+          }
+        }
+      };
+
+      return (
+        <div className="relative group my-3">
+          <pre
+            ref={preRef}
+            className="bg-[#111] border border-[#2A2A40] rounded-lg p-3 text-gray-200 overflow-x-auto"
+          >
+            <code {...props}>{children}</code>
+          </pre>
+          <button
+            onClick={handleCopy}
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#2A2A3E] hover:bg-[#3A3A4A] border border-[#3E3E55] text-gray-300 px-2 py-1 rounded-md flex items-center gap-1 text-xs"
+          >
+            {copiedCode && preRef.current?.innerText === copiedCode ? (
+              <>
+                <Check className="w-3 h-3 text-green-400" /> Copied
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3" /> Copy
+              </>
+            )}
+          </button>
+        </div>
+      );
+    },
+  }), [copiedCode, toast]);
+
   return (
     <>
       {/* Action Buttons */}
@@ -168,70 +234,9 @@ export const AIAssistant = ({ code, language }: AIAssistantProps) => {
             ) : response ? (
               <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
                 <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                  components={{
-                    code({ inline, className, children, ...props }: any) {
-                      const preRef = useRef<HTMLPreElement>(null);
-
-                      if (inline) {
-                        return (
-                          <code
-                            className="bg-[#2D2D3A] px-1 py-0.5 rounded text-gray-200"
-                            {...props}
-                          >
-                            {children}
-                          </code>
-                        );
-                      }
-
-                      const handleCopy = async () => {
-                        if (preRef.current) {
-                          const textToCopy = preRef.current.innerText;
-                          try {
-                            await navigator.clipboard.writeText(textToCopy);
-                            setCopiedCode(textToCopy);
-                            toast({
-                              title: "Copied!",
-                              description: "Code copied to clipboard",
-                            });
-                            setTimeout(() => setCopiedCode(null), 2000);
-                          } catch {
-                            toast({
-                              title: "Copy failed",
-                              description: "Could not copy code to clipboard",
-                              variant: "destructive",
-                            });
-                          }
-                        }
-                      };
-
-                      return (
-                        <div className="relative group my-3">
-                          <pre
-                            ref={preRef}
-                            className="bg-[#111] border border-[#2A2A40] rounded-lg p-3 text-gray-200 overflow-x-auto"
-                          >
-                            <code {...props}>{children}</code>
-                          </pre>
-                          <button
-                            onClick={handleCopy}
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#2A2A3E] hover:bg-[#3A3A4A] border border-[#3E3E55] text-gray-300 px-2 py-1 rounded-md flex items-center gap-1 text-xs"
-                          >
-                            {copiedCode && preRef.current?.innerText === copiedCode ? (
-                              <>
-                                <Check className="w-3 h-3 text-green-400" /> Copied
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" /> Copy
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      );
-                    },
-                  }}
+                  remarkPlugins={remarkPlugins}
+                  rehypePlugins={rehypePlugins}
+                  components={components}
                 >
                   {response}
                 </ReactMarkdown>

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -353,7 +353,7 @@ body {
     }
   };
 
-  const handlezip = () =>{
+  const handlezip = () => {
     console.log("clicked download")
   }
 
@@ -417,7 +417,7 @@ body {
     return () => clearTimeout(timer);
   }, []);
 
-  const sidebarProps = {
+  const sidebarProps = useMemo(() => ({
     roomId: id!,
     roomName,
     roomCode,
@@ -435,7 +435,27 @@ body {
     setShowDeletePopup,
     deleteRoom,
     setRoomName,
-  };
+  }), [
+    id, roomName, roomCode, participants, currentUser, navigate,
+    handleCopy, shareRoom, addPage, pages, setPages,
+    activePageId, setActivePageId, showDeletePopup, setShowDeletePopup,
+    deleteRoom, setRoomName
+  ]);
+
+  const editorOptions = useMemo(() => ({
+    fontSize: 14,
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+  }), []);
+
+  const handleEditorChange = useCallback((value: string | undefined) => {
+    setContent(language, value ?? "");
+  }, [setContent, language]);
+
+  const editorWrapperProps = useMemo(() => ({}), []);
+  const markdownRemarkPlugins = useMemo(() => [remarkGfm, remarkBreaks], []);
+  const markdownRehypePlugins = useMemo(() => [rehypeRaw], []);
 
 
 
@@ -472,85 +492,84 @@ body {
         <main className="flex-1 flex flex-col relative">
           <div className="p-4 border-b border-border bg-card">
             <div className="flex items-center justify-between mb-3">
-  <div className="flex items-center gap-4">
-    {isMobile && (
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-72">
-          <Sidebar
-            {...sidebarProps}
-            className="w-full h-full border-none pt-12"
-          />
-        </SheetContent>
-      </Sheet>
-    )}
-    <h2 className="font-semibold text-foreground ">
-      {activePage?.title || "Untitled Page"}
-    </h2>
-    <Select value={language} onValueChange={handleLanguageChange}>
-      <SelectTrigger className="w-[100px] md:w-[180px]">
-        <SelectValue placeholder="Select language" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="any">Any</SelectItem>
-        <SelectItem value="javascript">JavaScript</SelectItem>
-        <SelectItem value="typescript">TypeScript</SelectItem>
-        <SelectItem value="python">Python</SelectItem>
-        <SelectItem value="java">Java</SelectItem>
-        <SelectItem value="cpp">C++</SelectItem>
-        <SelectItem value="html">HTML</SelectItem>
-        <SelectItem value="css">CSS</SelectItem>
-        <SelectItem value="markdown">
-          Markdown (Docs/Table View)
-        </SelectItem>
-      </SelectContent>
-    </Select>
-  </div>
+              <div className="flex items-center gap-4">
+                {isMobile && (
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="md:hidden">
+                        <Menu className="h-6 w-6" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-72">
+                      <Sidebar
+                        {...sidebarProps}
+                        className="w-full h-full border-none pt-12"
+                      />
+                    </SheetContent>
+                  </Sheet>
+                )}
+                <h2 className="font-semibold text-foreground ">
+                  {activePage?.title || "Untitled Page"}
+                </h2>
+                <Select value={language} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="w-[100px] md:w-[180px]">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="typescript">TypeScript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="java">Java</SelectItem>
+                    <SelectItem value="cpp">C++</SelectItem>
+                    <SelectItem value="html">HTML</SelectItem>
+                    <SelectItem value="css">CSS</SelectItem>
+                    <SelectItem value="markdown">
+                      Markdown (Docs/Table View)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-  {/* ✅ REQUIRED FIX: group right-side buttons */}
-  <div className="flex items-center gap-2">
-    <Button
-      onClick={handlezip}
-      className="transition-all duration-300 bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs px-2 md:h-10 md:text-sm md:px-4"
-    >
-      <Download className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
-      Download ZIP
-    </Button>
+              {/* ✅ REQUIRED FIX: group right-side buttons */}
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handlezip}
+                  className="transition-all duration-300 bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs px-2 md:h-10 md:text-sm md:px-4"
+                >
+                  <Download className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
+                  Download ZIP
+                </Button>
 
-    <Button
-      onClick={async () => {
-        await navigator.clipboard.writeText(content[language] ?? "");
-        setCopied(true);
-        toast({
-          title: "Copied!",
-          description: "Code copied to clipboard",
-        });
-        setTimeout(() => setCopied(false), 2000);
-      }}
-      className={`transition-all duration-300 ${
-        copied
-          ? "bg-success hover:bg-success"
-          : "bg-primary hover:bg-primary/90"
-      } h-8 text-xs px-2 md:h-10 md:text-sm md:px-4`}
-    >
-      {copied ? (
-        <>
-          <Check className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
-          Copied!
-        </>
-      ) : (
-        <>
-          <Copy className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
-          Copy Code
-        </>
-      )}
-    </Button>
-  </div>
-</div>
+                <Button
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(content[language] ?? "");
+                    setCopied(true);
+                    toast({
+                      title: "Copied!",
+                      description: "Code copied to clipboard",
+                    });
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className={`transition-all duration-300 ${copied
+                    ? "bg-success hover:bg-success"
+                    : "bg-primary hover:bg-primary/90"
+                    } h-8 text-xs px-2 md:h-10 md:text-sm md:px-4`}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
+                      Copy Code
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
 
 
             <AIAssistant code={content[language] ?? ""} language={language} />
@@ -596,9 +615,9 @@ body {
                         editingUser.user_id !== collaborative.socket?.id
                       }
                       className={`flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border ${editingUser &&
-                          editingUser.user_id !== collaborative.socket?.id
-                          ? "bg-gray-800 text-gray-400 cursor-not-allowed"
-                          : "bg-[#252526] text-white border-gray-700 focus:border-gray-500"
+                        editingUser.user_id !== collaborative.socket?.id
+                        ? "bg-gray-800 text-gray-400 cursor-not-allowed"
+                        : "bg-[#252526] text-white border-gray-700 focus:border-gray-500"
                         }`}
                       placeholder={
                         editingUser &&
@@ -614,8 +633,8 @@ body {
                     <h3 className="text-sm font-semibold mb-2">👁️ Preview</h3>
                     <div className="prose prose-sm max-w-none">
                       <ReactMarkdown
-                        remarkPlugins={[remarkGfm, remarkBreaks]}
-                        rehypePlugins={[rehypeRaw]}
+                        remarkPlugins={markdownRemarkPlugins}
+                        rehypePlugins={markdownRehypePlugins}
                       >
                         {content?.[language] ?? ""}
                       </ReactMarkdown>
@@ -631,13 +650,9 @@ body {
                     (content && content[language]) ??
                     defaultCodeTemplates[language]
                   }
-                  onChange={(value) => setContent(language, value ?? "")}
-                  options={{
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                  }}
+                  onChange={handleEditorChange}
+                  options={editorOptions}
+                  wrapperProps={editorWrapperProps}
                 />
               )}
             </Card>
