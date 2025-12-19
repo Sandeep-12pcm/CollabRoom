@@ -28,6 +28,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SEO } from "@/components/SEO";
+import { Download } from "lucide-react";
 
 interface Participant {
   id: string;
@@ -352,6 +353,10 @@ body {
     }
   };
 
+  const handlezip = () =>{
+    console.log("clicked download")
+  }
+
   const handleCopy = () => {
     navigator.clipboard.writeText(roomCode);
     toast({
@@ -467,72 +472,86 @@ body {
         <main className="flex-1 flex flex-col relative">
           <div className="p-4 border-b border-border bg-card">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-4">
-                {isMobile && (
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="md:hidden">
-                        <Menu className="h-6 w-6" />
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="p-0 w-72">
-                      <Sidebar {...sidebarProps} className="w-full h-full border-none pt-12" />
-                    </SheetContent>
-                  </Sheet>
-                )}
-                <h2 className="font-semibold text-foreground ">
-                  {activePage?.title || "Untitled Page"}
-                </h2>
-                <Select value={language} onValueChange={handleLanguageChange}>
-                  <SelectTrigger className="w-[100px] md:w-[180px]">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="javascript">JavaScript</SelectItem>
-                    <SelectItem value="typescript">TypeScript</SelectItem>
-                    <SelectItem value="python">Python</SelectItem>
-                    <SelectItem value="java">Java</SelectItem>
-                    <SelectItem value="cpp">C++</SelectItem>
-                    <SelectItem value="html">HTML</SelectItem>
-                    <SelectItem value="css">CSS</SelectItem>
-                    <SelectItem value="markdown">
-                      Markdown (Docs/Table View)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+  <div className="flex items-center gap-4">
+    {isMobile && (
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 w-72">
+          <Sidebar
+            {...sidebarProps}
+            className="w-full h-full border-none pt-12"
+          />
+        </SheetContent>
+      </Sheet>
+    )}
+    <h2 className="font-semibold text-foreground ">
+      {activePage?.title || "Untitled Page"}
+    </h2>
+    <Select value={language} onValueChange={handleLanguageChange}>
+      <SelectTrigger className="w-[100px] md:w-[180px]">
+        <SelectValue placeholder="Select language" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="any">Any</SelectItem>
+        <SelectItem value="javascript">JavaScript</SelectItem>
+        <SelectItem value="typescript">TypeScript</SelectItem>
+        <SelectItem value="python">Python</SelectItem>
+        <SelectItem value="java">Java</SelectItem>
+        <SelectItem value="cpp">C++</SelectItem>
+        <SelectItem value="html">HTML</SelectItem>
+        <SelectItem value="css">CSS</SelectItem>
+        <SelectItem value="markdown">
+          Markdown (Docs/Table View)
+        </SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
 
-              <Button
-                onClick={async () => {
-                  await navigator.clipboard.writeText(
-                    content[language] ?? ""
-                  );
-                  setCopied(true);
-                  toast({
-                    title: "Copied!",
-                    description: "Code copied to clipboard",
-                  });
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-                className={`transition-all duration-300 ${copied
-                    ? "bg-success hover:bg-success"
-                    : "bg-primary hover:bg-primary/90"
-                  } h-8 text-xs px-2 md:h-10 md:text-sm md:px-4`}
-              >
-                {copied ? (
-                  <>
-                    <Check className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
-                    Copy Code
-                  </>
-                )}
-              </Button>
-            </div>
+  {/* ✅ REQUIRED FIX: group right-side buttons */}
+  <div className="flex items-center gap-2">
+    <Button
+      onClick={handlezip}
+      className="transition-all duration-300 bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs px-2 md:h-10 md:text-sm md:px-4"
+    >
+      <Download className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
+      Download ZIP
+    </Button>
+
+    <Button
+      onClick={async () => {
+        await navigator.clipboard.writeText(content[language] ?? "");
+        setCopied(true);
+        toast({
+          title: "Copied!",
+          description: "Code copied to clipboard",
+        });
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      className={`transition-all duration-300 ${
+        copied
+          ? "bg-success hover:bg-success"
+          : "bg-primary hover:bg-primary/90"
+      } h-8 text-xs px-2 md:h-10 md:text-sm md:px-4`}
+    >
+      {copied ? (
+        <>
+          <Check className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
+          Copied!
+        </>
+      ) : (
+        <>
+          <Copy className="md:h-4 md:w-4 h-2 w-2 md:mr-2" />
+          Copy Code
+        </>
+      )}
+    </Button>
+  </div>
+</div>
+
 
             <AIAssistant code={content[language] ?? ""} language={language} />
           </div>
