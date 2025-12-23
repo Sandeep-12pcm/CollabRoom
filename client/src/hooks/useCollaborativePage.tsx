@@ -35,11 +35,7 @@ export function useCollaborativePage(
   const isMountedRef = useRef(true);
   const { toast } = useToast();
   const currentUserRef = useRef<any>(null);
-  const [editingUser, setEditingUser] = useState<{
-    user_id: string;
-    display_name: string;
-  } | null>(null);
-  const editingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   /**
    * Load initial content and title from Supabase.
@@ -148,7 +144,6 @@ export function useCollaborativePage(
 
       const socket = io(SOCKET_URL, {
         auth: { token },
-        transports: ["websocket"],
         autoConnect: true,
       });
 
@@ -156,7 +151,17 @@ export function useCollaborativePage(
 
       socket.on("connect", () => {
         if (!mounted) return;
+        setIsConnected(true);
         socket.emit("join-page", pageId, roomId);
+      });
+
+      socket.on("disconnect", () => {
+        setIsConnected(false);
+      });
+
+      socket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+        setIsConnected(false);
       });
 
       socket.on("content-change", ({ content: remoteContent }: any) => {
@@ -193,17 +198,6 @@ export function useCollaborativePage(
           delete copy[p.user_id];
           return copy;
         });
-      });
-      socket.on("editing-started", ({ user_id, display_name }) => {
-        setEditingUser({ user_id, display_name });
-        console.log("Editing started:", { user_id, display_name });
-      });
-
-      socket.on("editing-stopped", () => {
-        setEditingUser(null);
-      });
-
-      socket.on("disconnect", (reason: any) => {
       });
     })();
 
@@ -274,25 +268,6 @@ export function useCollaborativePage(
       setContent(newContent);
       lastLocalChangeRef.current = JSON.stringify(newContent);
       console.log("setContentFromEditor called");
-      // 🔥 Editing lock logic (only runs when socket exists)
-      if (socketRef.current) {
-        console.log("✅ Socket connected, executing editing lock logic");
-        const { data } = await supabase.auth.getUser();
-        const user = data?.user;
-        socketRef.current.emit("editing-started", {
-          pageId,
-          user_id: user?.id,
-          display_name:
-            user?.user_metadata?.display_name || user?.email || "Someone",
-        });
-
-        if (editingTimerRef.current) clearTimeout(editingTimerRef.current);
-        editingTimerRef.current = setTimeout(() => {
-          socketRef.current?.emit("editing-stopped", { pageId });
-        }, 5000);
-      } else {
-        console.log("Socket not connected, skipping editing lock logic");
-      }
 
       emitContentChangeThrottled(newContent);
       scheduleSave(newContent);
@@ -388,7 +363,7 @@ export function useCollaborativePage(
     title,
     updateTitle,
     participants,
-    editingUser,
+    isConnected,
     cursors,
     saveNow,
     socket: socketRef.current,

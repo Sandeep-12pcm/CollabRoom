@@ -73,7 +73,7 @@ const Room = () => {
   const isMobile = useIsMobile();
   const theme = localStorage.getItem("theme") as "light" | "dark" | null;
 
-  const { editingUser, selectedLanguage, updateLanguage } = collaborative;
+  const { isConnected, selectedLanguage, updateLanguage } = collaborative;
   const setContent = collaborative?.setContent ?? (() => { });
   const language = selectedLanguage || "javascript";
   const activePage = pages.find((p) => p.id === activePageId);
@@ -529,6 +529,12 @@ body {
                     </SelectItem>
                   </SelectContent>
                 </Select>
+                <div className="flex items-center gap-2">
+                  <div className={`h-2.5 w-2.5 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {isConnected ? 'Connected' : 'Disconnected'}
+                  </span>
+                </div>
               </div>
 
               {/* ✅ REQUIRED FIX: group right-side buttons */}
@@ -585,16 +591,6 @@ body {
                       <h3 className="text-sm font-semibold">
                         ✏️ Markdown Editor (Collaborative)
                       </h3>
-                      {editingUser && (
-                        <span className="text-xs text-amber-400">
-                          Currently being edited by {editingUser.display_name}
-                        </span>
-                      )}
-                      {!editingUser && (
-                        <span className="text-xs text-green-400">
-                          You can edit now!
-                        </span>
-                      )}
                     </div>
 
                     <textarea
@@ -602,29 +598,9 @@ body {
                         (content && content[language]) ??
                         defaultCodeTemplates[language]
                       }
-                      onChange={(e) => {
-                        if (
-                          !editingUser ||
-                          editingUser.user_id === collaborative.socket?.id
-                        ) {
-                          setContent(language, e.target.value);
-                        }
-                      }}
-                      disabled={
-                        editingUser &&
-                        editingUser.user_id !== collaborative.socket?.id
-                      }
-                      className={`flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border ${editingUser &&
-                        editingUser.user_id !== collaborative.socket?.id
-                        ? "bg-gray-800 text-gray-400 cursor-not-allowed"
-                        : "bg-[#252526] text-white border-gray-700 focus:border-gray-500"
-                        }`}
-                      placeholder={
-                        editingUser &&
-                          editingUser.user_id !== collaborative.socket?.id
-                          ? `${editingUser.display_name} is editing...`
-                          : "Write Markdown collaboratively..."
-                      }
+                      onChange={(e) => setContent(language, e.target.value)}
+                      className="flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border bg-[#252526] text-white border-gray-700 focus:border-gray-500"
+                      placeholder="Write Markdown collaboratively..."
                     />
                   </div>
 

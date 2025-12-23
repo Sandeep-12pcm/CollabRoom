@@ -124,7 +124,7 @@ export const Navbar = () => {
 
             {/* Desktop Only AdSlot */}
             <div className="hidden lg:block w-48">
-              <AdSlot size="small" format="horizontal" />
+              <AdSlot size="small" format="horizontal" slot="7494183840" />
             </div>
 
             <ThemeToggle />
