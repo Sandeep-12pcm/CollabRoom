@@ -24,8 +24,21 @@ export const AdSlot = ({
   useEffect(() => {
     if (isPro) return;
 
+    let timeoutId: NodeJS.Timeout;
+
     const pushAd = () => {
       if (pushedRef.current) return;
+      
+      // Extra safety check: ensure element is still in DOM and has width
+      if (!containerRef.current || containerRef.current.getBoundingClientRect().width === 0) {
+        return;
+      }
+
+      // AdSense push should happen only when page is visible and layout is stable
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
       try {
         // @ts-ignore
         (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -35,20 +48,41 @@ export const AdSlot = ({
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Small delay to ensure layout has settled after coming back to foreground
+        timeoutId = setTimeout(pushAd, 100);
+      }
+    };
+
     if (containerRef.current) {
-      if (containerRef.current.offsetWidth > 0) {
-        pushAd();
+      const width = containerRef.current.getBoundingClientRect().width;
+      
+      if (width > 0 && document.visibilityState === "visible") {
+        // Delay ensures that components within animations (like Navbar dropdown) 
+        // have fully reached their final dimensions.
+        timeoutId = setTimeout(pushAd, 200);
       } else {
         const observer = new ResizeObserver((entries) => {
-          if (entries[0].contentRect.width > 0) {
-            pushAd();
+          const entry = entries[0];
+          if (entry.contentRect.width > 0 && document.visibilityState === "visible") {
+            timeoutId = setTimeout(pushAd, 200);
             observer.disconnect();
           }
         });
         observer.observe(containerRef.current);
-        return () => observer.disconnect();
+        
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        
+        return () => {
+          observer.disconnect();
+          document.removeEventListener("visibilitychange", handleVisibilityChange);
+          clearTimeout(timeoutId);
+        };
       }
     }
+
+    return () => clearTimeout(timeoutId);
   }, [isPro]);
 
   if (isPro) return null;
