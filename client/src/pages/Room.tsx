@@ -524,9 +524,7 @@ body {
                     <SelectItem value="cpp">C++</SelectItem>
                     <SelectItem value="html">HTML</SelectItem>
                     <SelectItem value="css">CSS</SelectItem>
-                    <SelectItem value="markdown">
-                      Markdown (Docs/Table View)
-                    </SelectItem>
+                    <SelectItem value="markdown">Markdown (Docs/Table View)</SelectItem>
                   </SelectContent>
                 </Select>
                 <div className="flex items-center gap-2">
