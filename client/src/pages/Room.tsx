@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AIAssistant } from "@/components/AIAssistant";
 import { supabase } from "@/integrations/supabase/client";
@@ -528,10 +528,22 @@ body {
                   </SelectContent>
                 </Select>
                 <div className="flex items-center gap-2">
-                  <div className={`h-2.5 w-2.5 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {isConnected ? 'Connected' : 'Disconnected'}
-                  </span>
+                  {isConnected ? (
+                    <>
+                      <div className="h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                      <span className="text-xs font-medium text-muted-foreground">Connected</span>
+                    </>
+                  ) : currentUser ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                      <span className="text-xs font-medium text-muted-foreground">Connecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                      <span className="text-xs font-medium text-muted-foreground">Disconnected</span>
+                    </>
+                  )}
                 </div>
               </div>
 
