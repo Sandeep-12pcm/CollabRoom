@@ -13,7 +13,16 @@ import { FeedbackForm } from "./pages/FeedbackForm";
 import ProfilePage from "./pages/ProfilePage";
 import ContactForm from "./pages/ContactForm";
 import ComingSoon from "./components/loading/ComingSoon";
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 /**
  * Main App Component
@@ -35,7 +44,7 @@ const App = () => (
             <Route path="/room/:id" element={<Room />} />
             <Route path="/feedback" element={< FeedbackForm />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/contact" element={<ContactForm/>} />
+            <Route path="/contact" element={<ContactForm />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

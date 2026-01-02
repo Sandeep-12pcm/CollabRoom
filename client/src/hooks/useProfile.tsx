@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Profile {
   id: string;
@@ -21,147 +22,112 @@ interface Room {
 }
 
 export function useProfile() {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const queryClient = useQueryClient();
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const {
-        data: { user: suser },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (authError || !suser) {
-        setUser(null);
-        setProfile(null);
-        setRooms([]);
-        setLoading(false);
-        return;
-      }
-      setUser(suser);
+  // 1. Fetch Auth User
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    },
+  });
 
-      // Fetch profile details
-      const { data: pData, error: pErr } = await supabase
+  const userId = user?.id;
+
+  // 2. Fetch Profile
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ["profile", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase
         .from("profiles")
         .select("id, name, email, avatar_url, is_pro, joined_at, last_login")
-        .eq("id", suser.id)
-        .maybeSingle(); // safe if no row yet
+        .eq("id", userId)
+        .maybeSingle();
 
-      if (pErr) throw pErr;
+      if (error) throw error;
 
-      if (!pData) {
-        // create blank profile row if not present
+      if (!data) {
         const { data: newP, error: insertErr } = await supabase
           .from("profiles")
           .insert({
-            id: suser.id,
-            email: suser.email,
-            name:
-              suser.user_metadata?.name ||
-              suser.user_metadata?.display_name ||
-              null,
-            avatar_url:
-              suser.user_metadata?.avatar_url ||
-              suser.user_metadata?.picture ||
-              null,
-            joined_at: suser.created_at,
+            id: userId,
+            email: user?.email,
+            name: user?.user_metadata?.name || user?.user_metadata?.display_name || null,
+            avatar_url: user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null,
+            joined_at: user?.created_at,
           })
           .select()
           .maybeSingle();
         if (insertErr) throw insertErr;
-        console.log("No profile found; created new profile.", suser);
-        console.log("Created new profile for user:", newP);
-        setProfile(newP || null);
-      } else {
-        setProfile(pData as Profile);
+        return newP as Profile;
       }
+      return data as Profile;
+    },
+    enabled: !!userId,
+  });
 
-      // Fetch user's rooms
-      const { data: rData, error: rErr } = await supabase
+  // 3. Fetch Rooms
+  const { data: rooms = [], isLoading: roomsLoading } = useQuery<Room[]>({
+    queryKey: ["rooms", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
         .from("rooms")
         .select("id, room_code, created_at, updated_at, name, expiry_hours")
-        .eq("created_by", suser.id)
+        .eq("created_by", userId)
         .order("created_at", { ascending: false });
 
-      if (rErr) throw rErr;
-      setRooms(rData || []);
-    } catch (err) {
-      console.error("useProfile fetchAll error", err);
-      // do not toast here - let callers handle it
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
 
+  // 4. Real-time Subscription for Rooms
   useEffect(() => {
-    fetchAll();
+    if (!userId) return;
 
-    // real-time listener for rooms changes for this user
-    let subscription: any;
-    (async () => {
-      const {
-        data: { user: suser },
-      } = await supabase.auth.getUser();
-      if (!suser) return;
-      subscription = supabase
-        .channel("public:rooms")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "rooms",
-            filter: `created_by=eq.${suser.id}`,
-          },
-          (payload) => {
-            setRooms((r) => [payload.new, ...r]);
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "rooms",
-            filter: `created_by=eq.${suser.id}`,
-          },
-          (payload) => {
-            setRooms((r) =>
-              r.map((it) => (it.id === payload.new.id ? payload.new : it))
-            );
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "DELETE",
-            schema: "public",
-            table: "rooms",
-            filter: `created_by=eq.${suser.id}`,
-          },
-          (payload) => {
-            setRooms((r) => r.filter((it) => it.id !== payload.old.id));
-          }
-        )
-        .subscribe();
-    })();
+    const subscription = supabase
+      .channel(`public:rooms:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "rooms",
+          filter: `created_by=eq.${userId}`,
+        },
+        () => {
+          // Invalidate rooms query on any change
+          queryClient.invalidateQueries({ queryKey: ["rooms", userId] });
+        }
+      )
+      .subscribe();
 
     return () => {
-      try {
-        if (subscription) supabase.removeChannel(subscription);
-      } catch (e) {}
+      supabase.removeChannel(subscription);
     };
-  }, [fetchAll]);
+  }, [userId, queryClient]);
+
+  const loading = userLoading || profileLoading || roomsLoading;
 
   return {
     loading,
     user,
     profile,
     rooms,
-    refresh: fetchAll,
-    setProfile,
-    setRooms,
+    refresh: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["rooms", userId] });
+    },
+    setProfile: (newProfile: Profile) => {
+      queryClient.setQueryData(["profile", userId], newProfile);
+    },
+    setRooms: (updater: (old: Room[]) => Room[]) => {
+      queryClient.setQueryData(["rooms", userId], (old: Room[] | undefined) => updater(old || []));
+    },
   };
 }

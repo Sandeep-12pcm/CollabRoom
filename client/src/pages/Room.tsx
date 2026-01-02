@@ -25,10 +25,12 @@ import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Menu, Loader2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SEO } from "@/components/SEO";
 import { Download } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 interface Participant {
   id: string;
@@ -55,25 +57,72 @@ interface Page {
 const Room = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [pages, setPages] = useState<Page[]>([]);
+
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [roomName, setRoomName] = useState("Loading...");
-  const [roomCode, setRoomCode] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [roomOwnerId, setRoomOwnerId] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // 1. Fetch Room Metadata
+  const { data: roomMetadata } = useQuery({
+    queryKey: ["room-metadata", id],
+    queryFn: async () => {
+      if (!id) throw new Error("No room ID");
+      const { data, error } = await supabase
+        .from("rooms")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("Room not found");
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const roomName = roomMetadata?.name || "Loading...";
+  const roomCode = roomMetadata?.room_code || "";
+  const roomOwnerId = roomMetadata?.created_by || null;
+
+  // 2. Fetch Pages (Metadata only for cache)
+  const { data: pages = [] } = useQuery<Page[]>({
+    queryKey: ["room-pages", id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from("pages")
+        .select("id, title, content, created_by")
+        .eq("room_id", id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!id,
+  });
+
+  // Set initial active page if not set
+  useEffect(() => {
+    if (pages.length > 0 && !activePageId) {
+      setActivePageId(pages[0].id);
+    }
+  }, [pages, activePageId]);
+
   const collaborative = useCollaborativePage(activePageId, id);
 
   const content = collaborative?.content ?? "";
   const isMobile = useIsMobile();
   const theme = localStorage.getItem("theme") as "light" | "dark" | null;
 
+<<<<<<< HEAD
   const { isConnected, selectedLanguage, updateLanguage } = collaborative;
+=======
+  const { editingUser, selectedLanguage, updateLanguage, isConnected } = collaborative;
+>>>>>>> test
   const setContent = collaborative?.setContent ?? (() => { });
   const language = selectedLanguage || "javascript";
   const activePage = pages.find((p) => p.id === activePageId);
@@ -142,9 +191,9 @@ body {
    * Subscribes to 'room_participants' changes.
    */
   useEffect(() => {
-    let channel: RealtimeChannel | undefined;
+    let partChannel: RealtimeChannel | undefined;
 
-    const fetchRoom = async () => {
+    const setupRoom = async () => {
       if (!id) {
         toast({
           title: "Invalid Room",
@@ -159,34 +208,12 @@ body {
         data: { user },
       } = await supabase.auth.getUser();
       setCurrentUser(user);
-      const { data: room, error: roomError } = await supabase
-        .from("rooms")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (roomError || !room) {
-        toast({
-          title: "Room not found",
-          description: "This room doesn't exist or has been deleted",
-          variant: "destructive",
-        });
-        navigate("/");
-        return;
-      }
-
-      setRoomName(room.name);
-      setRoomCode(room.room_code);
-      setRoomOwnerId(room.created_by);
 
       if (user && !isJoining) {
         setIsJoining(true);
-        console.log("Joining room participants for user:", user);
         const displayName =
-          user.user_metadata?.display_name || user.user_metadata?.full_name ||
-
-          "Anonymous";
-        const { error: part_error } = await supabase
+          user.user_metadata?.display_name || user.user_metadata?.full_name || "Anonymous";
+        await supabase
           .from("room_participants")
           .upsert(
             {
@@ -199,10 +226,6 @@ body {
               onConflict: "room_id, user_id",
             }
           );
-
-        if (part_error) {
-          console.error("Failed to upsert participant:", part_error);
-        }
       }
 
       const { data: initialParticipants } = await supabase
@@ -211,7 +234,7 @@ body {
         .eq("room_id", id);
       if (initialParticipants) setParticipants(initialParticipants);
 
-      channel = supabase
+      partChannel = supabase
         .channel(`room:${id}`)
         .on(
           "postgres_changes",
@@ -222,10 +245,7 @@ body {
             filter: `room_id=eq.${id}`,
           },
           (payload) => {
-            if (
-              payload.eventType === "INSERT" ||
-              payload.eventType === "UPDATE"
-            ) {
+            if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
               setParticipants((prev) => {
                 const exists = prev.find((p) => p.id === payload.new.id);
                 if (exists) {
@@ -244,9 +264,10 @@ body {
         )
         .subscribe();
     };
-    fetchRoom();
+
+    setupRoom();
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      if (partChannel) supabase.removeChannel(partChannel);
     };
   }, [id, navigate, toast, isJoining]);
 
@@ -256,20 +277,6 @@ body {
    */
   useEffect(() => {
     if (!id) return;
-
-    const loadPages = async () => {
-      const { data, error } = await supabase
-        .from("pages")
-        .select("id, title, content, created_by")
-        .eq("room_id", id)
-        .order("created_at", { ascending: true });
-
-      if (!error && data) {
-        setPages(data);
-        if (data.length > 0) setActivePageId(data[0].id);
-      }
-    };
-    loadPages();
 
     const channel = supabase
       .channel(`pages:room-${id}`)
@@ -281,27 +288,16 @@ body {
           table: "pages",
           filter: `room_id=eq.${id}`,
         },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setPages((prev) => {
-              if (prev.some((p) => p.id === payload.new.id)) return prev;
-              return [...prev, payload.new as Page];
-            });
-          } else if (payload.eventType === "DELETE") {
-            setPages((prev) => prev.filter((p) => p.id !== payload.old.id));
-          } else if (payload.eventType === "UPDATE") {
-            setPages((prev) =>
-              prev.map((p) =>
-                p.id === payload.new.id ? (payload.new as Page) : p
-              )
-            );
-          }
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["room-pages", id] });
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [id]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, queryClient]);
 
   const addPage = async () => {
     if (!id) return;
@@ -428,18 +424,20 @@ body {
     shareRoom,
     addPage,
     pages,
-    setPages,
     activePage: activePageId,
     setActivePage: setActivePageId,
     showDeletePopup,
     setShowDeletePopup,
     deleteRoom,
-    setRoomName,
+    roomCreatorId: roomOwnerId,
+    setRoomName: (name: string) => {
+      queryClient.setQueryData(["room-metadata", id], (old: any) => ({ ...old, name }));
+    },
   }), [
     id, roomName, roomCode, participants, currentUser, navigate,
-    handleCopy, shareRoom, addPage, pages, setPages,
+    handleCopy, shareRoom, addPage, pages,
     activePageId, setActivePageId, showDeletePopup, setShowDeletePopup,
-    deleteRoom, setRoomName
+    deleteRoom, queryClient
   ]);
 
   const editorOptions = useMemo(() => ({
@@ -511,6 +509,24 @@ body {
                 <h2 className="font-semibold text-foreground ">
                   {activePage?.title || "Untitled Page"}
                 </h2>
+                <div className="flex items-center gap-2">
+                  {!currentUser ? (
+                    <div className="flex items-center gap-1.5 text-red-500 text-xs font-medium bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      Disconnected
+                    </div>
+                  ) : !isConnected ? (
+                    <div className="flex items-center gap-1.5 text-amber-500 text-xs font-medium bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Connecting...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-green-500 text-xs font-medium bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                      Connected
+                    </div>
+                  )}
+                </div>
                 <Select value={language} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="w-[100px] md:w-[180px]">
                     <SelectValue placeholder="Select language" />

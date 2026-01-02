@@ -5,6 +5,7 @@ import { Share2, Plus, Users, Trash2, Copy, X, Edit2, LogOut as ExitIcon } from 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "./ui/sonner";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useQueryClient } from "@tanstack/react-query";
 import { AdSlot } from "./AdSlot";
 
 interface Participant {
@@ -32,12 +33,12 @@ interface SidebarProps {
   navigate: (path: string) => void;
   shareRoom: () => void;
   addPage: () => void;
-  setPages: React.Dispatch<React.SetStateAction<Page[]>>;
   setActivePage: (id: string | null) => void;
   showDeletePopup: boolean;
   setShowDeletePopup: (v: boolean) => void;
   deleteRoom: () => Promise<void> | void;
   setRoomName: (name: string) => void;
+  roomCreatorId?: string | null;
 }
 
 export default function Sidebar({
@@ -45,7 +46,6 @@ export default function Sidebar({
   roomName,
   roomCode,
   pages,
-  setPages,
   activePage,
   participants,
   currentUser,
@@ -58,9 +58,9 @@ export default function Sidebar({
   setShowDeletePopup,
   deleteRoom,
   setRoomName,
+  roomCreatorId,
   className,
 }: SidebarProps & { className?: string }) {
-  const [roomCreator, setRoomCreator] = useState<string | null>(null);
   const [deletingPageIds, setDeletingPageIds] = useState<Record<string, boolean>>({});
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [editingRoomName, setEditingRoomName] = useState(false);
@@ -68,7 +68,9 @@ export default function Sidebar({
   const { isFree } = useSubscription();
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
+<<<<<<< HEAD
   // Fetch room creator (to show/hide delete room)
   useEffect(() => {
     if (!roomId) {
@@ -189,6 +191,9 @@ export default function Sidebar({
       }
     };
   }, [roomId, setPages, navigate, activePage, setActivePage, pages]);
+=======
+  // redundant effect removed (Room.tsx handles fetching and subscription)
+>>>>>>> test
 
   // Delete a page from the backend and update UI
   const deletePage = async (pageId: string) => {
@@ -218,22 +223,20 @@ export default function Sidebar({
         return;
       }
 
-      // Immediately update local state (realtime delete will also fire but dedupe handles it)
-      setPages((prev) => {
-        const idx = prev.findIndex((p) => p.id === pageId);
-        const next = prev.filter((p) => p.id !== pageId);
-        // If the deleted page was active, set a new active page
-        if (activePage === pageId) {
-          if (next.length > 0) {
-            // choose previous page if available, else first
-            const newIndex = Math.max(0, Math.min(idx - 1, next.length - 1));
-            setActivePage(next[newIndex].id);
-          } else {
-            setActivePage(null);
-          }
+      // Invalidate React Query cache
+      queryClient.invalidateQueries({ queryKey: ["room-pages", roomId] });
+
+      // If the deleted page was active, set a new active page
+      if (activePage === pageId) {
+        const next = pages.filter((p) => p.id !== pageId);
+        if (next.length > 0) {
+          const idx = pages.findIndex((p) => p.id === pageId);
+          const newIndex = Math.max(0, Math.min(idx - 1, next.length - 1));
+          setActivePage(next[newIndex].id);
+        } else {
+          setActivePage(null);
         }
-        return next;
-      });
+      }
 
       toast.success("Page deleted successfully");
     } catch (err) {
@@ -267,7 +270,7 @@ export default function Sidebar({
         console.error("Error updating page title:", error);
         toast.error("Failed to update page title.");
       } else {
-        setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, title: data.title } : p)));
+        queryClient.invalidateQueries({ queryKey: ["room-pages", roomId] });
         toast.success("Page title updated successfully.");
       }
     } catch (err) {
@@ -310,7 +313,7 @@ export default function Sidebar({
     }
   };
 
-  const isAdmin = Boolean(currentUser && roomCreator === currentUser.id);
+  const isAdmin = Boolean(currentUser && roomCreatorId === currentUser.id);
 
   return (
     <>
@@ -348,23 +351,35 @@ export default function Sidebar({
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-foreground">{roomName}</h2>
                 {isAdmin && (
-                  <Edit2
-                    className="h-4 w-4 text-foreground cursor-pointer transition-colors hover:text-yellow-500"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-foreground transition-colors hover:text-yellow-500 hover:bg-yellow-500/10"
                     onClick={() => setEditingRoomName(true)}
-                  />
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
             )}
             {isAdmin ? (
-              <Trash2
-                className="h-5 w-5 text-foreground cursor-pointer transition-colors hover:text-red-500"
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-foreground transition-colors hover:text-red-500 hover:bg-red-500/10"
                 onClick={() => setShowDeletePopup(true)}
-              />
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
             ) : (
-              <ExitIcon
-                className="h-5 w-5 text-foreground cursor-pointer transition-colors hover:text-red-500"
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-foreground transition-colors hover:text-red-500 hover:bg-red-500/10"
                 onClick={() => setShowExitPopup(true)}
-              />
+              >
+                <ExitIcon className="h-5 w-5" />
+              </Button>
             )}
           </div>
 
@@ -436,20 +451,27 @@ export default function Sidebar({
                     {page.title || `Untitled Page ${idx + 1}`}
                   </button>
                 )}
-                <div className="flex items-center gap-2">
-                  <Edit2
-                    className="h-4 w-4 text-muted-foreground hover:text-yellow-500 transition cursor-pointer"
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-yellow-500 hover:bg-yellow-500/10"
                     onClick={() => setEditingPageId(page.id)}
-                  />
-                  {/* Delete page button */}
-                  <X
-                    className={`h-4 w-4 text-muted-foreground hover:text-red-500 transition cursor-pointer ${deletingPageIds[page.id] ? "opacity-50 pointer-events-none" : ""
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 ${deletingPageIds[page.id] ? "opacity-50 pointer-events-none" : ""
                       }`}
                     onClick={() => {
                       setSelectedPageId(page.id);
                       setShowConfirm(true);
                     }}
-                  />
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}
