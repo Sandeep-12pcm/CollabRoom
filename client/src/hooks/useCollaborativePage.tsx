@@ -39,6 +39,7 @@ export function useCollaborativePage(
     user_id: string;
     display_name: string;
   } | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const editingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
@@ -156,6 +157,7 @@ export function useCollaborativePage(
 
       socket.on("connect", () => {
         if (!mounted) return;
+        setIsConnected(true);
         socket.emit("join-page", pageId, roomId);
       });
 
@@ -204,6 +206,7 @@ export function useCollaborativePage(
       });
 
       socket.on("disconnect", (reason: any) => {
+        setIsConnected(false);
       });
     })();
 
@@ -394,5 +397,6 @@ export function useCollaborativePage(
     socket: socketRef.current,
     selectedLanguage,
     updateLanguage,
+    isConnected,
   };
 }

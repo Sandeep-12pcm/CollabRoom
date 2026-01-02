@@ -1,7 +1,14 @@
 import React from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { Terminal } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -18,70 +25,54 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   title = "Delete Confirmation",
   message = "Are you sure you want to delete this page? This action cannot be undone.",
 }) => {
-  if (typeof document === "undefined") return null;
+  return (
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <AlertDialogContent className="bg-[#1E1E2E] text-gray-100 rounded-xl shadow-2xl border border-[#2A2A40] p-0 overflow-hidden font-mono max-w-md w-[95%]">
+        {/* Header Bar like a Code Editor */}
+        <div className="flex items-center justify-between bg-[#2D2D3A] px-4 py-2 border-b border-[#3E3E55]">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-red-500"></span>
+            <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
+            <span className="w-3 h-3 rounded-full bg-green-500"></span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <Terminal size={14} /> CollabRoom.js
+          </div>
+        </div>
 
-  return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-[9999]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          {/* Modal Window */}
-          <motion.div
-            initial={{ y: 50, opacity: 0, scale: 0.95 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 20, opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="bg-[#1E1E2E] text-gray-100 rounded-xl shadow-2xl border border-[#2A2A40] w-[95%] max-w-md overflow-hidden font-mono"
-          >
-            {/* Header Bar like a Code Editor */}
-            <div className="flex items-center justify-between bg-[#2D2D3A] px-4 py-2 border-b border-[#3E3E55]">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
-                <span className="w-3 h-3 rounded-full bg-green-500"></span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Terminal size={14} /> CollabRoom.js
-              </div>
-            </div>
+        {/* Content */}
+        <div className="p-6 text-left">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold text-[#F38BA8] mb-3 flex items-center gap-2">
+              ⚠️ {title}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
 
-            {/* Content */}
-            <div className="p-6 text-left">
-              <h2 className="text-lg font-semibold text-[#F38BA8] mb-3">
-                ⚠️ {title}
-              </h2>
-              <pre className="text-sm text-[#A6ADC8] bg-[#2D2D3A] p-3 rounded-md border border-[#3E3E55] overflow-x-auto whitespace-pre-wrap">
-{`// System Message:
+          <pre className="text-sm text-[#A6ADC8] bg-[#2D2D3A] p-3 rounded-md border border-[#3E3E55] overflow-x-auto whitespace-pre-wrap mb-6">
+            {`// System Message:
 "${message}"`}
-              </pre>
+          </pre>
 
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-md bg-[#2D2D3A] hover:bg-[#3E3E55] text-gray-300 transition border border-[#3E3E55]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    onConfirm();
-                    onClose();
-                  }}
-                  className="px-4 py-2 rounded-md bg-[#F38BA8] hover:bg-[#F87171] text-black font-semibold transition"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>,
-    document.body
+          <AlertDialogFooter className="flex flex-row justify-end gap-3 sm:space-x-0">
+            <AlertDialogCancel
+              onClick={onClose}
+              className="px-4 py-2 rounded-md bg-[#2D2D3A] hover:bg-[#3E3E55] text-gray-300 transition border border-[#3E3E55] hover:text-white"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onConfirm();
+                onClose();
+              }}
+              className="px-4 py-2 rounded-md bg-[#F38BA8] hover:bg-[#F87171] text-black font-semibold transition border-none"
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 
