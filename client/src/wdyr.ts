@@ -5,6 +5,6 @@ if (import.meta.env.DEV) {
     "@welldone-software/why-did-you-render"
   );
   whyDidYouRender(React, {
-    trackAllPureComponents: true,
+    trackAllPureComponents: false,
   });
 }
