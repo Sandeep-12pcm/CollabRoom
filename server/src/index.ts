@@ -16,17 +16,31 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
-const app = express();
-app.use(cors({
-  origin: CLIENT_ORIGIN,  // allow frontend
+const allowedOrigins = CLIENT_ORIGIN ? CLIENT_ORIGIN.split(",").map(origin => origin.trim()) : [];
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`CORS blocked for origin: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
-}));
+};
+
+const app = express();
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/api/ai-code-assistant', aiRoute);
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: CLIENT_ORIGIN, methods: ["GET", "POST"] },
+  cors: corsOptions,
 });
 
 io.use(async (socket, next) => {
