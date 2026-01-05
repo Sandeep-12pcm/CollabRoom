@@ -386,6 +386,5 @@ export function useCollaborativePage(
     socket: socketRef.current,
     selectedLanguage,
     updateLanguage,
-    isConnected,
   };
 }
