@@ -7,7 +7,7 @@ import ComingSoon from "@/components/loading/ComingSoon";
 export const SubscriptionDialog = () => {
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [commingsoon, setCommingSoon] = useState(false);
+  const [comingSoon, setComingSoon] = useState(false);
   const [email, setEmail] = useState("");
 
   const navigate = useNavigate();
@@ -73,7 +73,7 @@ export const SubscriptionDialog = () => {
       <div className="flex justify-center mt-12 mb-20">
         <motion.button
           onClick={() => {
-            setCommingSoon(true);
+            setComingSoon(true);
             setOpen(true);
           }}
           className="relative px-10 py-4 text-lg font-semibold rounded-xl text-black dark:text-white bg-gradient-to-r from-yellow-400 to-yellow-00 shadow-xl"
@@ -104,7 +104,7 @@ export const SubscriptionDialog = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
             >
-              {commingsoon ? (
+              {comingSoon ? (
                 // 👉 Show Coming Soon inside modal
                 <div className="w-full h-full relative">
                   <ComingSoon />
@@ -112,7 +112,7 @@ export const SubscriptionDialog = () => {
                   {/* Close Button */}
                   <button
                     onClick={() => {
-                      setCommingSoon(false);
+                      setComingSoon(false);
                       setOpen(false);
                     }}
                     className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
@@ -127,7 +127,7 @@ export const SubscriptionDialog = () => {
                   <button
                     onClick={() => {
                       setOpen(false);
-                      setCommingSoon(false);
+                      setComingSoon(false);
                     }}
                     className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
                   >
@@ -174,7 +174,7 @@ export const SubscriptionDialog = () => {
                             Save{" "}
                             {Math.round(
                               ((plan.original - plan.price) / plan.original) *
-                                100
+                              100
                             )}
                             % 🎉
                           </div>

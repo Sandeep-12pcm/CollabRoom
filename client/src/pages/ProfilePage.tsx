@@ -96,9 +96,7 @@ export async function uploadAvatar(profileId: string, file: File) {
 export default function ProfilePage() {
   const { loading, user, profile, rooms, refresh, setProfile, setRooms } =
     useProfile();
-  const { toast } = useToast
-    ? useToast()
-    : { toast: (t: any) => console.log(t) };
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const [editName, setEditName] = useState("");

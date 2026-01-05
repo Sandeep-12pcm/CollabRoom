@@ -431,7 +431,7 @@ body {
     id, roomName, roomCode, participants, currentUser, navigate,
     handleCopy, shareRoom, addPage, pages,
     activePageId, setActivePageId, showDeletePopup, setShowDeletePopup,
-    deleteRoom, queryClient
+    deleteRoom, queryClient, roomOwnerId
   ]);
 
   const editorOptions = useMemo(() => ({

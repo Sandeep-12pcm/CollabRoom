@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import Room from "./pages/Room";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import CommingSoon from "./components/loading/ComingSoon";
 import { FeedbackForm } from "./pages/FeedbackForm";
 import ProfilePage from "./pages/ProfilePage";
 import ContactForm from "./pages/ContactForm";
