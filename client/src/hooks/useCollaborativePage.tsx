@@ -35,16 +35,12 @@ export function useCollaborativePage(
   const isMountedRef = useRef(true);
   const { toast } = useToast();
   const currentUserRef = useRef<any>(null);
-<<<<<<< HEAD
-  const [isConnected, setIsConnected] = useState(false);
-=======
   const [editingUser, setEditingUser] = useState<{
     user_id: string;
     display_name: string;
   } | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const editingTimerRef = useRef<NodeJS.Timeout | null>(null);
->>>>>>> test
 
   /**
    * Load initial content and title from Supabase.
@@ -208,8 +204,6 @@ export function useCollaborativePage(
           return copy;
         });
       });
-<<<<<<< HEAD
-=======
       socket.on("editing-started", ({ user_id, display_name }) => {
         setEditingUser({ user_id, display_name });
         console.log("Editing started:", { user_id, display_name });
@@ -222,7 +216,6 @@ export function useCollaborativePage(
       socket.on("disconnect", (reason: any) => {
         setIsConnected(false);
       });
->>>>>>> test
     })();
 
     return () => {

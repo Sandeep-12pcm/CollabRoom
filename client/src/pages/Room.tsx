@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Copy, Check, Loader2 } from "lucide-react";
+import { Copy, Check, Loader2, Menu, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AIAssistant } from "@/components/AIAssistant";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,10 +25,8 @@ import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Loader2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SEO } from "@/components/SEO";
-import { Download } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 
@@ -118,11 +116,7 @@ const Room = () => {
   const isMobile = useIsMobile();
   const theme = localStorage.getItem("theme") as "light" | "dark" | null;
 
-<<<<<<< HEAD
-  const { isConnected, selectedLanguage, updateLanguage } = collaborative;
-=======
   const { editingUser, selectedLanguage, updateLanguage, isConnected } = collaborative;
->>>>>>> test
   const setContent = collaborative?.setContent ?? (() => { });
   const language = selectedLanguage || "javascript";
   const activePage = pages.find((p) => p.id === activePageId);
