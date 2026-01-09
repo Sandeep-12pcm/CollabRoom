@@ -131,14 +131,14 @@ export default function ProfilePage() {
 
   const retentionOptions = profile?.is_pro
     ? [
-        { label: "72 hours", hours: 72 },
-        { label: "1 week", hours: 24 * 7 },
-        { label: "1 month", hours: 24 * 30 },
-      ]
+      { label: "72 hours", hours: 72 },
+      { label: "1 week", hours: 24 * 7 },
+      { label: "1 month", hours: 24 * 30 },
+    ]
     : [
-        { label: "24 hours", hours: 24 },
-        { label: "72 hours", hours: 72 },
-      ];
+      { label: "24 hours", hours: 24 },
+      { label: "72 hours", hours: 72 },
+    ];
 
   // Save profile (name + avatar)
   const handleSaveProfile = async () => {
@@ -308,16 +308,19 @@ export default function ProfilePage() {
       </header>
 
       <main className="container mx-auto px-4 py-10">
+        <div className="mb-8">
+          <AdSlot size="medium" format="horizontal" slot="7494183840" />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
           {/* Left column */}
           <motion.div initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.28 }}>
             <Card className="p-6 rounded-2xl bg-white dark:bg-[#11121a] border border-gray-200 dark:border-[#1f2937] shadow-lg">
               <div className="flex items-center gap-4">
                 {/* Profile picture */}
                 <div
-                  className={`relative w-24 h-24 shrink-0 rounded-full overflow-hidden border-4 ${
-                    profile?.is_pro ? "border-yellow-400" : "border-slate-600"
-                  }`}
+                  className={`relative w-24 h-24 shrink-0 rounded-full overflow-hidden border-4 ${profile?.is_pro ? "border-yellow-400" : "border-slate-600"
+                    }`}
                 >
                   <img
                     src={profile?.avatar_url || "/default_dp.jpg"}

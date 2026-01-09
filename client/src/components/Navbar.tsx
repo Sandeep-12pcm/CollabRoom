@@ -6,7 +6,7 @@ import { Code2, Menu, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { joinDemoRoom } from "@/utils/demoRoom";
 import { useSubscription } from "@/hooks/useSubscription";
-import { AdSlot } from "./AdSlot";
+
 
 /**
  * Navbar Component
@@ -122,12 +122,8 @@ export const Navbar = () => {
               Feedback
             </Link>
 
-            {/* Desktop Only AdSlot */}
-            <div className="hidden lg:block w-48">
-              <AdSlot size="small" format="horizontal" slot="7494183840" />
-            </div>
-
             <ThemeToggle />
+
 
             {/* === Conditional Profile / Auth Buttons === */}
             {isLoggedIn ? (
@@ -270,13 +266,10 @@ export const Navbar = () => {
                 </Button>
               )}
 
-              {/* Mobile AdSlot */}
-              <div className="mt-4 pt-4 border-t border-border flex justify-center">
-                <AdSlot size="small" format="horizontal" slot="7494183840" />
-              </div>
             </div>
           </div>
         )}
+
       </div>
     </nav>
   );

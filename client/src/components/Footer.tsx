@@ -1,9 +1,13 @@
 import { motion } from "framer-motion";
 import { Code2, Github, Twitter, Linkedin } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { AdSlot } from "./AdSlot";
 
 export const Footer = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isPublisherPage = location.pathname === "/" || location.pathname === "/home" || location.pathname === "/profile";
 
   const sections = [
     {
@@ -47,7 +51,14 @@ export const Footer = () => {
 
   return (
     <footer className="relative bg-card/50 border-t border-border backdrop-blur-sm">
+      {/* Ad Slot at top of Footer - only on publisher pages */}
+      {isPublisherPage && (
+        <div className="container mx-auto px-4 pt-8">
+          <AdSlot size="medium" format="horizontal" slot="7494183840" />
+        </div>
+      )}
       {/* Subtle gradient overlay */}
+
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/50 pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
