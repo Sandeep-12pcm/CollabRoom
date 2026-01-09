@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Code2, Github, Twitter, Linkedin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { AdSlot } from "./AdSlot";
 
 export const Footer = () => {
   const navigate = useNavigate();
@@ -13,14 +12,12 @@ export const Footer = () => {
         { label: "Home", action: () => navigate("/") },
         { label: "Create Room", action: () => navigate("/create") },
         { label: "Join Room", action: () => navigate("/join") },
-        { label: "Pricing", action: () => navigate("/pricing") },
       ],
     },
     {
       title: "Product",
       items: [
         { label: "Real-time Collaboration", action: () => navigate("/features") },
-        { label: "Multi-page Rooms", action: () => navigate("/features") },
         { label: "AI Assistant", action: () => navigate("/features") },
         { label: "Code Sharing", action: () => navigate("/features") },
       ],
@@ -30,7 +27,6 @@ export const Footer = () => {
       items: [
         { label: "Documentation", action: () => navigate("/docs") },
         { label: "Help Center", action: () => navigate("/help") },
-        { label: "FAQs", action: () => navigate("/faq") },
         { label: "Contact Support", action: () => navigate("/contact") },
       ],
     },
@@ -44,89 +40,71 @@ export const Footer = () => {
   ];
 
   const socialLinks = [
-    { icon: Github, href: "https://github.com/Sandeep-12pcm" },
-    { icon: Twitter, href: "https://x.com/Sandeep36701746" },
-    { icon: Linkedin, href: "https://www.linkedin.com/in/sandeep12pcm/" },
+    { icon: Github, href: "https://github.com/Sandeep-12pcm", label: "GitHub" },
+    { icon: Twitter, href: "https://x.com/Sandeep36701746", label: "Twitter" },
+    { icon: Linkedin, href: "https://www.linkedin.com/in/sandeep12pcm/", label: "LinkedIn" },
   ];
 
   return (
-    <footer className="relative bg-background border-t border-border overflow-hidden font-mono">
-      {/* === Ambient Background Glow === */}
-      <div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 30%, rgba(96,165,250,0.25), transparent 50%), radial-gradient(circle at 80% 70%, rgba(236,72,153,0.2), transparent 50%)",
-        }}
-      />
+    <footer className="relative bg-card/50 border-t border-border backdrop-blur-sm">
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/50 pointer-events-none" />
 
-      {/* === Animated Sweep Line === */}
-      <motion.div
-        initial={{ x: "-100%" }}
-        animate={{ x: ["-100%", "100%"] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-        className="absolute top-0 left-0 w-full h-full pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(147,197,253,0.07) 50%, transparent)",
-        }}
-      />
-
-      {/* === Main Footer Content === */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10 mb-10">
-          {/* --- Brand --- */}
-          <div className="space-y-4 md:col-span-2">
-            <Link to="/" className="flex items-center gap-2 group">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        {/* Main Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 lg:gap-12">
+          {/* Brand Section */}
+          <div className="col-span-2 space-y-4">
+            <Link to="/" className="inline-flex items-center gap-2.5 group">
               <motion.div
-                whileHover={{ rotate: 10, scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 200 }}
-                className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent shadow-lg"
+                whileHover={{ rotate: 8, scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="p-2 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors"
               >
-                <Code2 className="h-6 w-6 text-white" />
+                <Code2 className="h-5 w-5 text-primary" />
               </motion.div>
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <span className="text-lg font-semibold text-foreground">
                 CollabRoom
               </span>
             </Link>
 
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
-              A real-time collaborative workspace to code, share ideas, and build
-              together — designed for developers and students.
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+              Real-time collaborative workspace for developers. Code, share, and build together.
             </p>
 
-            <div className="flex gap-4 pt-3">
-              {socialLinks.map(({ icon: Icon, href }, i) => (
+            {/* Social Links */}
+            <div className="flex items-center gap-3 pt-2">
+              {socialLinks.map(({ icon: Icon, href, label }) => (
                 <motion.a
-                  key={i}
+                  key={label}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  whileHover={{ y: -3, scale: 1.1 }}
+                  whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  aria-label={label}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-4 w-4" />
                 </motion.a>
               ))}
             </div>
           </div>
 
-          {/* --- Sections --- */}
+          {/* Navigation Sections */}
           {sections.map(({ title, items }) => (
-            <div key={title}>
-              <h3 className="font-semibold mb-4 text-foreground tracking-wide uppercase text-xs">
+            <div key={title} className="space-y-3">
+              <h3 className="text-xs font-medium text-foreground uppercase tracking-wider">
                 {title}
               </h3>
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2">
                 {items.map(({ label, action }) => (
                   <li key={label}>
                     <button
                       onClick={action}
-                      className="text-muted-foreground hover:text-primary transition-colors relative group w-full text-left"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 text-left"
                     >
                       {label}
-                      <span className="absolute left-0 bottom-0 h-[1px] w-0 bg-primary group-hover:w-full transition-all duration-300" />
                     </button>
                   </li>
                 ))}
@@ -135,25 +113,16 @@ export const Footer = () => {
           ))}
         </div>
 
-        {/* --- Footer Ad (Free Users Only via AdSlot logic) --- */}
-        <div className="mb-10 w-full flex justify-center">
-          <AdSlot size="medium" format="auto" slot="3938082210" />
-        </div>
-
-        {/* === Bottom Line === */}
-        <div className="relative border-t border-border pt-6 mt-8 text-center text-muted-foreground text-sm">
-          <motion.div
-            initial={{ width: "10%" }}
-            animate={{ width: ["10%", "80%", "10%"] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-0 left-1/2 -translate-x-1/2 h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent"
-          />
-
-          <p className="text-sm">
-            © {new Date().getFullYear()}{" "}
-            <span className="text-primary font-semibold">CollabRoom</span>. All
-            rights reserved.
-          </p>
+        {/* Divider */}
+        <div className="mt-12 pt-6 border-t border-border/50">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} CollabRoom. All rights reserved.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Built with ❤️ for developers
+            </p>
+          </div>
         </div>
       </div>
     </footer>

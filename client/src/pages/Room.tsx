@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import JSZip from "jszip";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,7 +29,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SEO } from "@/components/SEO";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
+// import { useCursorPresence } from "@/hooks/useCursorPresence";
+// import { CursorOverlay } from "@/components/CursorOverlay";
+import { useRoomPermissions } from "@/hooks/useRoomPermissions";
 
 interface Participant {
   id: string;
@@ -50,7 +53,7 @@ interface Page {
  * - Code editor and Markdown preview
  * - Real-time participant tracking
  * - Page management
- * - Chat/AI assistant integration
+ * - Chat/AI assistant integration  
  */
 const Room = () => {
   const { id } = useParams<{ id: string }>();
@@ -86,7 +89,9 @@ const Room = () => {
   const roomName = roomMetadata?.name || "Loading...";
   const roomCode = roomMetadata?.room_code || "";
   const roomOwnerId = roomMetadata?.created_by || null;
-
+  const isOwner = roomOwnerId === currentUser?.id;
+  // Room permissions for guests
+  const permissions = useRoomPermissions(id || null, isOwner);
   // 2. Fetch Pages (Metadata only for cache)
   const { data: pages = [] } = useQuery<Page[]>({
     queryKey: ["room-pages", id],
@@ -342,10 +347,103 @@ body {
       });
     }
   };
+  const languageExtensions: Record<string, string> = {
+    javascript: "js",
+    typescript: "ts",
+    python: "py",
+    java: "java",
+    cpp: "cpp",
+    html: "html",
+    css: "css",
+    markdown: "md",
+    any: "txt",
+  };
 
-  const handlezip = () => {
-    console.log("clicked download")
-  }
+  const handlezip = async () => {
+    if (pages.length === 0) {
+      toast({
+        title: "No Pages",
+        description: "There are no pages to download",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const zip = new JSZip();
+
+      pages.forEach((page) => {
+        let contentObj: Record<string, any> = {};
+        try {
+          contentObj = typeof page.content === "string"
+            ? JSON.parse(page.content)
+            : (page.content || {});
+        } catch {
+          contentObj = { any: page.content || "" };
+        }
+
+        // If contentObj is not an object or is null, wrap it
+        if (typeof contentObj !== 'object' || contentObj === null) {
+          contentObj = { any: String(contentObj || "") };
+        }
+
+        // Create a folder for each page
+        const safeTitle = page.title.replace(/[^a-zA-Z0-9\s]/g, "").trim() || "Untitled";
+        const folder = zip.folder(safeTitle);
+
+        if (!folder) return;
+
+        // Add each language's content as a separate file
+        Object.entries(contentObj).forEach(([lang, code]) => {
+          // Skip internal fields if any, or empty code
+          if (!lang || lang === 'id') return;
+
+          const ext = languageExtensions[lang] || "txt";
+          const fileName = `${safeTitle}.${ext}`;
+
+          // CRITICAL FIX: Ensure code is a string. JSZip throws if it gets an object.
+          let finalCode = "";
+          if (typeof code === "string") {
+            finalCode = code;
+          } else if (code !== null && code !== undefined) {
+            try {
+              finalCode = JSON.stringify(code, null, 2);
+            } catch {
+              finalCode = String(code);
+            }
+          }
+
+          if (finalCode) {
+            folder.file(fileName, finalCode);
+          }
+        });
+      });
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safeRoomName = roomName.replace(/[^a-zA-Z0-9\s]/g, "").trim() || "room";
+
+      a.href = url;
+      a.download = `${safeRoomName}-pages.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Downloaded!",
+        description: "All pages have been downloaded as a zip file",
+      });
+    } catch (err) {
+      console.error("Zip error:", err);
+      toast({
+        title: "Error",
+        description: "Failed to create zip file",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(roomCode);
@@ -416,7 +514,7 @@ body {
     navigate,
     handleCopy,
     shareRoom,
-    addPage,
+    addPage: permissions.allow_guests_create_pages || permissions.isOwner ? addPage : undefined,
     pages,
     activePage: activePageId,
     setActivePage: setActivePageId,
@@ -427,11 +525,15 @@ body {
     setRoomName: (name: string) => {
       queryClient.setQueryData(["room-metadata", id], (old: any) => ({ ...old, name }));
     },
+    canCreatePages: permissions.allow_guests_create_pages || permissions.isOwner,
+    canDeletePages: permissions.allow_guests_delete_pages || permissions.isOwner,
+    canEdit: permissions.allow_guests_edit || permissions.isOwner,
+    isOwner: permissions.isOwner,
   }), [
     id, roomName, roomCode, participants, currentUser, navigate,
     handleCopy, shareRoom, addPage, pages,
     activePageId, setActivePageId, showDeletePopup, setShowDeletePopup,
-    deleteRoom, queryClient, roomOwnerId
+    deleteRoom, queryClient, roomOwnerId, permissions
   ]);
 
   const editorOptions = useMemo(() => ({
@@ -449,12 +551,8 @@ body {
   const markdownRemarkPlugins = useMemo(() => [remarkGfm, remarkBreaks], []);
   const markdownRehypePlugins = useMemo(() => [rehypeRaw], []);
 
-
-
-  // ...
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-hero">
       <SEO
         title={activePage?.title || roomName || "Room"}
         description={`Collaborate in real-time in ${roomName}`}
@@ -462,7 +560,7 @@ body {
       <div className="pt-16 flex flex-row min-h-screen">
         <Navbar />
         {!isMobile && (
-          <div className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border/50 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto scrollbar-thin bg-card/50 backdrop-blur-sm">
             <Sidebar {...sidebarProps} />
           </div>
         )}
@@ -488,11 +586,11 @@ body {
                 {isMobile && (
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="md:hidden">
-                        <Menu className="h-6 w-6" />
+                      <Button variant="ghost" size="icon" className="md:hidden hover:bg-muted/80 transition-colors">
+                        <Menu className="h-5 w-5" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="p-0 w-72">
+                    <SheetContent side="left" className="p-0 w-72 border-r border-border/50">
                       <Sidebar
                         {...sidebarProps}
                         className="w-full h-full border-none pt-12"
@@ -503,24 +601,6 @@ body {
                 <h2 className="font-semibold text-foreground ">
                   {activePage?.title || "Untitled Page"}
                 </h2>
-                <div className="flex items-center gap-2">
-                  {!currentUser ? (
-                    <div className="flex items-center gap-1.5 text-red-500 text-xs font-medium bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                      Disconnected
-                    </div>
-                  ) : !isConnected ? (
-                    <div className="flex items-center gap-1.5 text-amber-500 text-xs font-medium bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      Connecting...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 text-green-500 text-xs font-medium bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                      Connected
-                    </div>
-                  )}
-                </div>
                 <Select value={language} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="w-[100px] md:w-[180px]">
                     <SelectValue placeholder="Select language" />

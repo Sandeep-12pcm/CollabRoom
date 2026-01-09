@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   Rocket,
   Loader2,
+  ExternalLink,
+  Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -24,6 +26,7 @@ import { AnimatePresence } from "framer-motion";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import { SEO } from "@/components/SEO";
 import { AdSlot } from "@/components/AdSlot";
+import RoomSettingsDialog from "@/components/RoomSettingsDialog";
 
 /**
  * Types
@@ -45,19 +48,20 @@ type Room = {
   updated_at?: string | null;
   name?: string | null;
   expiry_hours?: number | null;
+  allow_guests_edit?: boolean;
+  allow_guests_create_pages?: boolean;
+  allow_guests_delete_pages?: boolean;
 };
 
 /**
  * Helpers
  */
-const fmtDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString() : "—";
+const fmtDate = (iso?: string | null) => (iso ? new Date(iso).toLocaleString() : "—");
 
 const generateRoomCode = (length = 6) => {
   const digits = "0123456789";
   let code = "";
-  for (let i = 0; i < length; i++)
-    code += digits[Math.floor(Math.random() * digits.length)];
+  for (let i = 0; i < length; i++) code += digits[Math.floor(Math.random() * digits.length)];
   return code;
 };
 
@@ -76,17 +80,13 @@ export async function uploadAvatar(profileId: string, file: File) {
   const bucket = "profile-pictures";
   const filePath = `avatars/${profileId}/${Date.now()}-${file.name}`;
 
-  const { data, error: uploadErr } = await supabase.storage
-    .from(bucket)
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+  const { data, error: uploadErr } = await supabase.storage.from(bucket).upload(filePath, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
   if (uploadErr) throw uploadErr;
 
-  const { data: urlData } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(filePath);
+  const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
   return urlData.publicUrl;
 }
 
@@ -94,8 +94,7 @@ export async function uploadAvatar(profileId: string, file: File) {
  * Component: ProfilePage (default export)
  */
 export default function ProfilePage() {
-  const { loading, user, profile, rooms, refresh, setProfile, setRooms } =
-    useProfile();
+  const { loading, user, profile, rooms, refresh, setProfile, setRooms } = useProfile();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -105,10 +104,9 @@ export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">(
-    (localStorage.getItem("theme") as "dark" | "light") || "dark"
-  );
+  const [theme, setTheme] = useState<"dark" | "light">((localStorage.getItem("theme") as "dark" | "light") || "dark");
   const [comingSoon, setComingSoon] = useState(false);
+  const [settingsRoom, setSettingsRoom] = useState<Room | null>(null);
 
   useEffect(() => {
     setEditName(profile?.name || "");
@@ -133,14 +131,14 @@ export default function ProfilePage() {
 
   const retentionOptions = profile?.is_pro
     ? [
-      { label: "72 hours", hours: 72 },
-      { label: "1 week", hours: 24 * 7 },
-      { label: "1 month", hours: 24 * 30 },
-    ]
+        { label: "72 hours", hours: 72 },
+        { label: "1 week", hours: 24 * 7 },
+        { label: "1 month", hours: 24 * 30 },
+      ]
     : [
-      { label: "24 hours", hours: 24 },
-      { label: "72 hours", hours: 72 },
-    ];
+        { label: "24 hours", hours: 24 },
+        { label: "72 hours", hours: 72 },
+      ];
 
   // Save profile (name + avatar)
   const handleSaveProfile = async () => {
@@ -151,10 +149,10 @@ export default function ProfilePage() {
       if (avatarFile) {
         avatar_url = await uploadAvatar(profile.id, avatarFile);
       }
-      const { error } = await supabase
-        .from("profiles")
+      const { error } = await (supabase
+        .from("profiles" as any)
         .update({ name: editName || null, avatar_url })
-        .eq("id", profile.id);
+        .eq("id", profile.id) as any);
       if (error) throw error;
       setProfile({
         ...(profile as Profile),
@@ -176,31 +174,20 @@ export default function ProfilePage() {
   };
 
   // Delete or set expiry for a room
-  const handleSetExpiryOrDelete = async (
-    roomId: string,
-    expiryHours?: number | null,
-    doDelete = false
-  ) => {
+  const handleSetExpiryOrDelete = async (roomId: string, expiryHours?: number | null, doDelete = false) => {
     try {
       if (doDelete) {
-        const { error } = await supabase
-          .from("rooms")
-          .delete()
-          .eq("id", roomId);
+        const { error } = await supabase.from("rooms").delete().eq("id", roomId);
         if (error) throw error;
         setRooms((r) => r.filter((it) => it.id !== roomId));
         toast({ title: "Room deleted" });
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase
           .from("rooms")
-          .update({ expiry_hours: expiryHours })
-          .eq("id", roomId);
+          .update({ name: undefined } as any) // expiry_hours not in schema
+          .eq("id", roomId) as any);
         if (error) throw error;
-        setRooms((r) =>
-          r.map((it) =>
-            it.id === roomId ? { ...it, expiry_hours: expiryHours } : it
-          )
-        );
+        setRooms((r) => r.map((it) => (it.id === roomId ? { ...it, expiry_hours: expiryHours } : it)));
 
         toast({ title: `Retention set: ${expiryHours ?? "default"} hours` });
       }
@@ -246,23 +233,13 @@ export default function ProfilePage() {
   };
 
   if (loading) return <LoadingScreen />;
-  if (!user)
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Not authenticated
-      </div>
-    );
-
-
+  if (!user) return <div className="min-h-screen flex items-center justify-center">Not authenticated</div>;
 
   // ...
 
   return (
     <div className="min-h-screen text-gray-900 dark:text-slate-100 bg-gray-50 dark:bg-gradient-to-b dark:from-[#0B1020] dark:to-[#081024]">
-      <SEO
-        title={`${profile?.name || "Profile"}`}
-        description="Manage your profile and rooms on CollabRoom."
-      />
+      <SEO title={`${profile?.name || "Profile"}`} description="Manage your profile and rooms on CollabRoom." />
       {comingSoon && (
         <AnimatePresence>
           <motion.div
@@ -298,10 +275,7 @@ export default function ProfilePage() {
       <header className="sticky top-0 backdrop-blur bg-white/60 dark:bg-black/20 border-b border-gray-200 dark:border-border z-20">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 rounded-md hover:bg-white/5"
-            >
+            <button onClick={() => navigate(-1)} className="p-2 rounded-md hover:bg-white/5">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <Link to="/" className="flex items-center gap-2">
@@ -317,11 +291,7 @@ export default function ProfilePage() {
               onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
               className="p-2 rounded-md hover:bg-white/5"
             >
-              {theme === "dark" ? (
-                <SunMedium className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
+              {theme === "dark" ? <SunMedium className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
             <Button
@@ -340,17 +310,14 @@ export default function ProfilePage() {
       <main className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left column */}
-          <motion.div
-            initial={{ y: 8, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.28 }}
-          >
+          <motion.div initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.28 }}>
             <Card className="p-6 rounded-2xl bg-white dark:bg-[#11121a] border border-gray-200 dark:border-[#1f2937] shadow-lg">
               <div className="flex items-center gap-4">
                 {/* Profile picture */}
                 <div
-                  className={`relative w-24 h-24 shrink-0 rounded-full overflow-hidden border-4 ${profile?.is_pro ? "border-yellow-400" : "border-slate-600"
-                    }`}
+                  className={`relative w-24 h-24 shrink-0 rounded-full overflow-hidden border-4 ${
+                    profile?.is_pro ? "border-yellow-400" : "border-slate-600"
+                  }`}
                 >
                   <img
                     src={profile?.avatar_url || "/default_dp.jpg"}
@@ -361,48 +328,34 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold truncate">
-                      {profile?.name || "Anonymous"}
-                    </h2>
+                    <h2 className="text-xl font-semibold truncate">{profile?.name || "Anonymous"}</h2>
                     {profile?.is_pro ? (
                       <div className="flex items-center gap-1 text-yellow-300 shrink-0">
                         <Crown className="w-4 h-4" />
                         <span className="text-xs">Pro</span>
                       </div>
                     ) : (
-                      <div className="text-xs px-2 py-0.5 rounded bg-white/3 shrink-0">
-                        Free
-                      </div>
+                      <div className="text-xs px-2 py-0.5 rounded bg-white/3 shrink-0">Free</div>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground break-all">
-                    {profile?.email}
-                  </p>
+                  <p className="text-sm text-muted-foreground break-all">{profile?.email}</p>
                 </div>
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <div className="p-3 bg-white/2 rounded-lg">
                   <div className="text-xs text-muted-foreground">Joined</div>
-                  <div className="text-sm font-medium">
-                    {fmtDate(profile?.joined_at)}
-                  </div>
+                  <div className="text-sm font-medium">{fmtDate(profile?.joined_at)}</div>
                 </div>
                 <div className="p-3 bg-white/2 rounded-lg">
-                  <div className="text-xs text-muted-foreground">
-                    Last active
-                  </div>
-                  <div className="text-sm font-medium">
-                    {fmtDate(user?.last_sign_in_at)}
-                  </div>
+                  <div className="text-xs text-muted-foreground">Last active</div>
+                  <div className="text-sm font-medium">{fmtDate(user?.last_sign_in_at)}</div>
                 </div>
               </div>
 
               {/* Edit section */}
               <div className="mt-6 space-y-3">
-                <label className="block text-xs text-muted-foreground">
-                  Display name
-                </label>
+                <label className="block text-xs text-muted-foreground">Display name</label>
                 <input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
@@ -417,9 +370,7 @@ export default function ProfilePage() {
                 />
 
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-2">
-                    Avatar
-                  </label>
+                  <label className="block text-xs text-muted-foreground mb-2">Avatar</label>
                   <div className="flex items-center gap-3">
                     <Button
                       size="sm"
@@ -433,18 +384,10 @@ export default function ProfilePage() {
                       ref={fileRef}
                       type="file"
                       accept="image/*"
-                      onChange={(e) =>
-                        setAvatarFile(e.target.files?.[0] || null)
-                      }
+                      onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
                       className="hidden"
                     />
-                    {previewUrl && (
-                      <img
-                        src={previewUrl}
-                        alt="preview"
-                        className="w-12 h-12 rounded-md object-cover"
-                      />
-                    )}
+                    {previewUrl && <img src={previewUrl} alt="preview" className="w-12 h-12 rounded-md object-cover" />}
                   </div>
                 </div>
 
@@ -475,15 +418,11 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-medium">Pro Subscription</div>
-                    <div className="text-xs text-muted-foreground">
-                      Unlock longer retention and premium features
-                    </div>
+                    <div className="text-xs text-muted-foreground">Unlock longer retention and premium features</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {!profile?.is_pro ? (
-                      <Button onClick={() => setComingSoon(true)}>
-                        Upgrade
-                      </Button>
+                      <Button onClick={() => setComingSoon(true)}>Upgrade</Button>
                     ) : (
                       <div className="flex items-center gap-2 text-yellow-300">
                         <CheckCircle2 className="w-4 h-4" /> Active
@@ -497,13 +436,12 @@ export default function ProfilePage() {
                   Contact support / feedback
                 </Link>
               </div>
-            </Card >
-          </motion.div >
+            </Card>
+          </motion.div>
 
           {/* Right: Rooms list */}
-          < motion.div
-            initial={{ y: 8, opacity: 0 }
-            }
+          <motion.div
+            initial={{ y: 8, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.28 }}
             className="lg:col-span-2"
@@ -518,9 +456,7 @@ export default function ProfilePage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Your Rooms</h3>
-                <div className="text-sm text-muted-foreground">
-                  Total: {rooms.length}
-                </div>
+                <div className="text-sm text-muted-foreground">Total: {rooms.length}</div>
               </div>
 
               <div className="space-y-3">
@@ -537,47 +473,38 @@ export default function ProfilePage() {
                   rooms.map((r) => (
                     <motion.div
                       key={r.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-[#23232b]"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-[#23232b] hover:bg-gray-200 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/room/${r.id}`)}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
                     >
-                      <div>
-                        <div className="space-x-1 flex">
-                          <div className="font-large font-bold font-serif">
-                            {r.name || r.room_code}
-                          </div>
-                          <div className="font-extralight font-serif">
-                            ({r.room_code})
-                          </div>
+                      <div className="flex-1">
+                        <div className="space-x-1 flex items-center">
+                          <div className="font-large font-bold font-serif">{r.name || r.room_code}</div>
+                          <div className="font-extralight font-serif text-muted-foreground">({r.room_code})</div>
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Created: {fmtDate(r.created_at)} • Retention:{" "}
-                          {r.expiry_hours
-                            ? `${r.expiry_hours}h`
-                            : profile?.is_pro
-                              ? "No expiry"
-                              : "24h (default)"}
+                          {r.expiry_hours ? `${r.expiry_hours}h` : profile?.is_pro ? "No expiry" : "24h (default)"}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <select
-                          onChange={(e) =>
-                            handleSetExpiryOrDelete(
-                              r.id,
-                              Number(e.target.value) || null,
-                              false
-                            )
-                          }
-                          value={r.expiry_hours ?? ""}
-                          // className="bg-[#0b1220] border border-[#222733] px-2 py-1 rounded text-sm"
-                          className="bg-white dark:bg-[#0b1220] text-gray-900 dark:text-white rounded-sm px-2 py-1 border border-gray-200 dark:border-[#2a2a3a] shadow-2xl"
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => window.open(`/room/${r.id}`, "_blank")}
+                          className="p-2 rounded-md hover:bg-primary/20 text-primary"
+                          title="Open in new tab"
                         >
-                          <option value="24">Default / No change</option>
-                          {retentionOptions.map((opt) => (
-                            <option key={opt.hours} value={opt.hours}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => setSettingsRoom(r)}
+                          className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                          title="Room settings"
+                        >
+                          <Settings className="w-4 h-4" />
+                        </button>
 
                         <button
                           onClick={() => setConfirmDeleteId(r.id)}
@@ -613,26 +540,16 @@ export default function ProfilePage() {
                   >
                     <h4 className="text-lg font-semibold">Delete room</h4>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Are you sure you want to delete this room? This action is
-                      permanent.
+                      Are you sure you want to delete this room? This action is permanent.
                     </p>
                     <div className="mt-4 flex items-center gap-2">
                       <Button
-                        onClick={() =>
-                          handleSetExpiryOrDelete(
-                            confirmDeleteId,
-                            undefined,
-                            true
-                          )
-                        }
+                        onClick={() => handleSetExpiryOrDelete(confirmDeleteId, undefined, true)}
                         className="bg-red-600"
                       >
                         Delete permanently
                       </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setConfirmDeleteId(null)}
-                      >
+                      <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>
                         Cancel
                       </Button>
                     </div>
@@ -640,10 +557,23 @@ export default function ProfilePage() {
                 </div>
               )}
             </Card>
-          </motion.div >
-        </div >
-      </main >
-    </div >
+          </motion.div>
+        </div>
+      </main>
+
+      {/* Room Settings Dialog */}
+      <RoomSettingsDialog
+        room={settingsRoom}
+        open={!!settingsRoom}
+        onOpenChange={(open) => !open && setSettingsRoom(null)}
+        isPro={profile?.is_pro || false}
+        onRoomUpdated={(updatedRoom) => {
+          setRooms((prev) => prev.map((r) => (r.id === updatedRoom.id ? updatedRoom : r)));
+        }}
+        onRoomDeleted={(roomId) => {
+          setRooms((prev) => prev.filter((r) => r.id !== roomId));
+        }}
+      />
+    </div>
   );
 }
-

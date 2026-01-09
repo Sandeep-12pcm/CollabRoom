@@ -21,7 +21,7 @@ interface Page {
   created_by: string | null;
 }
 
-interface SidebarProps {
+export interface SidebarProps {
   roomId: string | null;
   handleCopy: () => void;
   roomCode: string;
@@ -32,13 +32,17 @@ interface SidebarProps {
   currentUser: any;
   navigate: (path: string) => void;
   shareRoom: () => void;
-  addPage: () => void;
+  addPage?: () => void;
   setActivePage: (id: string | null) => void;
   showDeletePopup: boolean;
   setShowDeletePopup: (v: boolean) => void;
   deleteRoom: () => Promise<void> | void;
   setRoomName: (name: string) => void;
   roomCreatorId?: string | null;
+  canCreatePages?: boolean;
+  canDeletePages?: boolean;
+  canEdit?: boolean;
+  isOwner?: boolean;
 }
 
 export default function Sidebar({
@@ -59,6 +63,10 @@ export default function Sidebar({
   deleteRoom,
   setRoomName,
   roomCreatorId,
+  canCreatePages = true,
+  canDeletePages = false,
+  canEdit = true,
+  isOwner = false,
   className,
 }: SidebarProps & { className?: string }) {
   const [deletingPageIds, setDeletingPageIds] = useState<Record<string, boolean>>({});
@@ -77,6 +85,10 @@ export default function Sidebar({
     if (!pageId) return;
     if (!currentUser) {
       toast.warning("Login to delete pages.");
+      return;
+    }
+    if (!canDeletePages && !isOwner) {
+      toast.warning("You don't have permission to delete pages.");
       return;
     }
 
@@ -194,7 +206,7 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className={`border-r border-border bg-card p-4 flex flex-col h-full ${className}`}>
+      <aside className={`border-r border-border/50 bg-gradient-to-b from-card to-card/95 backdrop-blur-sm p-4 flex flex-col h-full ${className}`}>
         {/* Room name + edit/delete icon (Admin Only) */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
@@ -285,9 +297,11 @@ export default function Sidebar({
         <div className="flex-1 overflow-y-auto min-h-0 mb-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-muted-foreground">Pages</h3>
-            <Button size="sm" variant="ghost" onClick={addPage}>
-              <Plus className="h-4 w-4" />
-            </Button>
+            {canCreatePages && addPage && (
+              <Button size="sm" variant="ghost" onClick={addPage} title="Add new page">
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           <div className="space-y-1">
