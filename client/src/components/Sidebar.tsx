@@ -401,53 +401,52 @@ export default function Sidebar({
           )}
 
         </div>
-      </div>
-    </aside >
+      </aside>
 
 
-      {/* Delete Room Confirmation Dialog */ }
-      < ConfirmDialog
-  isOpen = { showDeletePopup }
-  onClose = {() => setShowDeletePopup(false)
-}
-onConfirm = { async() => {
-  try {
-    if (deleteRoom) {
-      await deleteRoom();
-    } else if (roomId) {
-      const { error } = await supabase.from("rooms").delete().eq("id", roomId);
-      if (error) throw error;
-    }
-  } catch (err) {
-    console.error("Failed to delete room:", err);
-    toast.error("Failed to delete room");
-  }
-}}
-title = "Delete Room?"
-message = "Are you sure you want to delete this room? This action cannot be undone."
-  />
+      {/* Delete Room Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeletePopup}
+        onClose={() => setShowDeletePopup(false)
+        }
+        onConfirm={async () => {
+          try {
+            if (deleteRoom) {
+              await deleteRoom();
+            } else if (roomId) {
+              const { error } = await supabase.from("rooms").delete().eq("id", roomId);
+              if (error) throw error;
+            }
+          } catch (err) {
+            console.error("Failed to delete room:", err);
+            toast.error("Failed to delete room");
+          }
+        }}
+        title="Delete Room?"
+        message="Are you sure you want to delete this room? This action cannot be undone."
+      />
 
-  {/* Exit Room Confirmation Dialog */ }
-  < ConfirmDialog
-isOpen = { showExitPopup }
-onClose = {() => setShowExitPopup(false)}
-onConfirm = {() => {
-  navigate("/");
-}}
-title = "Exit Room?"
-message = "Are you sure you want to exit the room?"
-  />
+      {/* Exit Room Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showExitPopup}
+        onClose={() => setShowExitPopup(false)}
+        onConfirm={() => {
+          navigate("/");
+        }}
+        title="Exit Room?"
+        message="Are you sure you want to exit the room?"
+      />
 
-  {/* Page Delete Confirmation Dialog */ }
-  < ConfirmDialog
-isOpen = { showConfirm }
-onClose = {() => setShowConfirm(false)}
-onConfirm = {() => {
-  if (selectedPageId) deletePage(selectedPageId);
-}}
-title = "Delete Page?"
-message = "Are you sure you want to delete this page? This action cannot be undone."
-  />
+      {/* Page Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => {
+          if (selectedPageId) deletePage(selectedPageId);
+        }}
+        title="Delete Page?"
+        message="Are you sure you want to delete this page? This action cannot be undone."
+      />
     </>
   );
 }
