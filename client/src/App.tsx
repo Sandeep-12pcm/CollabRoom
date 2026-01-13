@@ -12,6 +12,7 @@ import { FeedbackForm } from "./pages/FeedbackForm";
 import ProfilePage from "./pages/ProfilePage";
 import ContactForm from "./pages/ContactForm";
 import ComingSoon from "./components/loading/ComingSoon";
+import SubscriptionPage from "./components/SubscriptionPage";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/feedback" element={< FeedbackForm />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/contact" element={<ContactForm />} />
+            <Route path="/test" element={<SubscriptionPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

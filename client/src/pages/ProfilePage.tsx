@@ -18,7 +18,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { X, LogOut } from "lucide-react";
-import ComingSoon from "@/components/loading/ComingSoon";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +26,7 @@ import LoadingScreen from "@/components/loading/LoadingScreen";
 import { SEO } from "@/components/SEO";
 import { AdSlot } from "@/components/AdSlot";
 import RoomSettingsDialog from "@/components/RoomSettingsDialog";
+import SubscriptionPage from "@/components/SubscriptionPage";
 
 /**
  * Types
@@ -105,7 +105,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">((localStorage.getItem("theme") as "dark" | "light") || "dark");
-  const [comingSoon, setComingSoon] = useState(false);
+  const [subscriptionDialog, SubscriptionDialog] = useState(false);
   const [settingsRoom, setSettingsRoom] = useState<Room | null>(null);
 
   useEffect(() => {
@@ -240,7 +240,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen text-gray-900 dark:text-slate-100 bg-gray-50 dark:bg-gradient-to-b dark:from-[#0B1020] dark:to-[#081024]">
       <SEO title={`${profile?.name || "Profile"}`} description="Manage your profile and rooms on CollabRoom." />
-      {comingSoon && (
+      {subscriptionDialog && (
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
@@ -257,15 +257,18 @@ export default function ProfilePage() {
               className="relative w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl"
             >
               {/* Coming soon page */}
-              <ComingSoon />
-
-              {/* Close button */}
-              <button
-                onClick={() => setComingSoon(false)}
-                className="absolute top-4 right-4 text-white hover:text-primary transition"
-              >
-                <X className="w-7 h-7 drop-shadow-lg" />
-              </button>
+              <div className="relative">
+                {/* Close Button for SubscriptionPage view */}
+                <button
+                  onClick={() => {
+                    setSubscriptionDialog(false);
+                  }}
+                  className="absolute top-6 right-6 z-50 p-2 rounded-full bg-muted/20 hover:bg-muted/40 text-muted-foreground hover:text-foreground transition-all duration-200"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <SubscriptionPage onBack={() => setSubscriptionDialog(false)} />
+              </div>
             </motion.div>
           </motion.div>
         </AnimatePresence>
@@ -425,7 +428,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {!profile?.is_pro ? (
-                      <Button onClick={() => setComingSoon(true)}>Upgrade</Button>
+                      <Button onClick={() => navigate("/subscription")}>Upgrade</Button>
                     ) : (
                       <div className="flex items-center gap-2 text-yellow-300">
                         <CheckCircle2 className="w-4 h-4" /> Active

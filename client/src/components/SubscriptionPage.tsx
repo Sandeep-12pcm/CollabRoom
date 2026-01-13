@@ -18,7 +18,11 @@ interface Plan {
   popular?: boolean;
 }
 
-const SubscriptionPage = () => {
+interface SubscriptionPageProps {
+  onBack?: () => void;
+}
+
+const SubscriptionPage = ({ onBack }: SubscriptionPageProps) => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -116,7 +120,7 @@ const SubscriptionPage = () => {
       localStorage.setItem("subscription_plan", planId);
 
       toast.success("🎉 Subscription activated! You're now a Pro member!");
-      
+
       // Redirect to profile page
       navigate("/profile");
     } catch (error: any) {
@@ -128,13 +132,19 @@ const SubscriptionPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="container mx-auto px-4 py-6">
+    <div className="bg-background">
+      {/* Header - Only show if not in a dialog (can check via props if needed, but for now just making it less intrusive) */}
+      <div className="container mx-auto px-4 py-4">
         <Button
           variant="ghost"
-          onClick={() => navigate(-1)}
-          className="gap-2"
+          onClick={() => {
+            if (onBack) {
+              onBack();
+            } else {
+              navigate(-1);
+            }
+          }}
+          className="gap-2 sm:flex hidden"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -142,20 +152,20 @@ const SubscriptionPage = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-12 text-center">
+      <div className="container mx-auto px-4 py-4 md:py-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">
+            <Sparkles className="w-3 h-3" />
             100% OFF - Limited Time Offer!
           </span>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
+          <h1 className="text-2xl md:text-4xl font-bold mb-3 gradient-text">
             Choose Your Plan
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto">
             Unlock premium features and take your collaboration to the next level.
             All plans are <span className="text-primary font-semibold">FREE</span> for a limited time!
           </p>
@@ -163,7 +173,7 @@ const SubscriptionPage = () => {
       </div>
 
       {/* Plans Grid */}
-      <div className="container mx-auto px-4 pb-20">
+      <div className="container mx-auto px-4 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {plans.map((plan, index) => (
             <motion.div
@@ -171,16 +181,15 @@ const SubscriptionPage = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative rounded-2xl border p-6 ${
-                plan.popular
-                  ? "border-primary bg-card shadow-lg scale-105 z-10"
-                  : "border-border bg-card/50"
-              }`}
+              className={`relative rounded-2xl border p-5 flex flex-col ${plan.popular
+                ? "border-primary bg-card/50 shadow-xl md:scale-105 z-10"
+                : "border-border bg-card/30"
+                } backdrop-blur-sm`}
             >
               {/* Popular Badge */}
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                  <span className="px-4 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
                     Most Popular
                   </span>
                 </div>
@@ -188,40 +197,40 @@ const SubscriptionPage = () => {
 
               {/* Plan Icon */}
               <div
-                className={`w-14 h-14 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center text-white mb-4`}
+                className={`w-12 h-12 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center text-white mb-4 shadow-lg`}
               >
                 {plan.icon}
               </div>
 
               {/* Plan Name */}
-              <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+              <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
 
               {/* Pricing */}
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-primary">
+                  <span className="text-3xl font-bold text-primary">
                     ₹{plan.price}
                   </span>
-                  <span className="text-lg line-through text-muted-foreground">
+                  <span className="text-base line-through text-muted-foreground">
                     ₹{plan.originalPrice}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   per {plan.period}
                 </span>
                 <div className="mt-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-bold">
                     100% OFF 🎉
                   </span>
                 </div>
               </div>
 
               {/* Features */}
-              <ul className="space-y-3 mb-6">
+              <ul className="space-y-2.5 mb-8 flex-grow">
                 {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <span className="text-muted-foreground">{feature}</span>
+                  <li key={i} className="flex items-start gap-2 text-xs">
+                    <Check className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground/90">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -230,11 +239,10 @@ const SubscriptionPage = () => {
               <Button
                 onClick={() => handleSubscribe(plan.id)}
                 disabled={loading !== null}
-                className={`w-full ${
-                  plan.popular
-                    ? "bg-gradient-to-r from-primary to-purple-500 hover:opacity-90"
-                    : ""
-                }`}
+                className={`w-full h-11 text-sm font-semibold transition-all duration-300 ${plan.popular
+                  ? "bg-gradient-to-r from-primary to-purple-600 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
+                  : "hover:bg-primary/5 active:scale-[0.98]"
+                  }`}
                 variant={plan.popular ? "default" : "outline"}
               >
                 {loading === plan.id ? (
@@ -259,7 +267,7 @@ const SubscriptionPage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-center text-sm text-muted-foreground mt-12"
+          className="text-center text-[10px] sm:text-xs text-muted-foreground mt-8 opacity-60"
         >
           🔒 Secure checkout • Cancel anytime • No credit card required
         </motion.p>
