@@ -28,7 +28,7 @@ const queryClient = new QueryClient({
  * Main App Component
  * 
  * Sets up providers (QueryClient, Tooltip, Toaster) and defines the application routes.
- */
+*/
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>

@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
+import { useSystemStatus } from "@/context/SystemStatusContext";
+import { SystemMaintenance } from "@/components/SystemMaintenance";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -24,6 +26,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { dbOnline } = useSystemStatus();
 
   // Check session & sync profile for OAuth users
   useEffect(() => {
@@ -181,6 +184,18 @@ const Auth = () => {
       <span className="font-medium">Sign in with GitHub</span>
     </button>
   );
+  // if (!dbOnline) {
+  //   toast({
+  //     title: "Under Maintenance",
+  //     description: "Database is temporarily unavailable. Please try again later.",
+  //     variant: "destructive",
+  //   });
+  //   return;
+  // }
+  const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === "true";
+  if (isMaintenance){
+    return <SystemMaintenance />;
+  } 
 
   // Render UI
   return (

@@ -5,10 +5,13 @@ import App from "./App.tsx";
 import "./index.css";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
+import { SystemStatusProvider } from "./context/SystemStatusContext";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <SystemStatusProvider>
+      <App />
+    </SystemStatusProvider>
     <SpeedInsights />
     <Analytics />
   </React.StrictMode>

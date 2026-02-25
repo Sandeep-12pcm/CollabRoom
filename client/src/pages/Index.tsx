@@ -20,9 +20,10 @@ import { JoinRoomDialog } from "@/components/JoinRoomDialog";
 import { SubscriptionDialog } from "@/components/SubscriptionDialog";
 
 import { SEO } from "@/components/SEO";
-import { AdSlot } from "@/components/AdSlot";
+// import { AdSlot } from "@/components/AdSlot";
 
 const Landing: React.FC = () => {
+
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -115,10 +116,11 @@ const Landing: React.FC = () => {
           <SubscriptionDialog />
         </main>
 
-        {/* Ad Slot before Footer */}
+        {/* Ad Slot before Footer 
         <div className="container mx-auto px-4 py-8">
           <AdSlot size="medium" format="horizontal" slot="7494183840" />
         </div>
+          */}
 
         <Footer />
 

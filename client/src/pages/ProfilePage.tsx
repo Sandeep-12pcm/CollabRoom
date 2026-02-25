@@ -24,9 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 import { AnimatePresence } from "framer-motion";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import { SEO } from "@/components/SEO";
-import { AdSlot } from "@/components/AdSlot";
-import RoomSettingsDialog from "@/components/RoomSettingsDialog";
+// import { AdSlot } from "@/components/AdSlot";
 import SubscriptionPage from "@/components/SubscriptionPage";
+import RoomSettingsDialog from "@/components/RoomSettingsDialog";
 
 /**
  * Types
@@ -311,9 +311,9 @@ export default function ProfilePage() {
       </header>
 
       <main className="container mx-auto px-4 py-10">
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <AdSlot size="medium" format="horizontal" slot="7494183840" />
-        </div>
+        </div> */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* Left column */}
@@ -525,7 +525,7 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Fluid Ad Slot below rooms list */}
+              {/* Fluid Ad Slot below rooms list 
               <div className="mt-8 border-t border-gray-100 dark:border-white/5 pt-6">
                 <AdSlot
                   format="fluid"
@@ -534,6 +534,7 @@ export default function ProfilePage() {
                   className="rounded-lg border border-dashed border-muted bg-muted/5 p-4"
                 />
               </div>
+              */}
 
               {/* Delete modal */}
               {confirmDeleteId && (
