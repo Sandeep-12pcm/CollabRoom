@@ -63,7 +63,6 @@ export const Hero = () => {
               alt="Developers collaborating"
               width={612}
               height={344}
-              fetchPriority="high"
               className="relative z-10 rounded-2xl shadow-glow"
             />
           </div>
