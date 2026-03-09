@@ -192,10 +192,10 @@ const Auth = () => {
   //   });
   //   return;
   // }
-  const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === "true";
-  if (isMaintenance){
-    return <SystemMaintenance />;
-  } 
+  // const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === "true";
+  // if (isMaintenance){
+  //   return <SystemMaintenance />;
+  // } 
 
   // Render UI
   return (
