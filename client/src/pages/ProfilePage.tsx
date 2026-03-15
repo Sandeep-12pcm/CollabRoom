@@ -25,7 +25,7 @@ import { AnimatePresence } from "framer-motion";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import { SEO } from "@/components/SEO";
 // import { AdSlot } from "@/components/AdSlot";
-import SubscriptionPage from "@/components/SubscriptionPage";
+import SubscriptionPage from "@/pages/SubscriptionPage";
 import RoomSettingsDialog from "@/components/RoomSettingsDialog";
 
 /**

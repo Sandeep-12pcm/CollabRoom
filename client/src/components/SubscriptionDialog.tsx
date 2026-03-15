@@ -4,7 +4,7 @@ import { X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import ComingSoon from "@/components/loading/ComingSoon";
-import SubscriptionPage from "./SubscriptionPage";
+import SubscriptionPage from "../pages/SubscriptionPage";
 export const SubscriptionDialog = () => {
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
