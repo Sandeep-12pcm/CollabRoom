@@ -122,8 +122,8 @@ const ContactForm: React.FC = () => {
         <div className="space-y-2">
           <p className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-primary" />{" "}
-            <a href="mailto:sandeep12pcm@gmail.com" className="hover:underline">
-              soladhraharshal@gmail.com
+            <a href="mailto:collabroomdevlopers@gmail.com" className="hover:underline">
+              collabroomdevlopers@gmail.com
             </a>
           </p>
           <p className="flex items-center gap-2">
