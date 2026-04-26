@@ -1,5 +1,5 @@
 import ConfirmDialog from "./ui/ConfirmDialog";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2, Plus, Users, Trash2, Copy, X, Edit2, LogOut as ExitIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,9 +78,6 @@ export default function Sidebar({
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // redundant effect removed (Room.tsx handles fetching and subscription)
-
-  // Delete a page from the backend and update UI
   const deletePage = async (pageId: string) => {
     if (!pageId) return;
     if (!currentUser) {
@@ -445,7 +442,7 @@ export default function Sidebar({
           if (selectedPageId) deletePage(selectedPageId);
         }}
         title="Delete Page?"
-        message="Are you sure you want to delete this page? This action cannot be undone."
+        message="Are you sure you  want to delete this page? This action cannot be undone."
       />
     </>
   );

@@ -30,10 +30,19 @@ const Auth = () => {
 
   // Check session & sync profile for OAuth users
   useEffect(() => {
+
     const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      let session = null;
+
+      try {
+        const res = await supabase.auth.getSession();
+        session = res.data.session;
+
+        if (res.error) throw res.error;
+      } catch (err) {
+        console.error("Session failed:", err.message);
+        return; // STOP execution
+      }
       if (session) navigate("/");
     };
     checkSession();
@@ -49,14 +58,14 @@ const Auth = () => {
           user.user_metadata?.user_name ||
           "Developer";
 
-        const { data: existingProfile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", user.id)
-          .single();
+        try {
+          const { data: existingProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", user.id)
+            .single();
 
-        if (!existingProfile) {
-          try {
+          if (!existingProfile) {
             await supabase.from("profiles").insert({
               id: user.id,
               email: user.email,
@@ -67,30 +76,36 @@ const Auth = () => {
                 null,
               created_at: new Date(),
             });
-          } catch (error) {
-            console.error("Error creating profile:", error);
-            return;
+          } else {
+            await supabase
+              .from("profiles")
+              .update({
+                display_name: displayName,
+                avatar_url:
+                  user.user_metadata?.avatar_url ||
+                  user.user_metadata?.picture ||
+                  null,
+                created_at: new Date(),
+              })
+              .eq("id", user.id);
           }
-        } else {
-          await supabase
-            .from("profiles")
-            .update({
-              display_name: displayName,
-              avatar_url:
-                user.user_metadata?.avatar_url ||
-                user.user_metadata?.picture ||
-                null,
-              created_at: new Date(),
-            })
-            .eq("id", user.id);
+        } catch (err) {
+          console.error("Profile sync failed:", err.message);
         }
-
         navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+  supabase.auth.onAuthStateChange((event) => {
+    if ((event as string) === "TOKEN_REFRESH_FAILED") {
+      console.warn("Token refresh failed → logging out");
+
+      supabase.auth.signOut();
+      window.location.href = "/auth";
+    }
+  });
 
   // Email/Password Auth
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -136,6 +151,14 @@ const Auth = () => {
 
   // Supabase Google OAuth
   const handleGoogleLogin = async () => {
+    if (!dbOnline) {
+      toast({
+        title: "Server unavailable",
+        description: "Please try again in a moment.",
+        variant: "destructive",
+      });
+      return;
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -147,6 +170,14 @@ const Auth = () => {
 
   // Supabase GitHub OAuth
   const handleGithubLogin = async () => {
+    if (!dbOnline) {
+      toast({
+        title: "Server unavailable",
+        description: "Please try again in a moment.",
+        variant: "destructive",
+      });
+      return;
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
@@ -184,14 +215,14 @@ const Auth = () => {
       <span className="font-medium">Sign in with GitHub</span>
     </button>
   );
-  // if (!dbOnline) {
-  //   toast({
-  //     title: "Under Maintenance",
-  //     description: "Database is temporarily unavailable. Please try again later.",
-  //     variant: "destructive",
-  //   });
-  //   return;
-  // }
+  if (!dbOnline) {
+    toast({
+      title: "Under Maintenance",
+      description: "Database is temporarily unavailable. Please try again later.",
+      variant: "destructive",
+    });
+    return;
+  }
   // const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === "true";
   // if (isMaintenance){
   //   return <SystemMaintenance />;

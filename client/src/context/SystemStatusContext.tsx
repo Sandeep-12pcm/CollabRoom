@@ -19,7 +19,7 @@ export const SystemStatusProvider = ({ children }: any) => {
     };
 
     check();
-    const interval = setInterval(check, 30000); // check every 30s
+    const interval = setInterval(check, 300000); // check every 300s
     return () => clearInterval(interval);
   }, []);
 

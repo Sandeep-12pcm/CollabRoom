@@ -11,6 +11,7 @@ export const checkDatabaseHealth = async () => {
 
     return true;
   } catch (err) {
+    console.log("Database is down!", err);
     return false;
   }
 };

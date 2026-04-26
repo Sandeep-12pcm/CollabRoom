@@ -34,13 +34,13 @@ export function useCollaborativePage(
   const lastLocalChangeRef = useRef<string>(""); // JSON string of last content
   const isMountedRef = useRef(true);
   const { toast } = useToast();
-  const currentUserRef = useRef<any>(null);
-  const [editingUser, setEditingUser] = useState<{
-    user_id: string;
-    display_name: string;
-  } | null>(null);
+  // const currentUserRef = useRef<any>(null);
+  // const [editingUser, setEditingUser] = useState<{
+  //   user_id: string;
+  //   display_name: string;
+  // } | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const editingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // const editingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
    * Load initial content and title from Supabase.
@@ -48,7 +48,6 @@ export function useCollaborativePage(
   useEffect(() => {
     if (!pageId || !roomId) return;
     isMountedRef.current = true;
-
     (async () => {
       const { data: page, error } = await supabase
         .from("pages")
@@ -204,14 +203,14 @@ export function useCollaborativePage(
           return copy;
         });
       });
-      socket.on("editing-started", ({ user_id, display_name }) => {
-        setEditingUser({ user_id, display_name });
-        console.log("Editing started:", { user_id, display_name });
-      });
+      // socket.on("editing-started", ({ user_id, display_name }) => {
+      //   setEditingUser({ user_id, display_name });
+      //   console.log("Editing started:", { user_id, display_name });
+      // });
 
-      socket.on("editing-stopped", () => {
-        setEditingUser(null);
-      });
+      // socket.on("editing-stopped", () => {
+      //   setEditingUser(null);
+      // });
 
       socket.on("disconnect", (reason: any) => {
         setIsConnected(false);
@@ -280,11 +279,10 @@ export function useCollaborativePage(
    */
   const setContentFromEditor = useCallback(
     async (lang: string, code: string) => {
-
       const newContent = { ...content, [lang]: code };
       setContent(newContent);
       lastLocalChangeRef.current = JSON.stringify(newContent);
-      console.log("setContentFromEditor called");
+      // console.log("setContentFromEditor called");
 
       emitContentChangeThrottled(newContent);
       scheduleSave(newContent);

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import JSZip from "jszip";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel, User } from "@supabase/supabase-js";
 import Sidebar from "@/components/Sidebar";
 import Editor from "@monaco-editor/react";
+import { loader } from "@monaco-editor/react";
+import * as monaco from "monaco-editor";
+loader.config({ monaco })
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -58,7 +61,6 @@ interface Page {
 const Room = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -121,9 +123,9 @@ const Room = () => {
   const isMobile = useIsMobile();
   const theme = localStorage.getItem("theme") as "light" | "dark" | null;
 
-  const { editingUser, selectedLanguage, updateLanguage, isConnected } = collaborative;
+  const { selectedLanguage, updateLanguage, isConnected } = collaborative;
   const setContent = collaborative?.setContent ?? (() => { });
-  const language = selectedLanguage || "javascript";
+  const language = selectedLanguage || "any";
   const activePage = pages.find((p) => p.id === activePageId);
   const defaultCodeTemplates: Record<string, string> = {
     javascript: `// Write your code here...
@@ -317,7 +319,7 @@ body {
         })
         .filter((n) => !isNaN(n));
       const nextNum = pageNumbers.length > 0 ? Math.max(...pageNumbers) + 1 : 1;
-
+      console.log("Language: ");
       const { data, error } = await supabase
         .from("pages")
         .insert({
@@ -338,6 +340,10 @@ body {
         });
       } else if (data) {
         setActivePageId(data.id);
+        useQuery({
+          queryKey: ["room-pages", id],
+          // queryFn: fetchRoomPages
+        })
       }
     } catch (err) {
       toast({
@@ -346,6 +352,7 @@ body {
         variant: "destructive",
       });
     }
+
   };
   const languageExtensions: Record<string, string> = {
     javascript: "js",
@@ -601,7 +608,7 @@ body {
                 <h2 className="font-semibold text-foreground ">
                   {activePage?.title || "Untitled Page"}
                 </h2>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={language ?? "any"} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="w-[100px] md:w-[180px]">
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
@@ -720,7 +727,7 @@ body {
               ) : (
                 <Editor
                   height="80vh"
-                  language={language === "any" ? "javascript" : language}
+                  language={language === "any" ? "plaintext" : language}
                   theme={theme === "dark" ? "vs-dark" : "vs-light"}
                   value={
                     (content && content[language]) ??
