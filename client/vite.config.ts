@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
+import monacoEditorPlugin from "vite-plugin-monaco-editor";
 
 export default defineConfig({
   base: "/",
@@ -14,6 +15,14 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    monacoEditorPlugin({
+      languageWorkers: [
+        "editorWorkerService",
+        "json",
+        "html",
+        "css",
+      ],
+    }),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
