@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
-import monacoEditorPlugin from "vite-plugin-monaco-editor";
+import MonacoEditorPlugin from "vite-plugin-monaco-editor";
 
 export default defineConfig({
   base: "/",
@@ -15,7 +15,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    monacoEditorPlugin({
+    MonacoEditorPlugin({
       languageWorkers: [
         "editorWorkerService",
         "json",
