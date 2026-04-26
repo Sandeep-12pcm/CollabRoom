@@ -726,7 +726,7 @@ body {
                 </div>
               ) : (
                 <Editor
-                  height="80vh"
+                  height="100%"
                   language={language === "any" ? "plaintext" : language}
                   theme={theme === "dark" ? "vs-dark" : "vs-light"}
                   value={
