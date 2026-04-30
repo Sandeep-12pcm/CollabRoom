@@ -24,10 +24,7 @@ import { loader } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 loader.config({ monaco })
 import LoadingScreen from "@/components/loading/LoadingScreen";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
-import rehypeRaw from "rehype-raw";
+import MarkdownEditor from "@/components/MarkdownEditor";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SEO } from "@/components/SEO";
@@ -555,8 +552,6 @@ body {
   }, [setContent, language]);
 
   const editorWrapperProps = useMemo(() => ({}), []);
-  const markdownRemarkPlugins = useMemo(() => [remarkGfm, remarkBreaks], []);
-  const markdownRehypePlugins = useMemo(() => [rehypeRaw], []);
 
   return (
     <div className="min-h-screen bg-background-hero">
@@ -621,7 +616,7 @@ body {
                     <SelectItem value="cpp">C++</SelectItem>
                     <SelectItem value="html">HTML</SelectItem>
                     <SelectItem value="css">CSS</SelectItem>
-                    <SelectItem value="markdown">Markdown (Docs/Table View)</SelectItem>
+                    <SelectItem value="markdown">Markdown(Docs/Table View)</SelectItem>
                   </SelectContent>
                 </Select>
                 <div className="flex items-center gap-2">
@@ -691,39 +686,11 @@ body {
           <div className="flex-1 p-4">
             <Card className="h-full bg-code-bg border-code-border">
               {language === "markdown" ? (
-                <div className="flex flex-col md:flex-row h-full">
-                  {/* Markdown Collaborative Editor */}
-                  <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-border p-3 bg-[#1e1e1e] text-white flex flex-col">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-sm font-semibold">
-                        ✏️ Markdown Editor (Collaborative)
-                      </h3>
-                    </div>
-
-                    <textarea
-                      value={
-                        (content && content[language]) ??
-                        defaultCodeTemplates[language]
-                      }
-                      onChange={(e) => setContent(language, e.target.value)}
-                      className="flex-1 w-full resize-none p-3 rounded-md font-mono text-sm outline-none border bg-[#252526] text-white border-gray-700 focus:border-gray-500"
-                      placeholder="Write Markdown collaboratively..."
-                    />
-                  </div>
-
-                  {/* Markdown Preview */}
-                  <div className="w-full md:w-1/2 p-3 overflow-auto bg-white text-black rounded-b-md md:rounded-r-md">
-                    <h3 className="text-sm font-semibold mb-2">👁️ Preview</h3>
-                    <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown
-                        remarkPlugins={markdownRemarkPlugins}
-                        rehypePlugins={markdownRehypePlugins}
-                      >
-                        {content?.[language] ?? ""}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                </div>
+                <MarkdownEditor
+                  value={(content && content[language]) ?? defaultCodeTemplates[language]}
+                  onChange={(val) => setContent(language, val)}
+                  readOnly={!permissions.allow_guests_edit && !permissions.isOwner}
+                />
               ) : (
                 <Editor
                   height="100%"
