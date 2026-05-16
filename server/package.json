@@ -13,12 +13,14 @@
     "express": "^4.21.2",
     "groq-sdk": "^0.33.0",
     "http": "0.0.1-security",
+    "nodemailer": "^8.0.7",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.7.2",
+    "@types/nodemailer": "^8.0.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

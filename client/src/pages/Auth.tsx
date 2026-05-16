@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
 import { useSystemStatus } from "@/context/SystemStatusContext";
-import { SystemMaintenance } from "@/components/SystemMaintenance";
+// import { SystemMaintenance } from "@/components/SystemMaintenance";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,8 +25,10 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { dbOnline } = useSystemStatus();
+  const from = location.state?.from?.pathname || "/";
 
   // Check session & sync profile for OAuth users
   useEffect(() => {
@@ -43,7 +45,7 @@ const Auth = () => {
         console.error("Session failed:", err.message);
         return; // STOP execution
       }
-      if (session) navigate("/");
+      if (session) navigate(from, { replace: true });
     };
     checkSession();
 
@@ -92,7 +94,7 @@ const Auth = () => {
         } catch (err) {
           console.error("Profile sync failed:", err.message);
         }
-        navigate("/");
+        navigate(from, { replace: true });
       }
     });
 

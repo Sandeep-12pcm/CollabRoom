@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User,
@@ -234,8 +234,6 @@ export default function ProfilePage() {
 
   if (loading) return <LoadingScreen />;
   if (!user) return <div className="min-h-screen flex items-center justify-center">Not authenticated</div>;
-
-  // ...
 
   return (
     <div className="min-h-screen text-gray-900 dark:text-slate-100 bg-gray-50 dark:bg-gradient-to-b dark:from-[#0B1020] dark:to-[#081024]">

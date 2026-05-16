@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
 import aiRoute from "./routes/ai-code-assistant";
+import tournamentRoute from "./routes/tournament";
 dotenv.config();
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
@@ -38,6 +39,7 @@ const app = express();
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/api/ai-code-assistant', aiRoute);
+app.use('/api/tournament', tournamentRoute);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: corsOptions,
