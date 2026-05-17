@@ -56,10 +56,8 @@ export const TempTournamentPage = () => {
     const checkAuth = async () => {
       const { data, error } = await supabase.auth.getSession();
       if (error || !data.session) {
-        // Redirect to login with state to return here
-        navigate("/auth", {
-          state: { from: { pathname: "/tournament/register" } },
-        });
+        // Redirect to login, returning here after successful auth
+        navigate("/auth?redirectTo=%2Ftournament%2Fregister");
       } else {
         setSession(data.session);
         setLoading(false);
@@ -334,7 +332,7 @@ export const TempTournamentPage = () => {
                     </p>
                     <img src={qrCode} alt="UPI QR Code" className="w-52 h-52 object-contain" />
                     <p className="text-sm text-muted-foreground">UPI ID : sandybhai@upi </p>
-                    <p className="text-sm text-muted-foreground">for cash payments please contact <a href="https://instagram.com/collabrooms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">IG::CollabRooms</a></p>
+                    <p className="text-sm text-muted-foreground">For cash payments please contact <a href="https://instagram.com/collabrooms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">IG::CollabRooms</a></p>
                   </div>
                 </div>
 

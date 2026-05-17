@@ -31,7 +31,7 @@ export const SubscriptionDialog = () => {
 
   const handleSubscribe = () => {
     if (!isLoggedIn) {
-      navigate("/auth");
+      navigate("/auth?redirectTo=%2Fsubscription");
       return;
     }
     navigate("/profile");

@@ -393,7 +393,7 @@ export default function Sidebar({
 
           {!currentUser && (
             <div className="mt-3 pt-3 border-t border-border">
-              <Button size="sm" variant="outline" className="w-full" onClick={() => navigate("/auth")}>
+              <Button size="sm" variant="outline" className="w-full" onClick={() => navigate(`/auth?redirectTo=${encodeURIComponent(window.location.pathname + window.location.search)}`)}>
                 Sign in to join
               </Button>
             </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Code2, Menu, User } from "lucide-react";
@@ -19,6 +19,7 @@ export const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [profile, setProfile] = useState<any>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isFree } = useSubscription();
 
   // Fetch session and profile info from Supabase on mount
@@ -166,7 +167,7 @@ export const Navbar = () => {
               <Button
                 variant="default"
                 className="bg-gradient-primary hover:opacity-90 transition-opacity"
-                onClick={() => navigate("/auth")}
+                onClick={() => navigate(`/auth?redirectTo=${encodeURIComponent(location.pathname + location.search)}`)}
               >
                 Get Started
               </Button>
@@ -256,7 +257,7 @@ export const Navbar = () => {
               ) : (
                 <Button
                   onClick={() => {
-                    navigate("/auth");
+                    navigate(`/auth?redirectTo=${encodeURIComponent(location.pathname + location.search)}`);
                     setMobileMenuOpen(false);
                   }}
                   variant="default"

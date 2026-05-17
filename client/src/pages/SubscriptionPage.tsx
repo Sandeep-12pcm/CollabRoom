@@ -96,7 +96,7 @@ const SubscriptionPage = ({ onBack }: SubscriptionPageProps) => {
   const handleSubscribe = async (planId: string) => {
     if (!isLoggedIn) {
       toast.error("Please login first");
-      navigate("/auth");
+      navigate("/auth?redirectTo=%2Fsubscription");
       return;
     }
 

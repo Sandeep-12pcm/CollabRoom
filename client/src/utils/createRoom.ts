@@ -40,7 +40,7 @@ export const createRoom = async ({
         description: "Please sign in to create a room.",
         variant: "destructive",
       });
-      navigate("/auth");
+      navigate(`/auth?redirectTo=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
 

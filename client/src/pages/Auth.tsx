@@ -28,32 +28,51 @@ const Auth = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { dbOnline } = useSystemStatus();
-  const from = location.state?.from?.pathname || "/";
-
+  // const queryParams = new URLSearchParams(location.search);
+  // const redirectTo = queryParams.get("redirectTo") || "/";
+  // const from =
+  //   location.state?.from?.pathname ||
+  //   redirectTo ||
+  //   "/";
+  const from = new URLSearchParams(location.search).get("redirectTo") || "/";
   // Check session & sync profile for OAuth users
   useEffect(() => {
+    let isMounted = true;
 
     const checkSession = async () => {
-      let session = null;
-
       try {
-        const res = await supabase.auth.getSession();
-        session = res.data.session;
-
-        if (res.error) throw res.error;
-      } catch (err) {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        // ✅ Use a small delay so the URL (including ?redirectTo=) is fully
+        // parsed before we read `from`. This avoids a race with OAuth hash tokens.
+        if (data.session && isMounted) {
+          setTimeout(() => {
+            if (isMounted) {
+              const dest = new URLSearchParams(window.location.search).get("redirectTo") || "/";
+              navigate(dest, { replace: true });
+            }
+          }, 50);
+        }
+      } catch (err: any) {
         console.error("Session failed:", err.message);
-        return; // STOP execution
       }
-      if (session) navigate(from, { replace: true });
     };
+
     checkSession();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // 🔴 Handle failures / logout
+      if (event as string === "TOKEN_REFRESH_FAILED" || event === "SIGNED_OUT") {
+        navigate("/auth", { replace: true });
+        return;
+      }
+
+      // 🟢 Handle login
       if (event === "SIGNED_IN" && session) {
         const user = session.user;
+
         const displayName =
           user.user_metadata?.name ||
           user.user_metadata?.full_name ||
@@ -87,28 +106,23 @@ const Auth = () => {
                   user.user_metadata?.avatar_url ||
                   user.user_metadata?.picture ||
                   null,
-                created_at: new Date(),
+                updated_at: new Date(), // ✅ fix: not created_at
               })
               .eq("id", user.id);
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Profile sync failed:", err.message);
         }
+
         navigate(from, { replace: true });
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-  supabase.auth.onAuthStateChange((event) => {
-    if ((event as string) === "TOKEN_REFRESH_FAILED") {
-      console.warn("Token refresh failed → logging out");
-
-      supabase.auth.signOut();
-      window.location.href = "/auth";
-    }
-  });
-
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [navigate, from]);
   // Email/Password Auth
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -130,7 +144,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/auth?redirectTo=${encodeURIComponent(from)}`,
             data: { display_name: displayName },
           },
         });
@@ -164,7 +178,7 @@ const Auth = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}`,
+        redirectTo: `${window.location.origin}/auth?redirectTo=${encodeURIComponent(from)}`,
       },
     });
     if (error) console.error("Google login error:", error);
@@ -183,7 +197,7 @@ const Auth = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
-        redirectTo: `${window.location.origin}`,
+        redirectTo: `${window.location.origin}/auth?redirectTo=${encodeURIComponent(from)}`,
       },
     });
     if (error) console.error("GitHub login error:", error);
