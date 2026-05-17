@@ -1,6 +1,8 @@
 // src/pages/Landing.tsx
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Trophy, ArrowRight } from "lucide-react";
 
 import { Navbar } from "@/components/Navbar";
 import LoadingScreen from "@/components/loading/LoadingScreen";
@@ -65,7 +67,24 @@ const Landing: React.FC = () => {
       >
         <Navbar />
 
-        <main className="mt-1">
+        <main className="mt-20">
+          {/* TOURNAMENT HIGHLIGHT */}
+          <div className="bg-primary/10 border-b border-primary/20 py-3 px-4 relative z-10">
+            <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
+              <span className="flex items-center gap-2 font-medium text-foreground">
+                <Trophy className="w-5 h-5 text-primary animate-pulse" />
+                Are you ready for the ultimate showdown?
+              </span>
+              <Link
+                to="/tournament/register"
+                className="inline-flex items-center text-sm font-semibold text-primary hover:text-primary/80 hover:underline transition-all"
+              >
+                Register for the tournament here
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </div>
+          </div>
+
           {/* HERO */}
           <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
             <AmbientBackground />

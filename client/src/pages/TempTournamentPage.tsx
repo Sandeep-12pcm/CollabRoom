@@ -35,6 +35,8 @@ export const TempTournamentPage = () => {
 
 
   const [formData, setFormData] = useState({
+    teamName: "",
+    mobileNumber: "",
     player1Ign: "",
     player1Uid: "",
     player2Ign: "",
@@ -111,6 +113,8 @@ export const TempTournamentPage = () => {
         .from("tournament-registrations")
         .insert({
           user_id: session.user.id,
+          team_name: formData.teamName,
+          mobile_number: formData.mobileNumber,
           player1_ign: formData.player1Ign,
           player1_uid: formData.player1Uid,
           player2_ign: formData.player2Ign,
@@ -132,6 +136,8 @@ export const TempTournamentPage = () => {
           .from("tournament_registrations")
           .insert({
             user_id: session.user.id,
+            team_name: formData.teamName,
+            mobile_number: formData.mobileNumber,
             player1_ign: formData.player1Ign,
             player1_uid: formData.player1Uid,
             player2_ign: formData.player2Ign,
@@ -154,8 +160,12 @@ export const TempTournamentPage = () => {
         description: "Your team has been registered for the tournament.",
       });
 
+      // Show alert window
+      window.alert("You will receive a mail on registered email id once approved. Please check your inbox as well as spam folder.");
+
       // Clear form
       setFormData({
+        teamName: "", mobileNumber: "",
         player1Ign: "", player1Uid: "",
         player2Ign: "", player2Uid: "",
         player3Ign: "", player3Uid: "",
@@ -203,6 +213,36 @@ export const TempTournamentPage = () => {
             </CardHeader>
             <CardContent className="pt-8">
               <form onSubmit={handleSubmit} className="space-y-8">
+
+                {/* Team Info */}
+                <div className="bg-muted/10 p-6 rounded-lg border border-border/50">
+                  <h3 className="text-lg font-semibold mb-4 text-foreground">Team Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="teamName">Team Name</Label>
+                      <Input
+                        id="teamName"
+                        placeholder="e.g. Team Alpha"
+                        value={formData.teamName}
+                        onChange={handleInputChange}
+                        required
+                        className="bg-background"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mobileNumber">Mobile Number</Label>
+                      <Input
+                        id="mobileNumber"
+                        placeholder="e.g. 9876543210"
+                        value={formData.mobileNumber}
+                        onChange={handleInputChange}
+                        required
+                        type="tel"
+                        className="bg-background"
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 {/* Players 1-4 (Compulsory) */}
                 {[1, 2, 3, 4].map((num) => (
@@ -298,7 +338,15 @@ export const TempTournamentPage = () => {
                   </div>
                 </div>
 
-                <div className="pt-4 flex justify-end">
+                <div className="pt-4 flex flex-col sm:flex-row justify-end items-center gap-4">
+                  <a
+                    href="https://www.youtube.com/@aigamerwala"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-primary hover:underline"
+                  >
+                    Watch Rules on YouTube
+                  </a>
                   <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-auto px-8">
                     {submitting ? (
                       <>
