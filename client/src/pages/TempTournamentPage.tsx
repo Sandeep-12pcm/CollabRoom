@@ -87,7 +87,7 @@ export const TempTournamentPage = () => {
           player4_uid: formData.player4Uid,
           player5_ign: formData.player5Ign || null,
           player5_uid: formData.player5Uid || null,
-          payment_screenshot_url: "not_paid",
+          payment_screenshot_url: "Unpaid Tournament",
           user_email: session.user.email,
           status: 'pending'
         });
