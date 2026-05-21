@@ -7,7 +7,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import qrCode from "@/assets/qr_code.png";
 import {
   Card,
   CardContent,
@@ -18,13 +18,20 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
-export const TempTournamentPage = () => {
+export const TempTournamentPageWithPayment = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const amount = 40;
+  const upiId = "7303042793@upi";
+  const name = "CollabRoom";
+  const note = "Tournament Registration";
 
+  const paymentLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
+    name
+  )}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
 
 
   const [formData, setFormData] = useState({
@@ -42,7 +49,7 @@ export const TempTournamentPage = () => {
     player5Uid: "",
   });
 
-
+  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
 
   // Auth Guard
   useEffect(() => {
@@ -50,7 +57,7 @@ export const TempTournamentPage = () => {
       const { data, error } = await supabase.auth.getSession();
       if (error || !data.session) {
         // Redirect to login, returning here after successful auth
-        navigate("/auth?redirectTo=%2Ftournament%2Fregister");
+        navigate("/auth?redirectTo=%2Ftournament%2Fregister-with-payment");
       } else {
         setSession(data.session);
         setLoading(false);
@@ -63,14 +70,43 @@ export const TempTournamentPage = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setPaymentScreenshot(e.target.files[0]);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!paymentScreenshot) {
+      toast({
+        title: "Missing payment screenshot",
+        description: "Please upload your payment screenshot.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      // Save registration data
+      // 1. Upload screenshot to Supabase Storage
+      const fileExt = paymentScreenshot.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${session.user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("tournament-receipts")
+        .upload(filePath, paymentScreenshot);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("tournament-receipts")
+        .getPublicUrl(filePath);
+
+      // 2. Save registration data
       const { error: dbError } = await supabase
         .from("tournament-registrations")
         .insert({
@@ -87,7 +123,7 @@ export const TempTournamentPage = () => {
           player4_uid: formData.player4Uid,
           player5_ign: formData.player5Ign || null,
           player5_uid: formData.player5Uid || null,
-          payment_screenshot_url: "not_paid",
+          payment_screenshot_url: publicUrl,
           user_email: session.user.email,
           status: 'pending'
         });
@@ -110,7 +146,7 @@ export const TempTournamentPage = () => {
             player4_uid: formData.player4Uid,
             player5_ign: formData.player5Ign || null,
             player5_uid: formData.player5Uid || null,
-            payment_screenshot_url: null,
+            payment_screenshot_url: publicUrl,
             user_email: session.user.email,
             status: 'pending'
           });
@@ -134,6 +170,10 @@ export const TempTournamentPage = () => {
         player4Ign: "", player4Uid: "",
         player5Ign: "", player5Uid: "",
       });
+      setPaymentScreenshot(null);
+      // Reset file input by id
+      const fileInput = document.getElementById("paymentScreenshot") as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
 
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -164,9 +204,9 @@ export const TempTournamentPage = () => {
         <div className="max-w-3xl mx-auto">
           <Card className="shadow-lg border-primary/20">
             <CardHeader className="text-center pb-8 border-b bg-muted/30">
-              <CardTitle className="text-3xl font-bold tracking-tight text-primary">FFM NOIDA Tournament Registration</CardTitle>
+              <CardTitle className="text-3xl font-bold tracking-tight text-primary">Tournament Registration</CardTitle>
               <CardDescription className="text-base mt-2">
-                Register your team. 4 players are compulsory, 1 is optional.
+                Register your team. 4 players are compulsory, 1 is optional. Please upload your payment receipt at the end.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-8">
@@ -260,7 +300,41 @@ export const TempTournamentPage = () => {
                   </div>
                 </div>
 
-
+                {/* Payment Screenshot */}
+                <div className="bg-primary/5 p-6 rounded-lg border border-primary/20">
+                  <h3 className="text-lg font-semibold mb-4 text-primary">Payment Verification</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="paymentScreenshot">Upload Payment Screenshot</Label>
+                      <Input
+                        id="paymentScreenshot"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        required
+                        className="cursor-pointer bg-background"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Please upload a clear screenshot of your transaction receipt. Ensure the transaction ID is visible.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Pay ₹{amount} to complete your registration:
+                      <br />
+                      <a
+                        href={paymentLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Click to Pay via UPI
+                      </a>
+                    </p>
+                    <img src={qrCode} alt="UPI QR Code" className="w-52 h-52 object-contain" />
+                    <p className="text-sm text-muted-foreground">UPI ID : sandybhai@upi </p>
+                    <p className="text-sm text-muted-foreground">For cash payments please contact <a href="https://instagram.com/collabrooms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">IG::CollabRooms</a></p>
+                  </div>
+                </div>
 
                 <div className="pt-4 flex flex-col sm:flex-row justify-end items-center gap-4">
                   <a
@@ -293,4 +367,4 @@ export const TempTournamentPage = () => {
   );
 };
 
-export default TempTournamentPage;
+export default TempTournamentPageWithPayment;
