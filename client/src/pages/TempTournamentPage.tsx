@@ -72,7 +72,7 @@ export const TempTournamentPage = () => {
     try {
       // Save registration data
       const { error: dbError } = await supabase
-        .from("tournament-registrations")
+        .from("tournament_registrations")
         .insert({
           user_id: session.user.id,
           team_name: formData.teamName,
@@ -92,30 +92,7 @@ export const TempTournamentPage = () => {
           status: 'pending'
         });
 
-      if (dbError) {
-        // Fallback if table name is different in user setup
-        const { error: dbErrorFallback } = await supabase
-          .from("tournament_registrations")
-          .insert({
-            user_id: session.user.id,
-            team_name: formData.teamName,
-            mobile_number: formData.mobileNumber,
-            player1_ign: formData.player1Ign,
-            player1_uid: formData.player1Uid,
-            player2_ign: formData.player2Ign,
-            player2_uid: formData.player2Uid,
-            player3_ign: formData.player3Ign,
-            player3_uid: formData.player3Uid,
-            player4_ign: formData.player4Ign,
-            player4_uid: formData.player4Uid,
-            player5_ign: formData.player5Ign || null,
-            player5_uid: formData.player5Uid || null,
-            payment_screenshot_url: null,
-            user_email: session.user.email,
-            status: 'pending'
-          });
-        if (dbErrorFallback) throw dbErrorFallback;
-      }
+      if (dbError) throw dbError;
 
       toast({
         title: "Registration successful!",
@@ -139,7 +116,7 @@ export const TempTournamentPage = () => {
       console.error("Registration error:", error);
       toast({
         title: "Registration failed",
-        description: error.message || "An error occurred during registration. Check if you have run the database setup script.",
+        description: error.message || "An error occurred during registration.",
         variant: "destructive",
       });
     } finally {
@@ -269,7 +246,7 @@ export const TempTournamentPage = () => {
                     rel="noopener noreferrer"
                     className="text-sm font-semibold text-primary hover:underline"
                   >
-                    Watch Rules on YouTube
+                    Watch on YouTube
                   </a>
                   <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-auto px-8">
                     {submitting ? (

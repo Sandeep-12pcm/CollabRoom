@@ -52,26 +52,18 @@ export const TournamentAdminPage = () => {
       setIsAdmin(true);
 
       try {
-        // Try fetching from the table (with fallback for different naming convention)
-        let { data, error: dbError } = await supabase
-          .from("tournament_registrations")
-          .select("*")
-          .order("created_at", { ascending: false });
+        // Fetch via backend server (uses service role key — bypasses Supabase RLS)
+        const response = await fetch(`${import.meta.env.VITE_HOST_URL || "http://localhost:4000"}/api/tournament/registrations`);
+        const result = await response.json();
 
-        if (dbError) {
-          const { data: fallbackData, error: dbErrorFallback } = await supabase
-            .from("tournament-registrations")
-            .select("*")
-            .order("created_at", { ascending: false });
-
-          if (dbErrorFallback) throw dbErrorFallback;
-          data = fallbackData;
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to load registrations");
         }
 
-        setRegistrations(data || []);
+        setRegistrations(result.data || []);
       } catch (err: any) {
         console.error("Failed to fetch registrations:", err);
-        setError(err.message || "Failed to load registrations. Did you run the SQL setup script?");
+        setError(err.message || "Failed to load registrations.");
       } finally {
         setLoading(false);
       }
@@ -214,8 +206,8 @@ export const TournamentAdminPage = () => {
                           <Mail className="w-3 h-3 text-muted-foreground" />
                           {reg.user_email || "N/A"}
                         </div>
-                        <Badge 
-                          variant={reg.status === "approved" ? "default" : "outline"} 
+                        <Badge
+                          variant={reg.status === "approved" ? "default" : "outline"}
                           className="mt-1 text-[10px] py-0 px-1"
                         >
                           {reg.status || "pending"}

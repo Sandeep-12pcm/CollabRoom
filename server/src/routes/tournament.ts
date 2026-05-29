@@ -23,7 +23,25 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// GET /api/tournament/registrations — fetches all registrations (service role bypasses RLS)
+router.get("/registrations", async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("tournament_registrations")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return res.status(200).json({ data });
+  } catch (error: any) {
+    console.error("Failed to fetch registrations:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 router.post("/approve", async (req, res) => {
+
   const { registrationId, userEmail, status, reason } = req.body;
 
   if (!registrationId || !status) {
