@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ const Auth = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { dbOnline } = useSystemStatus();
+  const maintenanceToastShown = useRef(false);
   // const queryParams = new URLSearchParams(location.search);
   // const redirectTo = queryParams.get("redirectTo") || "/";
   // const from =
@@ -123,6 +124,22 @@ const Auth = () => {
       subscription.unsubscribe();
     };
   }, [navigate, from]);
+
+  // Show maintenance toast once when DB goes offline (never during render)
+  useEffect(() => {
+    if (!dbOnline && !maintenanceToastShown.current) {
+      maintenanceToastShown.current = true;
+      toast({
+        title: "Under Maintenance",
+        description: "Database is temporarily unavailable. Please try again later.",
+        variant: "destructive",
+      });
+    }
+    if (dbOnline) {
+      maintenanceToastShown.current = false;
+    }
+  }, [dbOnline, toast]);
+
   // Email/Password Auth
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -231,13 +248,15 @@ const Auth = () => {
       <span className="font-medium">Sign in with GitHub</span>
     </button>
   );
+
   if (!dbOnline) {
-    toast({
-      title: "Under Maintenance",
-      description: "Database is temporarily unavailable. Please try again later.",
-      variant: "destructive",
-    });
-    return;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground text-center px-4">
+          🔧 Database is temporarily unavailable. Please try again later.
+        </p>
+      </div>
+    );
   }
   // const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === "true";
   // if (isMaintenance){
