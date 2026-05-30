@@ -57,17 +57,17 @@ router.post("/approve", async (req, res) => {
       .eq("id", registrationId);
 
     if (updateError) {
-        const { error: fallbackError } = await supabaseAdmin
+      const { error: fallbackError } = await supabaseAdmin
         .from("tournament-registrations")
         .update({ status })
         .eq("id", registrationId);
-        if (fallbackError) throw fallbackError;
+      if (fallbackError) throw fallbackError;
     }
 
     // 2. If approved or rejected and we have an email, send the confirmation email
     if ((status === "approved" || status === "rejected") && userEmail) {
       let mailOptions;
-      
+
       if (status === "approved") {
         mailOptions = {
           from: `"Tournament Admin" <${process.env.SMTP_EMAIL}>`,
@@ -100,7 +100,7 @@ router.post("/approve", async (req, res) => {
               <p>Your slot is now rejected. Your Payment will be refunded in 2-3 business days (if applicable).</p>
               <p><b>Reason for Rejection:</b> ${reason || "Not specified"}</p>
               <br/>
-              <p>Please send the correct payment screenshot, with your in-game name on the screenshot, and email it back to us.</p>
+              <p>Please review it and reply back to this email for any queries.</p>
               <p>For any payment refund, please reply us your payment details. (UPI ID / QR Code / bank details)</p>
               <p>Regards,</p>
               <p>Team CollabRoom</p>
@@ -116,9 +116,9 @@ router.post("/approve", async (req, res) => {
         } catch (emailErr) {
           console.error("Failed to send email:", emailErr);
           // We still return success since DB was updated, but log the email error
-          return res.status(200).json({ 
-              message: "Status updated, but email failed to send (check SMTP config).",
-              emailError: true 
+          return res.status(200).json({
+            message: "Status updated, but email failed to send (check SMTP config).",
+            emailError: true
           });
         }
       }

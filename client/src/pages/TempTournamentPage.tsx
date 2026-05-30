@@ -141,7 +141,8 @@ export const TempTournamentPage = () => {
         <div className="max-w-3xl mx-auto">
           <Card className="shadow-lg border-primary/20">
             <CardHeader className="text-center pb-8 border-b bg-muted/30">
-              <CardTitle className="text-3xl font-bold tracking-tight text-primary">FFM NOIDA Tournament Registration</CardTitle>
+              <CardTitle className="text-3xl font-bold tracking-tight text-red-600">This Tournament has been cancelled due to venue allocation issue, we will organize the tournament on another venue. (Register if intrested)</CardTitle>
+              <CardTitle className="text-3xl font-bold tracking-tight text-primary">FFM Tournament Registration</CardTitle>
               <CardDescription className="text-base mt-2">
                 Register your team. 4 players are compulsory, 1 is optional.
               </CardDescription>
