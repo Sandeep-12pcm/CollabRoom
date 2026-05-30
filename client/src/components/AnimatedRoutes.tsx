@@ -16,6 +16,7 @@ const ComingSoon = lazy(() => import("./loading/ComingSoon"));
 const TempTournamentPage = lazy(() => import("../pages/TempTournamentPage"));
 const TempTournamentPageWithPayment = lazy(() => import("../pages/TempTournamentPageWithPayment"));
 const TournamentAdminPage = lazy(() => import("../pages/TournamentAdminPage"));
+const TournamentInfoPage = lazy(() => import("../pages/TournamentInfoPage"));
 const SubscriptionPage = lazy(() => import("../pages/SubscriptionPage"));
 
 export const AnimatedRoutes = () => {
@@ -37,6 +38,7 @@ export const AnimatedRoutes = () => {
           <Route path="/tournament/register" element={<PageTransition><TempTournamentPage /></PageTransition>} />
           <Route path="/tournament/register-with-payment" element={<PageTransition><TempTournamentPageWithPayment /></PageTransition>} />
           <Route path="/tournament/admin" element={<PageTransition><TournamentAdminPage /></PageTransition>} />
+          <Route path="/tournament/info" element={<PageTransition><TournamentInfoPage /></PageTransition>} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
       </Suspense>
