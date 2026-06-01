@@ -88,17 +88,17 @@ const TOURNAMENT_DATA = {
   // Schedule
   schedule: [
     {
-      time: "5:00 PM",
+      time: "4:50 PM",
       event: "Team Check-in & Verification",
       icon: <Users className="w-4 h-4" />,
     },
     {
-      time: "5:30 PM",
+      time: "5:10 PM",
       event: "Opening Ceremony",
       icon: <Star className="w-4 h-4" />,
     },
     {
-      time: "6:00 PM",
+      time: "5:20 PM",
       event: "Group Stage — Round 1",
       icon: <Gamepad2 className="w-4 h-4" />,
     },
@@ -108,7 +108,7 @@ const TOURNAMENT_DATA = {
     //   icon: <Clock className="w-4 h-4" />,
     // },
     {
-      time: "2:00 PM",
+      time: "5:40 PM",
       event: "Group Stage — Round 2",
       icon: <Gamepad2 className="w-4 h-4" />,
     },
@@ -118,12 +118,12 @@ const TOURNAMENT_DATA = {
     //   icon: <Zap className="w-4 h-4" />,
     // },
     {
-      time: "5:00 PM",
+      time: "6:00 PM",
       event: "Group Stage - Round 3",
       icon: <Trophy className="w-4 h-4" />,
     },
     {
-      time: "7:30 PM",
+      time: "6:20 PM",
       event: "Prize Distribution & Closing",
       icon: <Award className="w-4 h-4" />,
     },
@@ -278,6 +278,7 @@ export const TournamentInfoPage = () => {
   // ── Real-time registrations ──
   const [registeredTeams, setRegisteredTeams] = useState<RegisteredTeam[]>([]);
   const [regLoading, setRegLoading] = useState(true);
+  const [showNotice, setShowNotice] = useState(true);
 
   useEffect(() => {
     // Initial fetch
@@ -331,6 +332,31 @@ export const TournamentInfoPage = () => {
         description={d.description}
       />
       <Navbar />
+
+      {/* ── Registration Notice Banner ── */}
+      {showNotice && (
+        <div className="sticky top-16 z-40 w-full bg-amber-500/10 border-b border-amber-500/30 backdrop-blur-md">
+          <div className="max-w-5xl mx-auto px-4 py-3 flex items-start sm:items-center gap-3">
+            <span className="flex-shrink-0 mt-0.5 sm:mt-0 text-amber-400 text-lg">📬</span>
+            <p className="text-sm text-amber-200 leading-relaxed flex-1">
+              <span className="font-bold text-amber-400">Already registered?</span>{" "}
+              Please allow up to <span className="font-semibold">24 hours</span> to receive your confirmation email.
+              If you haven't received it, make sure to check your{" "}
+              <span className="font-extrabold text-amber-400 underline underline-offset-2 decoration-amber-400/60">
+                spam / junk folder
+              </span>
+              .
+            </p>
+            <button
+              aria-label="Dismiss notice"
+              onClick={() => setShowNotice(false)}
+              className="flex-shrink-0 text-amber-400/70 hover:text-amber-300 transition-colors p-1 rounded-lg hover:bg-amber-400/10"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Hero ── */}
       <section
