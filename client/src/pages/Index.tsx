@@ -76,7 +76,7 @@ const Landing: React.FC = () => {
                 Are you ready for the ultimate showdown?
               </span>
               <Link
-                to="/tournament/register"
+                to="/tournament/info"
                 className="inline-flex items-center text-sm font-semibold text-primary hover:text-primary/80 hover:underline transition-all"
               >
                 Register for the tournament here

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -87,17 +88,17 @@ const TOURNAMENT_DATA = {
   // Schedule
   schedule: [
     {
-      time: "9:00 AM",
+      time: "5:00 PM",
       event: "Team Check-in & Verification",
       icon: <Users className="w-4 h-4" />,
     },
     {
-      time: "10:00 AM",
+      time: "5:30 PM",
       event: "Opening Ceremony",
       icon: <Star className="w-4 h-4" />,
     },
     {
-      time: "10:30 AM",
+      time: "6:00 PM",
       event: "Group Stage — Round 1",
       icon: <Gamepad2 className="w-4 h-4" />,
     },
@@ -261,12 +262,67 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
   );
 };
 
+// ─── Registered Team Row Type ────────────────────────────────────────────────
+type RegisteredTeam = {
+  id: string | null;
+  team_name: string | null;
+  player1_ign: string | null;
+  slot_number: number | null;
+  created_at: string | null;
+};
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export const TournamentInfoPage = () => {
   const d = TOURNAMENT_DATA;
-  const slotsPercent = Math.round(
-    ((d.format.totalTeams - d.format.slotsLeft) / d.format.totalTeams) * 100
-  );
+
+  // ── Real-time registrations ──
+  const [registeredTeams, setRegisteredTeams] = useState<RegisteredTeam[]>([]);
+  const [regLoading, setRegLoading] = useState(true);
+
+  useEffect(() => {
+    // Initial fetch
+    const fetchTeams = async () => {
+      const { data, error } = await supabase
+        .from("tournament_registrations")
+        .select("id, team_name, player1_ign, slot_number, created_at")
+        .eq("status", "approved")
+        .order("slot_number", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: true });
+      if (error) {
+        console.log("Error: " + error.message)
+      }
+      if (!data) setRegisteredTeams([])
+      else setRegisteredTeams(data as RegisteredTeam[]);
+      setRegLoading(false);
+    };
+
+    fetchTeams();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel("tournament_registrations_approved")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "tournament_registrations",
+        },
+        () => {
+          // Re-fetch on any change so we always reflect current approved state
+          fetchTeams();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const approvedCount = registeredTeams.length;
+  const slotsLeft = Math.max(0, d.format.totalTeams - approvedCount);
+  const slotsPercent = Math.round((approvedCount / d.format.totalTeams) * 100);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -397,7 +453,7 @@ export const TournamentInfoPage = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Slots Filled</span>
                   <span className="font-bold text-primary">
-                    {d.format.totalTeams - d.format.slotsLeft} / {d.format.totalTeams}
+                    {approvedCount} / {d.format.totalTeams}
                   </span>
                 </div>
                 <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -410,7 +466,7 @@ export const TournamentInfoPage = () => {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground text-right">
-                  {d.format.slotsLeft} slots remaining
+                  {regLoading ? "Loading..." : `${slotsLeft} slot${slotsLeft !== 1 ? "s" : ""} remaining`}
                 </p>
               </div>
 
@@ -439,6 +495,67 @@ export const TournamentInfoPage = () => {
                 </Link>
               </Button>
             </div>
+          </div>
+        </section>
+
+        {/* ── Registered Teams ── */}
+        <section id="teams" className="py-16 px-4 border-b border-border/40">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+              <Users className="w-6 h-6 text-primary" /> Registered Teams
+            </h2>
+            <p className="text-muted-foreground mb-8 text-sm">
+              {regLoading
+                ? "Fetching approved teams..."
+                : approvedCount === 0
+                  ? "No teams approved yet. Be the first!"
+                  : `${approvedCount} team${approvedCount !== 1 ? "s" : ""} approved — live updates enabled.`}
+            </p>
+
+            {regLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              </div>
+            ) : approvedCount === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Registrations are open — slots filling up soon!</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {registeredTeams.map((team, idx) => (
+                  <div
+                    key={team.id}
+                    className="relative flex items-center gap-4 bg-card/60 backdrop-blur border border-border/50 rounded-2xl px-5 py-4 hover:border-primary/40 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                  >
+                    {/* Slot number badge */}
+                    <div
+                      className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm ${idx === 0
+                        ? "bg-yellow-400/20 text-yellow-400 border border-yellow-400/40"
+                        : idx === 1
+                          ? "bg-slate-400/20 text-slate-300 border border-slate-400/40"
+                          : idx === 2
+                            ? "bg-orange-500/20 text-orange-400 border border-orange-500/40"
+                            : "bg-primary/10 text-primary border border-primary/20"
+                        }`}
+                    >
+                      {team.slot_number ?? idx + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm truncate">{team.team_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {team.leader_name}
+                      </p>
+                    </div>
+                    {idx === 0 && (
+                      <span className="absolute top-2 right-3 text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
+                        🥇 First
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

@@ -142,6 +142,66 @@ export type Database = {
           }
         ]
       }
+
+      tournament_registrations: {
+        Row: {
+          id: string
+          created_at: string
+          team_name: string
+          leader_name: string
+          leader_uid: string
+          leader_phone: string
+          player2_name: string | null
+          player2_uid: string | null
+          player3_name: string | null
+          player3_uid: string | null
+          player4_name: string | null
+          player4_uid: string | null
+          sub_name: string | null
+          sub_uid: string | null
+          status: string
+          slot_number: number | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          team_name: string
+          player1_ign: string
+          player1_uid: string
+          player2_ign?: string | null
+          player2_uid?: string | null
+          player3_ign?: string | null
+          player3_uid?: string | null
+          player4_ign?: string | null
+          player4_uid?: string | null
+          player5_ign?: string | null
+          player5_uid?: string | null
+          payment_screenshot_url?: string | null
+          user_email?: string | null
+          mobile_number?: string
+          status?: string
+          slot_number?: number | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          team_name?: string
+          leader_name?: string
+          leader_uid?: string
+          leader_phone?: string
+          player2_name?: string | null
+          player2_uid?: string | null
+          player3_name?: string | null
+          player3_uid?: string | null
+          player4_name?: string | null
+          player4_uid?: string | null
+          sub_name?: string | null
+          sub_uid?: string | null
+          status?: string
+          slot_number?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
