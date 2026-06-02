@@ -52,7 +52,7 @@ const TOURNAMENT_DATA = {
     address: "",
     city: "Faridabad, Haryana",
     pincode: "121002",
-    landmark: "Near Sector-16 Metro Station",
+    landmark: "Near Metro Heart Hospital",
 
     directionsUrl:
       "https://maps.app.goo.gl/QVchRoBF5ALd5kHZ6",
@@ -123,7 +123,7 @@ const TOURNAMENT_DATA = {
       icon: <Trophy className="w-4 h-4" />,
     },
     {
-      time: "6:20 PM",
+      time: "6:30 PM",
       event: "Prize Distribution & Closing",
       icon: <Award className="w-4 h-4" />,
     },
