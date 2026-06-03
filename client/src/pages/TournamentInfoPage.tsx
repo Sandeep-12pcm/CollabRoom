@@ -756,7 +756,7 @@ export const TournamentInfoPage = () => {
                     <li className="flex items-start gap-2">
                       <span className="text-green-400 font-bold mt-0.5">🚇</span>
                       <span>
-                        <strong className="text-foreground">Metro:</strong> Old Faridabad Metro Station — 10 min walk
+                        <strong className="text-foreground">Metro:</strong> Old Faridabad Metro Station
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
