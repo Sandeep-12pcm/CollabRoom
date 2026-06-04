@@ -41,9 +41,9 @@ const TOURNAMENT_DATA = {
     "Join the most electrifying Free Fire MAX tournament in the region! Compete against the best squads, show off your skills, and claim your share of the massive prize pool. Only the strongest team will rise to the top.",
 
   // Dates & Time
-  registrationDeadline: "June 8, 2026",
+  registrationDeadline: "June 7, 2026",
   tournamentDate: "June 8, 2026",
-  tournamentTime: "09:00 AM IST",
+  tournamentTime: "05:00 PM IST",
   registrationOpenDate: "June 1, 2026",
 
   // Venue
@@ -227,9 +227,9 @@ const PrizeTier = ({
           Top Prize
         </div>
       )}
-      <p className="text-3xl font-extrabold text-center mb-1">{label}</p>
+      <p className="text-xl md:text-3xl font-extrabold text-center mb-1">{label}</p>
       <p
-        className={`text-2xl font-bold text-center mt-2 ${textColorMap[color]}`}
+        className={`text-xl md:text-3xl font-bold text-center mt-2 ${textColorMap[color]}`}
       >
         {amount}
       </p>
@@ -285,6 +285,7 @@ export const TournamentInfoPage = () => {
     const fetchTeams = async () => {
       const { data, error } = await supabase
         .from("tournament_registrations")
+        // .select("*")
         .select("id, team_name, player1_ign, slot_number, created_at")
         .eq("status", "approved")
         .order("slot_number", { ascending: true, nullsFirst: false })
@@ -570,7 +571,7 @@ export const TournamentInfoPage = () => {
                     <div className="min-w-0">
                       <p className="font-bold text-sm truncate">{team.team_name}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {team.leader_name}
+                        {team.player1_ign}
                       </p>
                     </div>
                     {idx === 0 && (
@@ -604,7 +605,7 @@ export const TournamentInfoPage = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 sm:grid-cols-2 sm:gap-2">
               {d.prizes.map((p) => (
                 <PrizeTier key={p.position} {...p} />
               ))}
