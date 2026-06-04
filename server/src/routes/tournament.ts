@@ -2,7 +2,9 @@ import express from "express";
 import nodemailer from "nodemailer";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import dns from "dns";
 
+dns.setDefaultResultOrder("ipv4first");
 dotenv.config();
 
 const router = express.Router();
@@ -19,7 +21,7 @@ const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
-  family: 4,
+  // family: 4,
   requireTLS: true,
   auth: {
     user: process.env.SMTP_EMAIL,
