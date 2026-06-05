@@ -1,10 +1,8 @@
 import express from "express";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-import dns from "dns";
 
-dns.setDefaultResultOrder("ipv4first");
 dotenv.config();
 
 const router = express.Router();
@@ -16,18 +14,12 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
-// Configure Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  // family: 4,
-  requireTLS: true,
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+// Resend works over HTTPS (port 443) — never blocked by cloud platforms like Render.
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// The "from" address must be a verified domain/email in your Resend account.
+// While testing, Resend allows using "onboarding@resend.dev" as the sender.
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
 
 // GET /api/tournament/registrations — fetches all registrations (service role bypasses RLS)
 router.get("/registrations", async (req, res) => {
@@ -72,14 +64,12 @@ router.post("/approve", async (req, res) => {
 
     // 2. If approved or rejected and we have an email, send the confirmation email
     if ((status === "approved" || status === "rejected") && userEmail) {
-      let mailOptions;
+      let subject: string;
+      let html: string;
 
       if (status === "approved") {
-        mailOptions = {
-          from: `"Tournament Admin" <${process.env.SMTP_EMAIL}>`,
-          to: userEmail,
-          subject: "🎉 Tournament Slot Confirmed — CollabRoom",
-          html: `
+        subject = "🎉 Tournament Slot Confirmed — CollabRoom";
+        html = `
             <div style="margin:0;padding:0;background-color:#f4f6f9;font-family:'Segoe UI',Arial,sans-serif;">
 
               <!-- Header / Branding -->
@@ -134,7 +124,7 @@ router.post("/approve", async (req, res) => {
               <div style="max-width:600px;margin:0 auto;background:#1a1a2e;padding:24px 40px;text-align:center;border-radius:0 0 8px 8px;">
                 <p style="margin:0 0 8px;font-size:13px;color:#a0aec0;">
                   Need help? &nbsp;
-                  <a href="mailto:${process.env.SMTP_EMAIL}" style="color:#60a5fa;text-decoration:none;">Contact Support</a>
+                  <a href="mailto:${FROM_EMAIL}" style="color:#60a5fa;text-decoration:none;">Contact Support</a>
                   &nbsp;&#183;&nbsp;
                   <a href="https://collabroom.online" style="color:#60a5fa;text-decoration:none;">Visit Website</a>
                 </p>
@@ -144,14 +134,10 @@ router.post("/approve", async (req, res) => {
               </div>
 
             </div>
-          `,
-        };
-      } else if (status === "rejected") {
-        mailOptions = {
-          from: `"Tournament Admin" <${process.env.SMTP_EMAIL}>`,
-          to: userEmail,
-          subject: "Tournament Registration Update — CollabRoom",
-          html: `
+          `;
+      } else {
+        subject = "Tournament Registration Update — CollabRoom";
+        html = `
             <div style="margin:0;padding:0;background-color:#f4f6f9;font-family:'Segoe UI',Arial,sans-serif;">
 
               <!-- Header / Branding -->
@@ -204,7 +190,7 @@ router.post("/approve", async (req, res) => {
               <div style="max-width:600px;margin:0 auto;background:#1a1a2e;padding:24px 40px;text-align:center;border-radius:0 0 8px 8px;">
                 <p style="margin:0 0 8px;font-size:13px;color:#a0aec0;">
                   Need help? &nbsp;
-                  <a href="mailto:${process.env.SMTP_EMAIL}" style="color:#60a5fa;text-decoration:none;">Contact Support</a>
+                  <a href="mailto:${FROM_EMAIL}" style="color:#60a5fa;text-decoration:none;">Contact Support</a>
                   &nbsp;&#183;&nbsp;
                   <a href="https://collabroom.vercel.app" style="color:#60a5fa;text-decoration:none;">Visit Website</a>
                 </p>
@@ -214,22 +200,32 @@ router.post("/approve", async (req, res) => {
               </div>
 
             </div>
-          `,
-        };
+          `;
       }
 
-      if (mailOptions) {
-        try {
-          await transporter.sendMail(mailOptions);
-          console.log(`Email sent successfully to ${userEmail} for status ${status}`);
-        } catch (emailErr) {
-          console.error("Failed to send email:", emailErr);
-          // We still return success since DB was updated, but log the email error
+      try {
+        const { error: emailError } = await resend.emails.send({
+          from: `Tournament Admin <${FROM_EMAIL}>`,
+          to: userEmail,
+          subject,
+          html,
+        });
+
+        if (emailError) {
+          console.error("Resend error:", emailError);
           return res.status(200).json({
-            message: "Status updated, but email failed to send (check SMTP config).",
-            emailError: true
+            message: "Status updated, but email failed to send.",
+            emailError: true,
           });
         }
+
+        console.log(`Email sent successfully to ${userEmail} for status ${status}`);
+      } catch (emailErr) {
+        console.error("Failed to send email:", emailErr);
+        return res.status(200).json({
+          message: "Status updated, but email failed to send.",
+          emailError: true,
+        });
       }
     }
 
