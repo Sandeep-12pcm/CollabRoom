@@ -172,6 +172,15 @@ const TOURNAMENT_DATA = {
   ],
 };
 
+// ─── Deadline Helpers ────────────────────────────────────────────────────────
+const getDaysUntil = (dateStr: string): number => {
+  const deadline = new Date(dateStr);
+  deadline.setHours(23, 59, 59, 999); // end of deadline day
+  const now = new Date();
+  const diff = deadline.getTime() - now.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+};
+
 // ─── Helper Components ───────────────────────────────────────────────────────
 
 const StatBadge = ({
@@ -498,22 +507,42 @@ export const TournamentInfoPage = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
-                {[
-                  { label: "Registration Closes", value: d.registrationDeadline },
-                  { label: "Tournament Day", value: d.tournamentDate },
-                  { label: "Start Time", value: d.tournamentTime },
-                  { label: "Rounds", value: d.format.rounds.length.toString() },
-                ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="bg-muted/40 rounded-xl p-3 border border-border/40"
-                  >
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                      {label}
-                    </p>
-                    <p className="font-semibold text-sm">{value}</p>
-                  </div>
-                ))}
+                {(() => {
+                  const daysLeft = getDaysUntil(d.registrationDeadline);
+                  const isUrgent = daysLeft >= 0 && daysLeft <= 3;
+                  const items = [
+                    { label: "Registration Closes", value: d.registrationDeadline, urgent: isUrgent, daysLeft },
+                    { label: "Tournament Day", value: d.tournamentDate, urgent: false, daysLeft: 0 },
+                    { label: "Start Time", value: d.tournamentTime, urgent: false, daysLeft: 0 },
+                    { label: "Rounds", value: d.format.rounds.length.toString(), urgent: false, daysLeft: 0 },
+                  ];
+                  return items.map(({ label, value, urgent, daysLeft: dl }) => (
+                    <div
+                      key={label}
+                      className={`rounded-xl p-3 border transition-all duration-300 ${
+                        urgent
+                          ? "bg-red-500/10 border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)] animate-[deadlinePulse_2s_ease-in-out_infinite]"
+                          : "bg-muted/40 border-border/40"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 mb-1">
+                        <p className={`text-[10px] uppercase tracking-wider ${
+                          urgent ? "text-red-400 font-bold" : "text-muted-foreground"
+                        }`}>
+                          {label}
+                        </p>
+                        {urgent && (
+                          <span className="text-[8px] font-bold text-red-400 bg-red-500/20 border border-red-500/40 rounded-full px-1.5 py-0.5 uppercase tracking-wider leading-none animate-pulse">
+                            ⚠ {dl === 0 ? "Today!" : dl === 1 ? "Tomorrow!" : `${dl}d left!`}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`font-semibold text-sm ${
+                        urgent ? "text-red-400" : ""
+                      }`}>{value}</p>
+                    </div>
+                  ));
+                })()}
               </div>
 
               <Button asChild className="w-full gap-2 mt-2">

@@ -103,6 +103,10 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" }
         },
+        "deadlinePulse": {
+          "0%, 100%": { boxShadow: "0 0 8px rgba(239,68,68,0.2)", borderColor: "rgba(239,68,68,0.4)" },
+          "50%": { boxShadow: "0 0 20px rgba(239,68,68,0.5)", borderColor: "rgba(239,68,68,0.8)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -113,6 +117,7 @@ export default {
         "slide-in-right": "slide-in-right 0.4s ease-out",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
+        "deadlinePulse": "deadlinePulse 2s ease-in-out infinite",
       },
     },
   },
