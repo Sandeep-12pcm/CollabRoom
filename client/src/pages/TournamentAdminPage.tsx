@@ -15,10 +15,11 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ExternalLink, AlertCircle, CheckCircle, Mail, XCircle } from "lucide-react";
+import { Loader2, ExternalLink, AlertCircle, CheckCircle, Mail, XCircle, Download } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import * as XLSX from "xlsx";
 
 
 export const TournamentAdminPage = () => {
@@ -31,29 +32,35 @@ export const TournamentAdminPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    const HOST = import.meta.env.VITE_HOST_URL || "http://localhost:4000";
+
     const checkAuthAndFetchData = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Fire session check AND a server pre-warm ping in parallel
+      const [sessionResult] = await Promise.all([
+        supabase.auth.getSession(),
+        // Pre-warm the Render server so it's ready by the time we need it
+        fetch(`${HOST}/api/tournament/registrations`, { method: "HEAD" }).catch(() => null),
+      ]);
+
+      const { data: { session }, error: sessionError } = sessionResult;
 
       if (sessionError || !session) {
         navigate("/auth", { state: { from: { pathname: "/tournament/admin" } } });
         return;
       }
 
-      // Check if user is admin
       const userEmail = session.user.email;
-      // console.log(userEmail);
-      // console.log(ADMIN_EMAILS);
       if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
         setIsAdmin(false);
         setLoading(false);
-        return; // Stop here if not admin
+        return;
       }
 
       setIsAdmin(true);
 
       try {
         // Fetch via backend server (uses service role key — bypasses Supabase RLS)
-        const response = await fetch(`${import.meta.env.VITE_HOST_URL || "http://localhost:4000"}/api/tournament/registrations`);
+        const response = await fetch(`${HOST}/api/tournament/registrations`);
         const result = await response.json();
 
         if (!response.ok) {
@@ -120,6 +127,29 @@ export const TournamentAdminPage = () => {
     }
   };
 
+  const exportToXLSX = () => {
+    const rows = registrations.map((reg) => ({
+      "Team Name":    reg.team_name ?? "",
+      "Player 1 UID": reg.player1_uid ?? "",
+      "Player 1 IGN": reg.player1_ign ?? "",
+      "Player 2 UID": reg.player2_uid ?? "",
+      "Player 2 IGN": reg.player2_ign ?? "",
+      "Player 3 UID": reg.player3_uid ?? "",
+      "Player 3 IGN": reg.player3_ign ?? "",
+      "Player 4 UID": reg.player4_uid ?? "",
+      "Player 4 IGN": reg.player4_ign ?? "",
+      "Player 5 UID": reg.player5_uid ?? "",
+      "Player 5 IGN": reg.player5_ign ?? "",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook  = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
+
+    const filename = `tournament_registrations_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -159,9 +189,21 @@ export const TournamentAdminPage = () => {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Tournament Submissions</h1>
             <p className="text-muted-foreground mt-2">Manage and verify team registrations and payments.</p>
           </div>
-          <Badge variant="outline" className="text-sm px-4 py-1 bg-primary/10 text-primary border-primary/20">
-            {registrations.length} Teams Registered
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="text-sm px-4 py-1 bg-primary/10 text-primary border-primary/20">
+              {registrations.length} Teams Registered
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={registrations.length === 0}
+              onClick={exportToXLSX}
+              className="h-9 text-xs gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export XLSX
+            </Button>
+          </div>
         </div>
 
         {error && (

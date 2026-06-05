@@ -38,6 +38,12 @@ const corsOptions: cors.CorsOptions = {
 const app = express();
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Keep-alive health check — ping this with UptimeRobot every 14 min to prevent Render cold starts
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 app.use('/api/ai-code-assistant', aiRoute);
 app.use('/api/tournament', tournamentRoute);
 const server = http.createServer(app);
