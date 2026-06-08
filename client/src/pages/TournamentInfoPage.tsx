@@ -28,6 +28,8 @@ import {
   Instagram,
   Youtube,
   AlertTriangle,
+  Calculator,
+  Crosshair,
 } from "lucide-react";
 
 // ─── Tournament Data ────────────────────────────────────────────────────────
@@ -48,17 +50,17 @@ const TOURNAMENT_DATA = {
 
   // Venue
   venue: {
-    name: "Z-Park, Sector-16, Faridabad",
+    name: "Apna Park, Sector-16A, Faridabad",
     address: "",
     city: "Faridabad, Haryana",
     pincode: "121002",
-    landmark: "Near Metro Heart Hospital",
+    landmark: "Near Govt. Womens College, Nehru College",
 
     directionsUrl:
-      "https://maps.app.goo.gl/QVchRoBF5ALd5kHZ6",
+      "https://maps.app.goo.gl/VzPQLiG7Ebs95T7DA",
 
     mapEmbedUrl:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3509.448824743958!2d77.31963707549251!3d28.405710975789393!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cddad6949ce89%3A0x304792a7e8b02bb9!2sZ%20Park!5e0!3m2!1sen!2sin!4v1780131901750!5m2!1sen!2sin"
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d28073.598312539114!2d77.2943116380496!3d28.413227800220973!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cddb36f22c37b%3A0xc25098a36de69ec1!2sApna%20Park!5e0!3m2!1sen!2sin!4v1780840818068!5m2!1sen!2sin"
   },
 
   // Prize Pool
@@ -170,6 +172,23 @@ const TOURNAMENT_DATA = {
       a: "Yes, the Semi-Finals and Grand Finals will be live-streamed on our YouTube channel.",
     },
   ],
+
+  // Points Table
+  pointsTable: [
+    { rank: 1,  points: 12 },
+    { rank: 2,  points: 9  },
+    { rank: 3,  points: 8  },
+    { rank: 4,  points: 7  },
+    { rank: 5,  points: 6  },
+    { rank: 6,  points: 5  },
+    { rank: 7,  points: 4  },
+    { rank: 8,  points: 3  },
+    { rank: 9,  points: 2  },
+    { rank: 10, points: 1  },
+    { rank: 11, points: 0  },
+    { rank: 12, points: 0  },
+  ],
+  killPoints: 1,
 };
 
 // ─── Deadline Helpers ────────────────────────────────────────────────────────
@@ -242,6 +261,113 @@ const PrizeTier = ({
       >
         {amount}
       </p>
+    </div>
+  );
+};
+
+const PointsCalculator = () => {
+  const [rank, setRank] = useState<number | "">("");
+  const [kills, setKills] = useState<number | "">("");
+
+  const rankPoints =
+    rank !== "" && rank >= 1 && rank <= 12
+      ? (TOURNAMENT_DATA.pointsTable[rank - 1]?.points ?? 0)
+      : null;
+  const killPts = kills !== "" && kills >= 0 ? Number(kills) * TOURNAMENT_DATA.killPoints : null;
+  const total =
+    rankPoints !== null && killPts !== null ? rankPoints + killPts : null;
+
+  const rankLabel =
+    rank !== "" && rank >= 1 && rank <= 12 ? `#${rank}` : null;
+
+  const resultColor =
+    total === null
+      ? ""
+      : total >= 10
+      ? "text-yellow-400"
+      : total >= 6
+      ? "text-primary"
+      : "text-muted-foreground";
+
+  return (
+    <div className="card-elevated rounded-2xl p-6 space-y-5">
+      <div className="grid sm:grid-cols-2 gap-4">
+        {/* Rank input */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="calc-rank"
+            className="text-xs text-muted-foreground uppercase tracking-wider font-semibold"
+          >
+            Finish Rank (1–12)
+          </label>
+          <input
+            id="calc-rank"
+            type="number"
+            min={1}
+            max={12}
+            placeholder="e.g. 1"
+            value={rank}
+            onChange={(e) => {
+              const v = e.target.value;
+              setRank(v === "" ? "" : Math.min(12, Math.max(1, parseInt(v) || 1)));
+            }}
+            className="w-full bg-muted/50 border border-border/50 rounded-xl px-4 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
+          />
+        </div>
+
+        {/* Kills input */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="calc-kills"
+            className="text-xs text-muted-foreground uppercase tracking-wider font-semibold"
+          >
+            Total Kills
+          </label>
+          <input
+            id="calc-kills"
+            type="number"
+            min={0}
+            placeholder="e.g. 5"
+            value={kills}
+            onChange={(e) => {
+              const v = e.target.value;
+              setKills(v === "" ? "" : Math.max(0, parseInt(v) || 0));
+            }}
+            className="w-full bg-muted/50 border border-border/50 rounded-xl px-4 py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Result */}
+      {total !== null ? (
+        <div className="rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 p-5">
+          <div className="flex flex-wrap justify-between gap-4 text-sm mb-4">
+            <div className="text-center flex-1 min-w-[80px]">
+              <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Rank</p>
+              <p className="font-bold text-foreground text-lg">{rankLabel}</p>
+            </div>
+            <div className="text-center flex-1 min-w-[80px]">
+              <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Rank Pts</p>
+              <p className="font-bold text-primary text-lg">{rankPoints}</p>
+            </div>
+            <div className="text-center flex-1 min-w-[80px]">
+              <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Kill Pts</p>
+              <p className="font-bold text-primary text-lg">{killPts}</p>
+            </div>
+            <div className="text-center flex-1 min-w-[80px] border-l border-border/40 pl-4">
+              <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Total</p>
+              <p className={`font-extrabold text-2xl ${resultColor}`}>{total}</p>
+            </div>
+          </div>
+          <p className="text-center text-xs text-muted-foreground">
+            {rankPoints} (rank) + {kills} kill{Number(kills) !== 1 ? "s" : ""} × {TOURNAMENT_DATA.killPoints} pt = <span className={`font-bold ${resultColor}`}>{total} pts</span>
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-border/30 bg-muted/20 p-5 text-center text-muted-foreground text-sm">
+          Enter your rank and kills above to calculate your points.
+        </div>
+      )}
     </div>
   );
 };
@@ -519,16 +645,14 @@ export const TournamentInfoPage = () => {
                   return items.map(({ label, value, urgent, daysLeft: dl }) => (
                     <div
                       key={label}
-                      className={`rounded-xl p-3 border transition-all duration-300 ${
-                        urgent
-                          ? "bg-red-500/10 border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)] animate-[deadlinePulse_2s_ease-in-out_infinite]"
-                          : "bg-muted/40 border-border/40"
-                      }`}
+                      className={`rounded-xl p-3 border transition-all duration-300 ${urgent
+                        ? "bg-red-500/10 border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)] animate-[deadlinePulse_2s_ease-in-out_infinite]"
+                        : "bg-muted/40 border-border/40"
+                        }`}
                     >
                       <div className="flex items-center gap-1 mb-1">
-                        <p className={`text-[10px] uppercase tracking-wider ${
-                          urgent ? "text-red-400 font-bold" : "text-muted-foreground"
-                        }`}>
+                        <p className={`text-[10px] uppercase tracking-wider ${urgent ? "text-red-400 font-bold" : "text-muted-foreground"
+                          }`}>
                           {label}
                         </p>
                         {urgent && (
@@ -537,9 +661,8 @@ export const TournamentInfoPage = () => {
                           </span>
                         )}
                       </div>
-                      <p className={`font-semibold text-sm ${
-                        urgent ? "text-red-400" : ""
-                      }`}>{value}</p>
+                      <p className={`font-semibold text-sm ${urgent ? "text-red-400" : ""
+                        }`}>{value}</p>
                     </div>
                   ));
                 })()}
@@ -874,6 +997,131 @@ export const TournamentInfoPage = () => {
                 such cases.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* ── Points Table ── */}
+        <section
+          id="points-table"
+          className="py-16 px-4 border-b border-border/40"
+          style={{ background: "var(--gradient-subtle)" }}
+        >
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+              <Crosshair className="w-6 h-6 text-primary" /> Points System
+            </h2>
+            <p className="text-muted-foreground mb-8 text-sm">
+              Points are awarded based on your finish rank plus{" "}
+              <span className="font-semibold text-foreground">
+                {d.killPoints} point per kill
+              </span>
+              .
+            </p>
+
+            <div className="overflow-hidden rounded-2xl border border-border/50 shadow-lg">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr
+                    className="text-xs uppercase tracking-wider"
+                    style={{ background: "var(--gradient-primary)" }}
+                  >
+                    <th className="text-left px-5 py-3 text-primary-foreground/80 font-semibold w-1/2">
+                      Finish Rank
+                    </th>
+                    <th className="text-right px-5 py-3 text-primary-foreground/80 font-semibold w-1/2">
+                      Rank Points
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.pointsTable.map((row, i) => {
+                    const medalMap: Record<number, string> = {
+                      0: "🥇",
+                      1: "🥈",
+                      2: "🥉",
+                    };
+                    const highlightMap: Record<number, string> = {
+                      0: "bg-yellow-400/10 border-l-2 border-yellow-400/60",
+                      1: "bg-slate-400/10 border-l-2 border-slate-400/50",
+                      2: "bg-orange-500/10 border-l-2 border-orange-500/50",
+                    };
+                    const ptColorMap: Record<number, string> = {
+                      0: "text-yellow-400",
+                      1: "text-slate-300",
+                      2: "text-orange-400",
+                    };
+                    const isHighlighted = i < 3;
+                    return (
+                      <tr
+                        key={row.rank}
+                        className={`border-b border-border/30 transition-colors hover:bg-primary/5 ${
+                          isHighlighted
+                            ? highlightMap[i]
+                            : i % 2 === 0
+                            ? "bg-card/60"
+                            : "bg-muted/20"
+                        }`}
+                      >
+                        <td className="px-5 py-3 font-semibold text-foreground">
+                          <span className="flex items-center gap-2">
+                            {medalMap[i] && (
+                              <span className="text-base">{medalMap[i]}</span>
+                            )}
+                            <span
+                              className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
+                                isHighlighted
+                                  ? ptColorMap[i] +
+                                    " bg-current/10"
+                                  : "text-muted-foreground bg-muted/30"
+                              }`}
+                            >
+                              #{row.rank}
+                            </span>
+                          </span>
+                        </td>
+                        <td
+                          className={`px-5 py-3 text-right font-bold text-base ${
+                            isHighlighted ? ptColorMap[i] : "text-foreground"
+                          }`}
+                        >
+                          {row.points}{" "}
+                          <span className="text-xs text-muted-foreground font-normal">
+                            pts
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              {/* Kill bonus row */}
+              <div className="flex items-center justify-between px-5 py-3 bg-primary/5 border-t border-primary/20">
+                <span className="flex items-center gap-2 text-sm font-semibold text-primary">
+                  <Crosshair className="w-4 h-4" /> Per Kill Bonus
+                </span>
+                <span className="font-bold text-primary text-base">
+                  +{d.killPoints}{" "}
+                  <span className="text-xs text-muted-foreground font-normal">
+                    pt / kill
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Points Calculator ── */}
+        <section id="points-calculator" className="py-16 px-4 border-b border-border/40">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+              <Calculator className="w-6 h-6 text-primary" /> Points Calculator
+            </h2>
+            <p className="text-muted-foreground mb-8 text-sm">
+              Estimate your total points based on your finish rank and number of
+              kills.
+            </p>
+            <PointsCalculator />
           </div>
         </section>
 
