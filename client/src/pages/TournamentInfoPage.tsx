@@ -175,18 +175,18 @@ const TOURNAMENT_DATA = {
 
   // Points Table
   pointsTable: [
-    { rank: 1,  points: 12 },
-    { rank: 2,  points: 9  },
-    { rank: 3,  points: 8  },
-    { rank: 4,  points: 7  },
-    { rank: 5,  points: 6  },
-    { rank: 6,  points: 5  },
-    { rank: 7,  points: 4  },
-    { rank: 8,  points: 3  },
-    { rank: 9,  points: 2  },
-    { rank: 10, points: 1  },
-    { rank: 11, points: 0  },
-    { rank: 12, points: 0  },
+    { rank: 1, points: 12 },
+    { rank: 2, points: 9 },
+    { rank: 3, points: 8 },
+    { rank: 4, points: 7 },
+    { rank: 5, points: 6 },
+    { rank: 6, points: 5 },
+    { rank: 7, points: 4 },
+    { rank: 8, points: 3 },
+    { rank: 9, points: 2 },
+    { rank: 10, points: 1 },
+    { rank: 11, points: 0 },
+    { rank: 12, points: 0 },
   ],
   killPoints: 1,
 };
@@ -284,10 +284,10 @@ const PointsCalculator = () => {
     total === null
       ? ""
       : total >= 10
-      ? "text-yellow-400"
-      : total >= 6
-      ? "text-primary"
-      : "text-muted-foreground";
+        ? "text-yellow-400"
+        : total >= 6
+          ? "text-primary"
+          : "text-muted-foreground";
 
   return (
     <div className="card-elevated rounded-2xl p-6 space-y-5">
@@ -512,10 +512,10 @@ export const TournamentInfoPage = () => {
 
         <div className="relative max-w-5xl mx-auto text-center">
           {/* Status pill */}
-          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-1.5 mb-6">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs font-semibold text-primary uppercase tracking-widest">
-              Registration Open
+          <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-full px-4 py-1.5 mb-6">
+            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+            <span className="text-xs font-semibold text-red-400 uppercase tracking-widest">
+              Registration Closed, Stay tuned for next Updates!
             </span>
           </div>
 
@@ -560,7 +560,7 @@ export const TournamentInfoPage = () => {
               size="lg"
               className="gap-2 text-base px-8 bg-primary hover:bg-primary/90 shadow-lg glow-primary"
             >
-              <Link to="/tournament/register">
+              <Link to="/tournament/register-with-payment">
                 Register Now <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
@@ -669,7 +669,7 @@ export const TournamentInfoPage = () => {
               </div>
 
               <Button asChild className="w-full gap-2 mt-2">
-                <Link to="/tournament/register">
+                <Link to="/tournament/register-with-payment">
                   Secure Your Slot <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
@@ -1054,13 +1054,12 @@ export const TournamentInfoPage = () => {
                     return (
                       <tr
                         key={row.rank}
-                        className={`border-b border-border/30 transition-colors hover:bg-primary/5 ${
-                          isHighlighted
-                            ? highlightMap[i]
-                            : i % 2 === 0
+                        className={`border-b border-border/30 transition-colors hover:bg-primary/5 ${isHighlighted
+                          ? highlightMap[i]
+                          : i % 2 === 0
                             ? "bg-card/60"
                             : "bg-muted/20"
-                        }`}
+                          }`}
                       >
                         <td className="px-5 py-3 font-semibold text-foreground">
                           <span className="flex items-center gap-2">
@@ -1068,21 +1067,19 @@ export const TournamentInfoPage = () => {
                               <span className="text-base">{medalMap[i]}</span>
                             )}
                             <span
-                              className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                                isHighlighted
-                                  ? ptColorMap[i] +
-                                    " bg-current/10"
-                                  : "text-muted-foreground bg-muted/30"
-                              }`}
+                              className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${isHighlighted
+                                ? ptColorMap[i] +
+                                " bg-current/10"
+                                : "text-muted-foreground bg-muted/30"
+                                }`}
                             >
                               #{row.rank}
                             </span>
                           </span>
                         </td>
                         <td
-                          className={`px-5 py-3 text-right font-bold text-base ${
-                            isHighlighted ? ptColorMap[i] : "text-foreground"
-                          }`}
+                          className={`px-5 py-3 text-right font-bold text-base ${isHighlighted ? ptColorMap[i] : "text-foreground"
+                            }`}
                         >
                           {row.points}{" "}
                           <span className="text-xs text-muted-foreground font-normal">
@@ -1233,7 +1230,7 @@ export const TournamentInfoPage = () => {
                   className="bg-white text-primary hover:bg-white/90 font-bold gap-2 shadow-xl"
                   id="final-register-btn"
                 >
-                  <Link to="/tournament/register">
+                  <Link to="/tournament/register-with-payment">
                     Register Your Team <ArrowRight className="w-4 h-4" />
                   </Link>
                 </Button>
