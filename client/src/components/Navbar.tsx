@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Code2, Menu, User } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
-import { joinDemoRoom } from "@/utils/demoRoom";
 import { useSubscription } from "@/hooks/useSubscription";
+import { CreateRoomDialog } from "./CreateRoomDialog";
+import { JoinRoomDialog } from "./JoinRoomDialog";
 
 
 /**
@@ -94,27 +95,17 @@ export const Navbar = () => {
               Home
             </button>
 
-            <button onClick={() => joinDemoRoom(navigate)}>
-              <div className="text-foreground hover:text-primary transition-colors">
-                Demo Room
-              </div>
-            </button>
+            <CreateRoomDialog>
+              <button className="text-foreground hover:text-primary transition-colors">
+                New Room
+              </button>
+            </CreateRoomDialog>
 
-            <button
-              onClick={() => {
-                const section = document.getElementById("features");
-                if (section) section.scrollIntoView({ behavior: "smooth" });
-                else {
-                  navigate("/");
-                  setTimeout(() => {
-                    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-                  }, 300);
-                }
-              }}
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              Features
-            </button>
+            <JoinRoomDialog>
+              <button className="text-foreground hover:text-primary transition-colors">
+                Join Room
+              </button>
+            </JoinRoomDialog>
 
             <Link
               to="/feedback"
@@ -199,21 +190,25 @@ export const Navbar = () => {
                 Home
               </Link>
 
-              <Link
-                to="/room/demo"
-                className="text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  document.getElementById("create-room-trigger")?.click();
+                }}
+                className="text-foreground hover:text-primary transition-colors py-2 text-left w-full"
               >
-                Demo Room
-              </Link>
+                New Room
+              </button>
 
-              <Link
-                to="#features"
-                className="text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  document.getElementById("join-room-trigger")?.click();
+                }}
+                className="text-foreground hover:text-primary transition-colors py-2 text-left w-full"
               >
-                Features
-              </Link>
+                Join Room
+              </button>
 
               <Link
                 to="/feedback"

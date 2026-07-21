@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const JoinRoomDialog = () => {
+interface JoinRoomDialogProps {
+  children?: ReactNode;
+}
+
+export const JoinRoomDialog = ({ children }: JoinRoomDialogProps) => {
   const [open, setOpen] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const navigate = useNavigate();
@@ -56,10 +60,14 @@ export const JoinRoomDialog = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <div id="join-room-trigger">
-          <Button size="lg" variant="outline" className="gap-2">
-            <Users className="h-5 w-5" />
-            Join Room
-          </Button>
+          {children ? (
+            children
+          ) : (
+            <Button size="lg" variant="outline" className="gap-2">
+              <Users className="h-5 w-5" />
+              Join Room
+            </Button>
+          )}
         </div>
       </DialogTrigger>
       <DialogContent>
