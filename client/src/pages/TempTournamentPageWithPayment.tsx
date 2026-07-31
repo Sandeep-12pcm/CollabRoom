@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, Info, UserCheck, X, Flame, Trophy, Target, Shield, Gamepad2, Upload, QrCode, CreditCard } from "lucide-react";
 
 export const TempTournamentPageWithPayment = () => {
   const navigate = useNavigate();
@@ -24,6 +24,10 @@ export const TempTournamentPageWithPayment = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [session, setSession] = useState<any>(null);
+  
+  // Auth & Email State
+  const [userEmail, setUserEmail] = useState("");
+
   const amount = 40;
   const upiId = "7303042793@upi";
   const name = "CollabRoom";
@@ -33,7 +37,7 @@ export const TempTournamentPageWithPayment = () => {
     name
   )}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
 
-
+  // Form State
   const [formData, setFormData] = useState({
     teamName: "",
     mobileNumber: "",
@@ -49,35 +53,79 @@ export const TempTournamentPageWithPayment = () => {
     player5Uid: "",
   });
 
+  // Payment Screenshot State
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
 
-  // Auth Guard
+  // Player Screenshot Upload State
+  const [playerScreenshots, setPlayerScreenshots] = useState<{ [key: number]: File | null }>({
+    1: null,
+    2: null,
+    3: null,
+    4: null,
+    5: null,
+  });
+
+  const [screenshotPreviews, setScreenshotPreviews] = useState<{ [key: number]: string | null }>({
+    1: null,
+    2: null,
+    3: null,
+    4: null,
+    5: null,
+  });
+
+  // Auth Session Check
   useEffect(() => {
     const checkAuth = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) {
-        // Redirect to login, returning here after successful auth
-        navigate("/auth?redirectTo=%2Ftournament%2Fregister-with-payment");
-      } else {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
         setSession(data.session);
-        setLoading(false);
+        if (data.session.user?.email) {
+          setUserEmail(data.session.user.email);
+        }
       }
+      setLoading(false);
     };
     checkAuth();
-  }, [navigate]);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePaymentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setPaymentScreenshot(e.target.files[0]);
     }
   };
 
+  const handlePlayerScreenshotChange = (playerNum: number, file: File | null) => {
+    if (file) {
+      setPlayerScreenshots((prev) => ({ ...prev, [playerNum]: file }));
+      const previewUrl = URL.createObjectURL(file);
+      setScreenshotPreviews((prev) => ({ ...prev, [playerNum]: previewUrl }));
+    } else {
+      setPlayerScreenshots((prev) => ({ ...prev, [playerNum]: null }));
+      if (screenshotPreviews[playerNum]) {
+        URL.revokeObjectURL(screenshotPreviews[playerNum]!);
+      }
+      setScreenshotPreviews((prev) => ({ ...prev, [playerNum]: null }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Determine final email address
+    const finalEmail = session?.user?.email || userEmail.trim();
+    if (!finalEmail) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address or log in before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!paymentScreenshot) {
       toast({
         title: "Missing payment screenshot",
@@ -87,45 +135,106 @@ export const TempTournamentPageWithPayment = () => {
       return;
     }
 
+    // Validate player details: Each compulsory player must have either manual details or screenshot uploaded
+    for (let num = 1; num <= 4; num++) {
+      const ign = (formData[`player${num}Ign` as keyof typeof formData] || "").trim();
+      const uid = (formData[`player${num}Uid` as keyof typeof formData] || "").trim();
+      const screenshot = playerScreenshots[num];
+
+      const hasManual = Boolean(ign && uid);
+      const hasScreenshot = Boolean(screenshot);
+
+      if (!hasManual && !hasScreenshot) {
+        toast({
+          title: `Player ${num} details missing`,
+          description: `Please enter details manually or upload an In-Game ID screenshot for Player ${num}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     try {
-      // 1. Upload screenshot to Supabase Storage
-      const fileExt = paymentScreenshot.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${session.user.id}/${fileName}`;
+      // 1. Upload payment receipt screenshot to Supabase Storage
+      const payFileExt = paymentScreenshot.name.split(".").pop();
+      const userFolder = session?.user?.id || "guest";
+      const payFileName = `${userFolder}/${Math.random()}.${payFileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: payUploadError } = await supabase.storage
         .from("tournament-receipts")
-        .upload(filePath, paymentScreenshot);
+        .upload(payFileName, paymentScreenshot);
 
-      if (uploadError) throw uploadError;
+      if (payUploadError) throw payUploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl: paymentPublicUrl } } = supabase.storage
         .from("tournament-receipts")
-        .getPublicUrl(filePath);
+        .getPublicUrl(payFileName);
 
-      // 2. Save registration data
+      // 2. Upload player ID screenshots to Supabase Storage if any exist
+      const uploadedScreenshotUrls: { [key: number]: string } = {};
+
+      for (let num = 1; num <= 5; num++) {
+        const file = playerScreenshots[num];
+        if (file) {
+          const fileExt = file.name.split(".").pop();
+          const fileName = `game_ids/${Date.now()}_player${num}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("tournament-receipts")
+            .upload(fileName, file);
+
+          if (!uploadError) {
+            const { data: { publicUrl } } = supabase.storage
+              .from("tournament-receipts")
+              .getPublicUrl(fileName);
+            uploadedScreenshotUrls[num] = publicUrl;
+          } else {
+            console.warn(`Failed to upload screenshot for player ${num}:`, uploadError);
+          }
+        }
+      }
+
+      // Helper function to build final IGN and UID for DB insertion
+      const getPlayerIgn = (num: number, manualIgn: string) => {
+        if (manualIgn.trim()) return manualIgn.trim();
+        if (uploadedScreenshotUrls[num]) return `[Screenshot Uploaded: Player ${num}]`;
+        return "";
+      };
+
+      const getPlayerUid = (num: number, manualUid: string) => {
+        if (manualUid.trim()) return manualUid.trim();
+        if (uploadedScreenshotUrls[num]) return uploadedScreenshotUrls[num];
+        return "";
+      };
+
+      // Combine payment URL and player ID screenshots if uploaded
+      const playerScreenshotList = Object.values(uploadedScreenshotUrls);
+      const compositeScreenshotUrl = playerScreenshotList.length > 0
+        ? `${paymentPublicUrl} | GameID Screenshots: ${playerScreenshotList.join(" , ")}`
+        : paymentPublicUrl;
+
+      // 3. Save registration data in Supabase
       const { error: dbError } = await supabase
         .from("tournament_registrations")
         .insert({
-          user_id: session.user.id,
+          user_id: session?.user?.id || null,
           team_name: formData.teamName,
           mobile_number: formData.mobileNumber,
-          player1_ign: formData.player1Ign,
-          player1_uid: formData.player1Uid,
-          player2_ign: formData.player2Ign,
-          player2_uid: formData.player2Uid,
-          player3_ign: formData.player3Ign,
-          player3_uid: formData.player3Uid,
-          player4_ign: formData.player4Ign,
-          player4_uid: formData.player4Uid,
-          player5_ign: formData.player5Ign || null,
-          player5_uid: formData.player5Uid || null,
-          payment_screenshot_url: publicUrl,
-          user_email: session.user.email,
-          status: 'pending'
+          player1_ign: getPlayerIgn(1, formData.player1Ign),
+          player1_uid: getPlayerUid(1, formData.player1Uid),
+          player2_ign: getPlayerIgn(2, formData.player2Ign),
+          player2_uid: getPlayerUid(2, formData.player2Uid),
+          player3_ign: getPlayerIgn(3, formData.player3Ign),
+          player3_uid: getPlayerUid(3, formData.player3Uid),
+          player4_ign: getPlayerIgn(4, formData.player4Ign),
+          player4_uid: getPlayerUid(4, formData.player4Uid),
+          player5_ign: getPlayerIgn(5, formData.player5Ign) || null,
+          player5_uid: getPlayerUid(5, formData.player5Uid) || null,
+          payment_screenshot_url: compositeScreenshotUrl,
+          user_email: finalEmail,
+          status: "pending",
         });
 
       if (dbError) throw dbError;
@@ -136,7 +245,7 @@ export const TempTournamentPageWithPayment = () => {
       });
 
       // Show alert window
-      window.alert("You will receive a mail on registered email id once approved. Please check your inbox as well as spam folder.");
+      window.alert(`You will receive a mail on registered email id (${finalEmail}) once approved. Please check your inbox as well as spam folder.`);
 
       // Clear form
       setFormData({
@@ -148,9 +257,13 @@ export const TempTournamentPageWithPayment = () => {
         player5Ign: "", player5Uid: "",
       });
       setPaymentScreenshot(null);
-      // Reset file input by id
+      setPlayerScreenshots({ 1: null, 2: null, 3: null, 4: null, 5: null });
+      setScreenshotPreviews({ 1: null, 2: null, 3: null, 4: null, 5: null });
+
       const fileInput = document.getElementById("paymentScreenshot") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
+
+      navigate("/tournament/info");
 
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -166,46 +279,128 @@ export const TempTournamentPageWithPayment = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center ff-gaming-bg text-amber-400">
+        <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <SEO title="Tournament Registration" description="Register your team for the upcoming tournament." />
+    <div className="min-h-screen ff-gaming-bg text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
+      <SEO title="FFM Tournament Registration" description="Register your squad for the Free Fire MAX Tournament." />
       <Navbar />
 
-      <main className="flex-grow pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <Card className="shadow-lg border-primary/20">
-            <CardHeader className="text-center pb-8 border-b bg-muted/30">
-              <CardTitle className="text-3xl font-bold tracking-tight text-primary">Tournament Registration</CardTitle>
-              <CardDescription className="text-base mt-2">
-                Register your team. 4 players are compulsory, 1 is optional. Please upload your payment receipt at the end.
+      <main className="flex-grow pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          
+          {/* Main Card with Free Fire MAX styling */}
+          <Card className="ff-card shadow-2xl overflow-hidden border-amber-500/30">
+            <CardHeader className="text-center pb-8 border-b border-amber-500/20 bg-gradient-to-b from-amber-950/40 via-amber-900/10 to-transparent relative">
+              
+              {/* Tactical Top Tag */}
+              <div className="flex justify-center mb-3">
+                <span className="ff-badge px-4 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg">
+                  <Flame className="h-4 w-4 text-amber-400 animate-pulse" />
+                  FREE FIRE MAX BATTLEGROUNDS
+                  <Trophy className="h-3.5 w-3.5 text-amber-400" />
+                </span>
+              </div>
+
+              <CardTitle className="ff-title text-3xl sm:text-4xl font-extrabold tracking-wider uppercase drop-shadow-md">
+                FFM TOURNAMENT REGISTRATION
+              </CardTitle>
+              
+              <CardDescription className="text-slate-300 text-sm sm:text-base mt-2 max-w-xl mx-auto flex items-center justify-center gap-2">
+                <Gamepad2 className="h-4 w-4 text-amber-400 shrink-0" />
+                Register your squad! 4 Players Compulsory • 1 Substitute Optional • Upload Receipt Below
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-8">
+
+            <CardContent className="pt-8 space-y-8">
               <form onSubmit={handleSubmit} className="space-y-8">
 
-                {/* Team Info */}
-                <div className="bg-muted/10 p-6 rounded-lg border border-border/50">
-                  <h3 className="text-lg font-semibold mb-4 text-foreground">Team Details</h3>
+                {/* Email / Authentication Banner */}
+                {session?.user ? (
+                  <div className="ff-card-glow p-5 rounded-xl border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 mt-0.5">
+                        <UserCheck className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase font-bold tracking-wider text-amber-400">COMMANDER EMAIL REGISTERED</p>
+                        <p className="text-lg font-extrabold text-white tracking-wide">{session.user.email}</p>
+                        <p className="text-xs text-amber-300/80 font-medium mt-1 flex items-center gap-1.5">
+                          <Info className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                          All communication mails will be sent to this mail id.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate("/auth?redirectTo=%2Ftournament%2Fregister-with-payment")}
+                      className="shrink-0 border-amber-500/40 text-amber-300 hover:bg-amber-500/20 hover:text-white"
+                    >
+                      Switch Account
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="ff-card p-5 rounded-xl border border-amber-500/30 space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <h3 className="text-sm uppercase tracking-wider font-extrabold text-amber-400 flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-amber-400" />
+                        Commander Communication Email
+                      </h3>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-amber-400 hover:text-amber-300 underline p-0 h-auto font-medium text-xs"
+                        onClick={() => navigate("/auth?redirectTo=%2Ftournament%2Fregister-with-payment")}
+                      >
+                        Already registered? Log In
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="userEmail" className="text-slate-200 text-xs uppercase font-semibold">Email Address</Label>
+                      <Input
+                        id="userEmail"
+                        type="email"
+                        placeholder="e.g. survivor@freefire.com"
+                        value={userEmail}
+                        onChange={(e) => setUserEmail(e.target.value)}
+                        required
+                        className="ff-input"
+                      />
+                      <p className="text-xs text-amber-400 font-medium flex items-center gap-1.5 mt-1.5">
+                        <Info className="h-3.5 w-3.5 shrink-0" />
+                        All communication mails will be sent to this mail id.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Team Info Card */}
+                <div className="ff-card p-6 rounded-xl border border-amber-500/20 space-y-4">
+                  <div className="flex items-center gap-2 border-b border-amber-500/20 pb-3">
+                    <Shield className="h-5 w-5 text-amber-400" />
+                    <h3 className="text-lg font-extrabold uppercase tracking-wide text-amber-400">Squad Details</h3>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="teamName">Team Name</Label>
+                      <Label htmlFor="teamName" className="text-slate-200 text-xs uppercase font-semibold">Squad / Team Name</Label>
                       <Input
                         id="teamName"
-                        placeholder="e.g. Team Alpha"
+                        placeholder="e.g. SQUAD ALPHA"
                         value={formData.teamName}
                         onChange={handleInputChange}
                         required
-                        className="bg-background"
+                        className="ff-input"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="mobileNumber">Mobile Number</Label>
+                      <Label htmlFor="mobileNumber" className="text-slate-200 text-xs uppercase font-semibold">WhatsApp / Mobile Number</Label>
                       <Input
                         id="mobileNumber"
                         placeholder="e.g. 9876543210"
@@ -213,123 +408,227 @@ export const TempTournamentPageWithPayment = () => {
                         onChange={handleInputChange}
                         required
                         type="tel"
-                        className="bg-background"
+                        className="ff-input"
                       />
                     </div>
                   </div>
                 </div>
 
+                {/* Helper Banner */}
+                <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent p-4 rounded-xl border border-amber-500/30 flex items-center gap-3 text-sm text-amber-200 shadow-md">
+                  <Target className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
+                  <span className="font-medium">You can either upload or enter details manually for each player.</span>
+                </div>
+
                 {/* Players 1-4 (Compulsory) */}
                 {[1, 2, 3, 4].map((num) => (
-                  <div key={num} className="bg-muted/10 p-6 rounded-lg border border-border/50">
-                    <h3 className="text-lg font-semibold mb-4 text-foreground">Player {num} (Compulsory)</h3>
+                  <div key={num} className="ff-card p-6 rounded-xl border border-amber-500/30 space-y-4 relative overflow-hidden">
+                    <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-amber-500/20 border border-amber-500/40 text-amber-400 font-black text-xs px-2.5 py-1 rounded">
+                          0{num}
+                        </span>
+                        <h3 className="text-base font-extrabold uppercase tracking-wider text-slate-100">
+                          Player {num} <span className="text-amber-400 text-xs font-semibold ml-1">(COMPULSORY)</span>
+                        </h3>
+                      </div>
+                      <span className="text-xs text-amber-400/80 font-medium hidden sm:inline-block">Manual Entry or Screenshot</span>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor={`player${num}Ign`}>In-Game Name (IGN)</Label>
+                        <Label htmlFor={`player${num}Ign`} className="text-slate-300 text-xs uppercase">In-Game Name (IGN)</Label>
                         <Input
                           id={`player${num}Ign`}
                           placeholder="e.g. ShadowSlayer"
                           value={formData[`player${num}Ign` as keyof typeof formData]}
                           onChange={handleInputChange}
-                          required
-                          className="bg-background"
+                          className="ff-input"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`player${num}Uid`}>UID</Label>
+                        <Label htmlFor={`player${num}Uid`} className="text-slate-300 text-xs uppercase">In-Game UID</Label>
                         <Input
                           id={`player${num}Uid`}
                           placeholder="e.g. 123456789"
                           value={formData[`player${num}Uid` as keyof typeof formData]}
                           onChange={handleInputChange}
-                          required
-                          className="bg-background"
+                          className="ff-input"
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-2 pt-3 border-t border-amber-500/20">
+                      <Label htmlFor={`player${num}Screenshot`} className="text-xs uppercase font-semibold text-amber-400 flex items-center gap-1.5">
+                        <Upload className="h-3.5 w-3.5" />
+                        OR Upload Player {num} In-Game Profile Screenshot
+                      </Label>
+                      {screenshotPreviews[num] ? (
+                        <div className="relative inline-block mt-2">
+                          <img
+                            src={screenshotPreviews[num]!}
+                            alt={`Player ${num} Game ID Screenshot`}
+                            className="w-52 h-32 object-cover rounded-lg border-2 border-amber-500/50 shadow-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handlePlayerScreenshotChange(num, null)}
+                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 shadow-lg hover:bg-red-700 transition-colors"
+                            title="Remove image"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <Input
+                          id={`player${num}Screenshot`}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handlePlayerScreenshotChange(num, e.target.files?.[0] || null)}
+                          className="ff-input cursor-pointer file:bg-amber-500/20 file:text-amber-300 file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 file:font-semibold"
+                        />
+                      )}
                     </div>
                   </div>
                 ))}
 
-                {/* Player 5 (Optional) */}
-                <div className="bg-muted/10 p-6 rounded-lg border border-border/50 border-dashed">
-                  <h3 className="text-lg font-semibold mb-4 text-foreground/80">Player 5 (Optional / Substitute)</h3>
+                {/* Player 5 (Optional / Substitute) */}
+                <div className="ff-card p-6 rounded-xl border border-amber-500/20 border-dashed space-y-4">
+                  <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-slate-800 border border-slate-700 text-slate-400 font-black text-xs px-2.5 py-1 rounded">
+                        05
+                      </span>
+                      <h3 className="text-base font-extrabold uppercase tracking-wider text-slate-300">
+                        Player 5 <span className="text-slate-400 text-xs font-normal ml-1">(OPTIONAL / SUBSTITUTE)</span>
+                      </h3>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="player5Ign">In-Game Name (IGN)</Label>
+                      <Label htmlFor="player5Ign" className="text-slate-400 text-xs uppercase">In-Game Name (IGN)</Label>
                       <Input
                         id="player5Ign"
                         placeholder="e.g. StealthSniper"
                         value={formData.player5Ign}
                         onChange={handleInputChange}
-                        className="bg-background"
+                        className="ff-input"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="player5Uid">UID</Label>
+                      <Label htmlFor="player5Uid" className="text-slate-400 text-xs uppercase">In-Game UID</Label>
                       <Input
                         id="player5Uid"
                         placeholder="e.g. 987654321"
                         value={formData.player5Uid}
                         onChange={handleInputChange}
-                        className="bg-background"
+                        className="ff-input"
                       />
                     </div>
                   </div>
+
+                  <div className="space-y-2 pt-3 border-t border-amber-500/20">
+                    <Label htmlFor="player5Screenshot" className="text-xs uppercase font-semibold text-amber-400/80 flex items-center gap-1.5">
+                      <Upload className="h-3.5 w-3.5" />
+                      OR Upload Player 5 In-Game Profile Screenshot (Optional)
+                    </Label>
+                    {screenshotPreviews[5] ? (
+                      <div className="relative inline-block mt-2">
+                        <img
+                          src={screenshotPreviews[5]!}
+                          alt="Player 5 Game ID Screenshot"
+                          className="w-52 h-32 object-cover rounded-lg border-2 border-amber-500/50 shadow-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handlePlayerScreenshotChange(5, null)}
+                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 shadow-lg hover:bg-red-700 transition-colors"
+                          title="Remove image"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <Input
+                        id="player5Screenshot"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handlePlayerScreenshotChange(5, e.target.files?.[0] || null)}
+                        className="ff-input cursor-pointer file:bg-amber-500/20 file:text-amber-300 file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 file:font-semibold"
+                      />
+                    )}
+                  </div>
                 </div>
 
-                {/* Payment Screenshot */}
-                <div className="bg-primary/5 p-6 rounded-lg border border-primary/20">
-                  <h3 className="text-lg font-semibold mb-4 text-primary">Payment Verification</h3>
+                {/* Payment Screenshot Card */}
+                <div className="ff-card p-6 rounded-xl border border-amber-500/40 bg-gradient-to-br from-amber-950/30 via-slate-900 to-transparent space-y-4">
+                  <div className="flex items-center gap-2 border-b border-amber-500/30 pb-3">
+                    <CreditCard className="h-5 w-5 text-amber-400" />
+                    <h3 className="text-lg font-extrabold uppercase tracking-wide text-amber-400">Payment Verification</h3>
+                  </div>
+
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="paymentScreenshot">Upload Payment Screenshot</Label>
+                      <Label htmlFor="paymentScreenshot" className="text-slate-200 text-xs uppercase font-semibold">Upload Payment Receipt Screenshot *</Label>
                       <Input
                         id="paymentScreenshot"
                         type="file"
                         accept="image/*"
-                        onChange={handleFileChange}
+                        onChange={handlePaymentFileChange}
                         required
-                        className="cursor-pointer bg-background"
+                        className="ff-input cursor-pointer file:bg-amber-500/20 file:text-amber-300 file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 file:font-semibold"
                       />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Please upload a clear screenshot of your transaction receipt. Ensure the transaction ID is visible.
+                    <p className="text-xs text-slate-300">
+                      Upload a clear screenshot of your transaction receipt. Ensure Transaction ID is visible.
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Pay ₹{amount} to complete your registration:
-                      <br />
-                      <a
-                        href={paymentLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline font-medium"
-                      >
-                        Click to Pay via UPI
-                      </a>
-                    </p>
-                    <img src={qrCode} alt="UPI QR Code" className="w-52 h-52 object-contain" />
-                    <p className="text-sm text-muted-foreground">UPI ID : sandybhai@upi </p>
-                    <p className="text-sm text-muted-foreground">For cash payments please contact <a href="https://instagram.com/collabrooms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">IG::CollabRooms</a></p>
+
+                    <div className="bg-amber-950/40 border border-amber-500/30 p-4 rounded-xl space-y-3 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="space-y-1 text-center sm:text-left">
+                        <p className="text-xs uppercase font-bold text-amber-400">ENTRY FEE REQUIRED</p>
+                        <p className="text-2xl font-black text-white">₹{amount} INR</p>
+                        <a
+                          href={paymentLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block text-xs font-bold uppercase text-amber-400 hover:text-amber-300 underline mt-1"
+                        >
+                          Pay via UPI Link
+                        </a>
+                      </div>
+                      <div className="p-2 bg-white rounded-xl shadow-lg border border-amber-500/50">
+                        <img src={qrCode} alt="UPI QR Code" className="w-40 h-40 object-contain" />
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-slate-400 space-y-1">
+                      <p className="flex items-center gap-1.5"><QrCode className="h-3.5 w-3.5 text-amber-400" /> UPI ID: <span className="text-amber-300 font-bold">sandybhai@upi</span></p>
+                      <p>For cash payments contact <a href="https://instagram.com/collabrooms" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline font-bold">IG::CollabRooms</a></p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-4 flex flex-col sm:flex-row justify-end items-center gap-4">
+                {/* Submit Action */}
+                <div className="pt-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-amber-500/20">
                   <a
                     href="https://www.youtube.com/@aigamerwala"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-semibold text-primary hover:underline"
+                    className="text-xs uppercase font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 hover:underline"
                   >
-                    Watch Rules on YouTube
+                    <Flame className="h-4 w-4 text-amber-500" />
+                    Watch Official Rules on YouTube
                   </a>
-                  <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-auto px-8">
+                  
+                  <Button type="submit" size="lg" disabled={submitting} className="ff-button w-full sm:w-auto px-10 py-6 text-base font-extrabold tracking-wider">
                     {submitting ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Submitting...
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        SUBMITTING SQUAD...
                       </>
                     ) : (
-                      "Register Team"
+                      "REGISTER SQUAD NOW"
                     )}
                   </Button>
                 </div>

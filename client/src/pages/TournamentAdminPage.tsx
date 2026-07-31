@@ -15,12 +15,11 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ExternalLink, AlertCircle, CheckCircle, Mail, XCircle, Download } from "lucide-react";
+import { Loader2, ExternalLink, AlertCircle, CheckCircle, Mail, XCircle, Download, Flame, Shield, Trophy, Users } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
-
 
 export const TournamentAdminPage = () => {
   const navigate = useNavigate();
@@ -38,7 +37,6 @@ export const TournamentAdminPage = () => {
       // Fire session check AND a server pre-warm ping in parallel
       const [sessionResult] = await Promise.all([
         supabase.auth.getSession(),
-        // Pre-warm the Render server so it's ready by the time we need it
         fetch(`${HOST}/api/tournament/registrations`, { method: "HEAD" }).catch(() => null),
       ]);
 
@@ -59,7 +57,6 @@ export const TournamentAdminPage = () => {
       setIsAdmin(true);
 
       try {
-        // Fetch via backend server (uses service role key — bypasses Supabase RLS)
         const response = await fetch(`${HOST}/api/tournament/registrations`);
         const result = await response.json();
 
@@ -83,7 +80,7 @@ export const TournamentAdminPage = () => {
     let reason = null;
     if (status === "rejected") {
       reason = window.prompt("Reason for rejection (e.g. 'Slot is full', 'Incorrect payment'):");
-      if (reason === null) return; // User cancelled
+      if (reason === null) return;
     }
 
     setProcessingId(registrationId);
@@ -112,7 +109,6 @@ export const TournamentAdminPage = () => {
         });
       }
 
-      // Update local state
       setRegistrations((prev) =>
         prev.map((reg) => (reg.id === registrationId ? { ...reg, status } : reg))
       );
@@ -152,23 +148,23 @@ export const TournamentAdminPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center ff-gaming-bg text-amber-400">
+        <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
       </div>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen ff-gaming-bg text-slate-100 flex flex-col">
         <Navbar />
         <main className="flex-grow pt-24 px-4 flex items-center justify-center">
-          <Card className="max-w-md w-full border-destructive/50">
+          <Card className="ff-card max-w-md w-full border-red-500/50">
             <CardHeader className="text-center">
-              <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-              <CardTitle className="text-2xl text-destructive">Access Denied</CardTitle>
-              <CardDescription>
-                You do not have permission to view this page. If you are the administrator, please ensure your email is added to the `ADMIN_EMAILS` array in `TournamentAdminPage.tsx`.
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <CardTitle className="text-2xl text-red-400 font-extrabold uppercase">Access Denied</CardTitle>
+              <CardDescription className="text-slate-300">
+                You do not have permission to view this page. If you are the administrator, please ensure your email is added to the `ADMIN_EMAILS` array.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -179,117 +175,132 @@ export const TournamentAdminPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen ff-gaming-bg text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
       <SEO title="Tournament Admin" description="View tournament registrations" />
       <Navbar />
 
-      <main className="flex-grow pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="flex-grow pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        {/* Header */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-500/20 pb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Tournament Submissions</h1>
-            <p className="text-muted-foreground mt-2">Manage and verify team registrations and payments.</p>
+            <div className="flex items-center gap-2 mb-1">
+              <Flame className="h-5 w-5 text-amber-400" />
+              <span className="text-xs uppercase font-bold tracking-widest text-amber-400">COMMAND CENTER</span>
+            </div>
+            <h1 className="ff-title text-3xl sm:text-4xl font-black uppercase tracking-wider">Tournament Submissions</h1>
+            <p className="text-slate-300 text-sm mt-1">Manage and verify squad registrations and payment receipts.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-sm px-4 py-1 bg-primary/10 text-primary border-primary/20">
-              {registrations.length} Teams Registered
+            <Badge className="ff-badge text-xs px-4 py-1.5 font-bold flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              {registrations.length} Squads Registered
             </Badge>
             <Button
               variant="outline"
               size="sm"
               disabled={registrations.length === 0}
               onClick={exportToXLSX}
-              className="h-9 text-xs gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700"
+              className="h-10 text-xs font-bold gap-1.5 border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-white"
             >
-              <Download className="w-3.5 h-3.5" />
-              Export XLSX
+              <Download className="w-4 h-4" />
+              EXPORT XLSX
             </Button>
           </div>
         </div>
 
         {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error Loading Data</AlertTitle>
+          <Alert variant="destructive" className="mb-6 border-red-500/50 bg-red-950/40 text-red-200">
+            <AlertCircle className="h-4 w-4 text-red-400" />
+            <AlertTitle className="font-bold">Error Loading Data</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
-        <Card className="shadow-md overflow-hidden border-border/50">
+        <Card className="ff-card shadow-2xl overflow-hidden border-amber-500/30">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow>
-                  <TableHead className="w-[100px]">Date</TableHead>
-                  <TableHead>User / Status</TableHead>
-                  <TableHead>Player 1 (C)</TableHead>
-                  <TableHead>Player 2</TableHead>
-                  <TableHead>Player 3</TableHead>
-                  <TableHead>Player 4</TableHead>
-                  <TableHead>Player 5 (Sub)</TableHead>
-                  <TableHead className="text-right">Receipt</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+              <TableHeader className="bg-slate-900/90 border-b border-amber-500/30">
+                <TableRow className="border-amber-500/30 hover:bg-transparent">
+                  <TableHead className="w-[100px] text-amber-400 font-bold uppercase text-xs">Date</TableHead>
+                  <TableHead className="text-amber-400 font-bold uppercase text-xs">User / Status</TableHead>
+                  <TableHead className="text-amber-400 font-bold uppercase text-xs">Player 1 (C)</TableHead>
+                  <TableHead className="text-amber-400 font-bold uppercase text-xs">Player 2</TableHead>
+                  <TableHead className="text-amber-400 font-bold uppercase text-xs">Player 3</TableHead>
+                  <TableHead className="text-amber-400 font-bold uppercase text-xs">Player 4</TableHead>
+                  <TableHead className="text-amber-400 font-bold uppercase text-xs">Player 5 (Sub)</TableHead>
+                  <TableHead className="text-right text-amber-400 font-bold uppercase text-xs">Receipt</TableHead>
+                  <TableHead className="text-right text-amber-400 font-bold uppercase text-xs">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="divide-y divide-slate-800/60">
                 {registrations.length === 0 && !error ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="h-32 text-center text-slate-400">
                       No registrations found yet.
                     </TableCell>
                   </TableRow>
                 ) : (
                   registrations.map((reg) => (
-                    <TableRow key={reg.id} className="hover:bg-muted/30 transition-colors">
-                      <TableCell className="font-medium whitespace-nowrap text-xs">
+                    <TableRow key={reg.id} className="hover:bg-amber-500/10 transition-colors border-slate-800">
+                      <TableCell className="font-medium whitespace-nowrap text-xs text-slate-300">
                         {new Date(reg.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold text-xs flex items-center gap-1">
-                          <Mail className="w-3 h-3 text-muted-foreground" />
+                        <div className="font-bold text-xs text-slate-100 flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-amber-400" />
                           {reg.user_email || "N/A"}
                         </div>
                         <Badge
-                          variant={reg.status === "approved" ? "default" : "outline"}
-                          className="mt-1 text-[10px] py-0 px-1"
+                          className={`mt-1.5 text-[10px] py-0.5 px-2 font-extrabold uppercase border ${
+                            reg.status === "approved"
+                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                              : reg.status === "rejected"
+                              ? "bg-red-500/20 text-red-300 border-red-500/40"
+                              : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                          }`}
                         >
                           {reg.status || "pending"}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold text-sm">{reg.player1_ign}</div>
-                        <div className="text-xs text-muted-foreground font-mono">{reg.player1_uid}</div>
+                        <div className="font-bold text-sm text-slate-100">{reg.player1_ign}</div>
+                        <div className="text-xs text-amber-400/90 font-mono">{reg.player1_uid}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold text-sm">{reg.player2_ign}</div>
-                        <div className="text-xs text-muted-foreground font-mono">{reg.player2_uid}</div>
+                        <div className="font-bold text-sm text-slate-100">{reg.player2_ign}</div>
+                        <div className="text-xs text-amber-400/90 font-mono">{reg.player2_uid}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold text-sm">{reg.player3_ign}</div>
-                        <div className="text-xs text-muted-foreground font-mono">{reg.player3_uid}</div>
+                        <div className="font-bold text-sm text-slate-100">{reg.player3_ign}</div>
+                        <div className="text-xs text-amber-400/90 font-mono">{reg.player3_uid}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold text-sm">{reg.player4_ign}</div>
-                        <div className="text-xs text-muted-foreground font-mono">{reg.player4_uid}</div>
+                        <div className="font-bold text-sm text-slate-100">{reg.player4_ign}</div>
+                        <div className="text-xs text-amber-400/90 font-mono">{reg.player4_uid}</div>
                       </TableCell>
                       <TableCell>
                         {reg.player5_ign ? (
                           <>
-                            <div className="font-semibold text-sm">{reg.player5_ign}</div>
-                            <div className="text-xs text-muted-foreground font-mono">{reg.player5_uid}</div>
+                            <div className="font-bold text-sm text-slate-100">{reg.player5_ign}</div>
+                            <div className="text-xs text-amber-400/90 font-mono">{reg.player5_uid}</div>
                           </>
                         ) : (
-                          <span className="text-muted-foreground text-xs italic">None</span>
+                          <span className="text-slate-500 text-xs italic">None</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <a
-                          href={reg.payment_screenshot_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-xs text-primary hover:text-primary/80 hover:underline"
-                        >
-                          View Receipt <ExternalLink className="ml-1 w-3 h-3" />
-                        </a>
+                        {reg.payment_screenshot_url ? (
+                          <a
+                            href={reg.payment_screenshot_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline gap-1"
+                          >
+                            View Receipt <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          <span className="text-slate-500 text-xs">No Receipt</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -298,7 +309,7 @@ export const TournamentAdminPage = () => {
                             variant="outline"
                             disabled={reg.status === "approved" || processingId === reg.id}
                             onClick={() => handleStatusUpdate(reg.id, reg.user_email, "approved")}
-                            className="h-8 text-xs bg-green-500/10 text-green-600 hover:bg-green-500/20 hover:text-green-700 border-green-500/20"
+                            className="h-8 text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 hover:text-white border-emerald-500/40"
                           >
                             {processingId === reg.id ? (
                               <Loader2 className="w-3 h-3 animate-spin mr-1" />
@@ -312,7 +323,7 @@ export const TournamentAdminPage = () => {
                             variant="outline"
                             disabled={reg.status === "rejected" || processingId === reg.id}
                             onClick={() => handleStatusUpdate(reg.id, reg.user_email, "rejected")}
-                            className="h-8 text-xs bg-red-500/10 text-red-600 hover:bg-red-500/20 hover:text-red-700 border-red-500/20"
+                            className="h-8 text-xs font-bold bg-red-500/20 text-red-300 hover:bg-red-500/30 hover:text-white border-red-500/40"
                           >
                             {processingId === reg.id && reg.status !== "rejected" ? (
                               <Loader2 className="w-3 h-3 animate-spin mr-1" />

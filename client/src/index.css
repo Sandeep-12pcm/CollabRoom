@@ -461,4 +461,150 @@
     @apply transition-all duration-200 border-border;
     @apply focus:border-primary focus:ring-1 focus:ring-primary/20;
   }
+
+  /* ==========================================
+     Free Fire MAX Gaming Theme Utilities
+     ========================================== */
+  .ff-gaming-bg {
+    background-color: #0b0e14;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(255, 140, 0, 0.15) 0%, transparent 60%),
+      radial-gradient(circle at 85% 60%, rgba(255, 68, 0, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 15% 70%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+      linear-gradient(to bottom, rgba(11, 14, 20, 0.95), #06080d);
+  }
+
+  .ff-card {
+    background: rgba(18, 24, 38, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(245, 158, 11, 0.05);
+  }
+
+  .ff-card-glow {
+    background: rgba(22, 30, 48, 0.9);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), inset 0 0 10px rgba(245, 158, 11, 0.08);
+  }
+
+  .ff-title {
+    background: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.4));
+  }
+
+  .ff-badge {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(239, 68, 68, 0.2) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .ff-input {
+    background-color: rgba(11, 15, 25, 0.8) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    color: #f3f4f6 !important;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .ff-input:focus {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3) !important;
+  }
+
+  .ff-button {
+    background: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4);
+    transition: all 0.25s ease-in-out;
+  }
+
+  .ff-button:hover {
+    background: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
+    box-shadow: 0 6px 25px rgba(234, 88, 12, 0.6);
+    transform: translateY(-1px);
+  }
+
+  /* ==========================================
+     3D Gaming Environment & HUD Utilities
+     ========================================== */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .ff-3d-card {
+    background: linear-gradient(145deg, rgba(20, 26, 42, 0.88) 0%, rgba(12, 16, 26, 0.94) 100%);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 1rem;
+    box-shadow: 
+      0 15px 35px rgba(0, 0, 0, 0.7),
+      0 0 20px rgba(245, 158, 11, 0.15),
+      inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease;
+  }
+
+  .ff-3d-card:hover {
+    transform: translateY(-6px) rotateX(2deg) rotateY(-1deg);
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 
+      0 25px 45px rgba(0, 0, 0, 0.85),
+      0 0 35px rgba(245, 158, 11, 0.35),
+      inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  }
+
+  .ff-3d-title {
+    background: linear-gradient(135deg, #ffe580 0%, #f97316 45%, #ef4444 85%, #dc2626 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 20px rgba(245, 158, 11, 0.5), 0 0 40px rgba(239, 68, 68, 0.3);
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+  }
+
+  .ff-3d-podium {
+    background: linear-gradient(160deg, rgba(26, 32, 53, 0.95) 0%, rgba(14, 18, 30, 0.98) 100%);
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.2),
+      inset 0 0 20px rgba(245, 158, 11, 0.08);
+  }
+
+  .ff-hud-corner {
+    position: relative;
+  }
+
+  .ff-hud-corner::before,
+  .ff-hud-corner::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: rgba(245, 158, 11, 0.6);
+    pointer-events: none;
+  }
+
+  .ff-hud-corner::before {
+    top: 6px;
+    left: 6px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+  }
+
+  .ff-hud-corner::after {
+    bottom: 6px;
+    right: 6px;
+    border-bottom: 2px solid;
+    border-right: 2px solid;
+  }
 }
+
+
