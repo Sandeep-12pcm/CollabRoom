@@ -161,6 +161,7 @@ export type Database = {
           sub_uid: string | null
           status: string
           slot_number: number | null
+          tournament_code: string | null
         }
         Insert: {
           id?: string
@@ -181,6 +182,7 @@ export type Database = {
           mobile_number?: string
           status?: string
           slot_number?: number | null
+          tournament_code?: string | null
         }
         Update: {
           id?: string
@@ -199,6 +201,7 @@ export type Database = {
           sub_uid?: string | null
           status?: string
           slot_number?: number | null
+          tournament_code?: string | null
         }
         Relationships: []
       }

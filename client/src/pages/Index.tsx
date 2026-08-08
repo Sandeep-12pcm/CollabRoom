@@ -69,21 +69,23 @@ const Landing: React.FC = () => {
 
         <main>
           {/* TOURNAMENT HIGHLIGHT */}
-          {/* <div className="bg-primary/10 border-b border-primary/20 py-3 px-4 relative z-10">
-            <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
-              <span className="flex items-center gap-2 font-medium text-foreground">
-                <Trophy className="w-5 h-5 text-primary animate-pulse" />
-                Are you ready for the ultimate showdown?
-              </span>
-              <Link
-                to="/tournament/info"
-                className="inline-flex items-center text-sm font-semibold text-primary hover:text-primary/80 hover:underline transition-all"
-              >
-                Register for the tournament here
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
+          <section>
+            <div className="bg-primary/10 border-b border-primary/20 py-3 px-4 relative mt-16">
+              <div className="container mx flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
+                <span className="flex items-center gap-2 font-medium text-foreground">
+                  <Trophy className="w-5 h-5 text-primary animate-pulse" />
+                  🔥 Tournament Alert!
+                </span>
+                <Link
+                  to="/tournament/info"
+                  className="inline-flex items-center text-sm font-semibold text-primary hover:text-primary/80 hover:underline transition-all"
+                >
+                  Register for the tournament here
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
             </div>
-          </div> */}
+          </section>
 
           {/* HERO */}
           <section className="relative min-h-screen flex items-center justify-center overflow-hidden">

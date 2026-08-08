@@ -32,6 +32,7 @@ import {
   Calculator,
   Crosshair,
   Flame,
+  Loader2,
 } from "lucide-react";
 
 // ─── Tournament Data ────────────────────────────────────────────────────────
@@ -45,21 +46,23 @@ const TOURNAMENT_DATA = {
     "Join the most electrifying Free Fire MAX tournament in the region! Compete against the best squads, show off your skills, and claim your share of the massive prize pool. Only the strongest team will rise to the top.",
 
   // Dates & Time
-  registrationDeadline: "August 10, 2026",
-  tournamentDate: "August 12, 2026",
+  registrationDeadline: "August 22, 2026",
+  tournamentDate: "August 23, 2026",
   tournamentTime: "02:00 PM IST",
-  registrationOpenDate: "August 1, 2026",
+  registrationOpenDate: "August 10, 2026",
 
   // Venue
   venue: {
-    name: "Apna Park, Sector-16A, Faridabad",
-    address: "",
+    name: "Town Park, Sector-12, Faridabad",
+    address: "Sector 12, Town Park, Faridabad",
     city: "Faridabad, Haryana",
-    pincode: "121002",
-    landmark: "Near Govt. Womens College, Nehru College",
+    pincode: "121007",
+    landmark: "Near Bata Chowk Metro Station",
 
-    directionsUrl: "nan",
-    mapEmbedUrl: "nan",
+    directionsUrl: "https://maps.app.goo.gl/fkwBn2k2tG9f4WoL6",
+    mapEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d28082.462364513856!2d77.31594187360878!3d28.37977003282714!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cdc5cfcab97dd%3A0x8ede6ed94f20497f!2sTown%20Park%20Trail%2C%20Sector%2012%2C%20Faridabad%2C%20Haryana%20121007!5e0!3m2!1sen!2sin!4v1786181892726!5m2!1sen!2sin",
+
+    //  width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
   },
 
   // Prize Pool
@@ -406,9 +409,10 @@ export const TournamentInfoPage = () => {
         .from("tournament_registrations")
         .select("id, team_name, player1_ign, slot_number, created_at")
         .eq("status", "approved")
+        .eq("tournament_code", "lan_season_2")
         .order("slot_number", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
-      
+
       if (error) {
         console.log("Error: " + error.message);
       }
@@ -449,7 +453,7 @@ export const TournamentInfoPage = () => {
         title={`${d.name} — Tournament Info`}
         description={d.description}
       />
-      
+
       {/* ── 3D Gaming Environment Background ── */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <img
@@ -496,7 +500,7 @@ export const TournamentInfoPage = () => {
           className="relative overflow-hidden pt-28 pb-20 px-4"
         >
           <div className="relative max-w-5xl mx-auto text-center">
-            
+
             {/* 3D Top Badge */}
             <div className="inline-flex items-center gap-2 ff-badge px-5 py-2 rounded-full mb-6 shadow-xl border border-amber-400/60">
               <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
@@ -567,7 +571,7 @@ export const TournamentInfoPage = () => {
         </section>
 
         <main className="flex-grow">
-          
+
           {/* ── About Section ── */}
           <section id="about" className="py-16 px-4 border-b border-amber-500/20">
             <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 items-center">

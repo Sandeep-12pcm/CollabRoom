@@ -125,6 +125,7 @@ export const TournamentAdminPage = () => {
 
   const exportToXLSX = () => {
     const rows = registrations.map((reg) => ({
+      "Tournament Code": reg.tournament_code ?? "lan_season_2",
       "Team Name":    reg.team_name ?? "",
       "Player 1 UID": reg.player1_uid ?? "",
       "Player 1 IGN": reg.player1_ign ?? "",

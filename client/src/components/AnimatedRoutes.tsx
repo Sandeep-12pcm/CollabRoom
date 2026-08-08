@@ -13,10 +13,10 @@ const FeedbackForm = lazy(() => import("../pages/FeedbackForm").then(m => ({ def
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 const ContactForm = lazy(() => import("../pages/ContactForm"));
 const ComingSoon = lazy(() => import("./loading/ComingSoon"));
-const TempTournamentPage = lazy(() => import("../pages/TempTournamentPage"));
-const TempTournamentPageWithPayment = lazy(() => import("../pages/TempTournamentPageWithPayment"));
-const TournamentAdminPage = lazy(() => import("../pages/TournamentAdminPage"));
-const TournamentInfoPage = lazy(() => import("../pages/TournamentInfoPage"));
+const TempTournamentPage = lazy(() => import("../pages/tournament/RegisterationPage"));
+const TempTournamentPageWithPayment = lazy(() => import("../pages/tournament/PaymentRegistration"));
+const TournamentAdminPage = lazy(() => import("../pages/tournament/AdminPage"));
+const TournamentInfoPage = lazy(() => import("../pages/tournament/InfoPage"));
 const SubscriptionPage = lazy(() => import("../pages/SubscriptionPage"));
 
 export const AnimatedRoutes = () => {

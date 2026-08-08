@@ -24,7 +24,7 @@ export const TempTournamentPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [session, setSession] = useState<any>(null);
-  
+
   // Auth & Email State
   const [userEmail, setUserEmail] = useState("");
 
@@ -138,7 +138,7 @@ export const TempTournamentPage = () => {
         if (file) {
           const fileExt = file.name.split(".").pop();
           const fileName = `game_ids/${Date.now()}_player${num}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          
+
           const { error: uploadError } = await supabase.storage
             .from("tournament-receipts")
             .upload(fileName, file);
@@ -192,7 +192,8 @@ export const TempTournamentPage = () => {
           player5_uid: getPlayerUid(5, formData.player5Uid) || null,
           payment_screenshot_url: compositeScreenshotNote,
           user_email: finalEmail,
-          status: 'pending'
+          status: 'pending',
+          tournament_code: 'lan_season_2',
         });
 
       if (dbError) throw dbError;
@@ -246,11 +247,11 @@ export const TempTournamentPage = () => {
 
       <main className="flex-grow pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          
+
           {/* Main Card with Free Fire MAX styling */}
           <Card className="ff-card shadow-2xl overflow-hidden border-amber-500/30">
             <CardHeader className="text-center pb-8 border-b border-amber-500/20 bg-gradient-to-b from-amber-950/40 via-amber-900/10 to-transparent relative">
-              
+
               {/* Tactical Top Tag */}
               <div className="flex justify-center mb-3">
                 <span className="ff-badge px-4 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg">
@@ -263,7 +264,7 @@ export const TempTournamentPage = () => {
               <CardTitle className="ff-title text-3xl sm:text-4xl font-extrabold tracking-wider uppercase drop-shadow-md">
                 FFM LAN FARIDABAD TOURNAMENT
               </CardTitle>
-              
+
               <CardDescription className="text-slate-300 text-sm sm:text-base mt-2 max-w-xl mx-auto flex items-center justify-center gap-2">
                 <Gamepad2 className="h-4 w-4 text-amber-400 shrink-0" />
                 Assemble your squad! 4 Players Compulsory • 1 Substitute Optional
@@ -277,14 +278,14 @@ export const TempTournamentPage = () => {
                 {session?.user ? (
                   <div className="ff-card-glow p-5 rounded-xl border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 mt-0.5">
+                      <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 shrink-0">
                         <UserCheck className="h-6 w-6" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs uppercase font-bold tracking-wider text-amber-400">COMMANDER EMAIL REGISTERED</p>
-                        <p className="text-lg font-extrabold text-white tracking-wide">{session.user.email}</p>
+                        <p className="text-lg font-extrabold text-white tracking-wider break-words">{session.user.email}</p>
                         <p className="text-xs text-amber-300/80 font-medium mt-1 flex items-center gap-1.5">
-                          <Info className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                          <Info className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
                           All communication mails will be sent to this mail id.
                         </p>
                       </div>
@@ -526,7 +527,7 @@ export const TempTournamentPage = () => {
                     <Flame className="h-4 w-4 text-amber-500" />
                     Watch Official Rules on YouTube
                   </a>
-                  
+
                   <Button type="submit" size="lg" disabled={submitting} className="ff-button w-full sm:w-auto px-10 py-6 text-base font-extrabold tracking-wider">
                     {submitting ? (
                       <>

@@ -24,13 +24,13 @@ export const TempTournamentPageWithPayment = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [session, setSession] = useState<any>(null);
-  
+
   // Auth & Email State
   const [userEmail, setUserEmail] = useState("");
 
-  const amount = 40;
-  const upiId = "7303042793@upi";
-  const name = "CollabRoom";
+  const amount = 10;
+  const upiId = "sandybhai@upi";
+  const name = "Sandeep";
   const note = "Tournament Registration";
 
   const paymentLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
@@ -55,6 +55,7 @@ export const TempTournamentPageWithPayment = () => {
 
   // Payment Screenshot State
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
+  const [paymentPreview, setPaymentPreview] = useState<string | null>(null);
 
   // Player Screenshot Upload State
   const [playerScreenshots, setPlayerScreenshots] = useState<{ [key: number]: File | null }>({
@@ -92,9 +93,19 @@ export const TempTournamentPageWithPayment = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handlePaymentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setPaymentScreenshot(e.target.files[0]);
+  const handlePaymentFileChange = (file: File | null) => {
+    if (file) {
+      setPaymentScreenshot(file);
+      const previewUrl = URL.createObjectURL(file);
+      setPaymentPreview(previewUrl);
+    } else {
+      setPaymentScreenshot(null);
+      if (paymentPreview) {
+        URL.revokeObjectURL(paymentPreview);
+      }
+      setPaymentPreview(null);
+      const fileInput = document.getElementById("paymentScreenshot") as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
     }
   };
 
@@ -212,7 +223,7 @@ export const TempTournamentPageWithPayment = () => {
       // Combine payment URL and player ID screenshots if uploaded
       const playerScreenshotList = Object.values(uploadedScreenshotUrls);
       const compositeScreenshotUrl = playerScreenshotList.length > 0
-        ? `${paymentPublicUrl} | GameID Screenshots: ${playerScreenshotList.join(" , ")}`
+        ? `${paymentPublicUrl} | Game ID Screenshots: ${playerScreenshotList.join(" | ")}`
         : paymentPublicUrl;
 
       // 3. Save registration data in Supabase
@@ -235,6 +246,7 @@ export const TempTournamentPageWithPayment = () => {
           payment_screenshot_url: compositeScreenshotUrl,
           user_email: finalEmail,
           status: "pending",
+          tournament_code: "lan_season_2",
         });
 
       if (dbError) throw dbError;
@@ -257,6 +269,10 @@ export const TempTournamentPageWithPayment = () => {
         player5Ign: "", player5Uid: "",
       });
       setPaymentScreenshot(null);
+      if (paymentPreview) {
+        URL.revokeObjectURL(paymentPreview);
+        setPaymentPreview(null);
+      }
       setPlayerScreenshots({ 1: null, 2: null, 3: null, 4: null, 5: null });
       setScreenshotPreviews({ 1: null, 2: null, 3: null, 4: null, 5: null });
 
@@ -269,7 +285,7 @@ export const TempTournamentPageWithPayment = () => {
       console.error("Registration error:", error);
       toast({
         title: "Registration failed",
-        description: error.message || "An error occurred during registration. Check if you have run the database setup script.",
+        description: error.message || "An error occurred during registration.",
         variant: "destructive",
       });
     } finally {
@@ -292,11 +308,11 @@ export const TempTournamentPageWithPayment = () => {
 
       <main className="flex-grow pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          
+
           {/* Main Card with Free Fire MAX styling */}
           <Card className="ff-card shadow-2xl overflow-hidden border-amber-500/30">
             <CardHeader className="text-center pb-8 border-b border-amber-500/20 bg-gradient-to-b from-amber-950/40 via-amber-900/10 to-transparent relative">
-              
+
               {/* Tactical Top Tag */}
               <div className="flex justify-center mb-3">
                 <span className="ff-badge px-4 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg">
@@ -307,9 +323,9 @@ export const TempTournamentPageWithPayment = () => {
               </div>
 
               <CardTitle className="ff-title text-3xl sm:text-4xl font-extrabold tracking-wider uppercase drop-shadow-md">
-                FFM TOURNAMENT REGISTRATION
+                FFM LAN FARIDABAD TOURNAMENT
               </CardTitle>
-              
+
               <CardDescription className="text-slate-300 text-sm sm:text-base mt-2 max-w-xl mx-auto flex items-center justify-center gap-2">
                 <Gamepad2 className="h-4 w-4 text-amber-400 shrink-0" />
                 Register your squad! 4 Players Compulsory • 1 Substitute Optional • Upload Receipt Below
@@ -323,14 +339,14 @@ export const TempTournamentPageWithPayment = () => {
                 {session?.user ? (
                   <div className="ff-card-glow p-5 rounded-xl border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 mt-0.5">
+                      <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 shrink-0">
                         <UserCheck className="h-6 w-6" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs uppercase font-bold tracking-wider text-amber-400">COMMANDER EMAIL REGISTERED</p>
-                        <p className="text-lg font-extrabold text-white tracking-wide">{session.user.email}</p>
+                        <p className="text-lg font-extrabold text-white tracking-wider break-words">{session.user.email}</p>
                         <p className="text-xs text-amber-300/80 font-medium mt-1 flex items-center gap-1.5">
-                          <Info className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                          <Info className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
                           All communication mails will be sent to this mail id.
                         </p>
                       </div>
@@ -571,14 +587,32 @@ export const TempTournamentPageWithPayment = () => {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="paymentScreenshot" className="text-slate-200 text-xs uppercase font-semibold">Upload Payment Receipt Screenshot *</Label>
-                      <Input
-                        id="paymentScreenshot"
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePaymentFileChange}
-                        required
-                        className="ff-input cursor-pointer file:bg-amber-500/20 file:text-amber-300 file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 file:font-semibold"
-                      />
+                      {paymentPreview ? (
+                        <div className="relative inline-block mt-2">
+                          <img
+                            src={paymentPreview}
+                            alt="Payment Receipt Screenshot Preview"
+                            className="w-52 h-32 object-cover rounded-lg border-2 border-amber-500/50 shadow-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handlePaymentFileChange(null)}
+                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 shadow-lg hover:bg-red-700 transition-colors"
+                            title="Remove payment image"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <Input
+                          id="paymentScreenshot"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handlePaymentFileChange(e.target.files?.[0] || null)}
+                          required
+                          className="ff-input cursor-pointer file:bg-amber-500/20 file:text-amber-300 file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 file:font-semibold"
+                        />
+                      )}
                     </div>
                     <p className="text-xs text-slate-300">
                       Upload a clear screenshot of your transaction receipt. Ensure Transaction ID is visible.
@@ -603,7 +637,7 @@ export const TempTournamentPageWithPayment = () => {
                     </div>
 
                     <div className="text-xs text-slate-400 space-y-1">
-                      <p className="flex items-center gap-1.5"><QrCode className="h-3.5 w-3.5 text-amber-400" /> UPI ID: <span className="text-amber-300 font-bold">sandybhai@upi</span></p>
+                      <p className="flex items-center gap-1.5"><QrCode className="h-3.5 w-3.5 text-amber-400" /> UPI ID: <span className="text-amber-300 font-bold">{upiId}</span></p>
                       <p>For cash payments contact <a href="https://instagram.com/collabrooms" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline font-bold">IG::CollabRooms</a></p>
                     </div>
                   </div>
@@ -620,7 +654,7 @@ export const TempTournamentPageWithPayment = () => {
                     <Flame className="h-4 w-4 text-amber-500" />
                     Watch Official Rules on YouTube
                   </a>
-                  
+
                   <Button type="submit" size="lg" disabled={submitting} className="ff-button w-full sm:w-auto px-10 py-6 text-base font-extrabold tracking-wider">
                     {submitting ? (
                       <>
