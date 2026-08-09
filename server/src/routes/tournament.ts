@@ -38,6 +38,65 @@ router.get("/registrations", async (req, res) => {
   }
 });
 
+// POST /api/tournament/ensure-user — Ensures an auth user & profile exist for registration
+router.post("/ensure-user", async (req, res) => {
+  const { email, displayName } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  try {
+    let userId: string | null = null;
+
+    // 1. Check if user already exists in auth.users by email
+    const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+    if (listData?.users) {
+      const existingUser = listData.users.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase()
+      );
+      if (existingUser) {
+        userId = existingUser.id;
+      }
+    }
+
+    // 2. If user doesn't exist, create a new user using service role
+    if (!userId) {
+      const autoPassword = `Collab_${Math.random().toString(36).slice(2, 8)}${Math.floor(1000 + Math.random() * 9000)}!`;
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: autoPassword,
+        email_confirm: true,
+        user_metadata: { display_name: displayName || email.split("@")[0] },
+      });
+
+      if (createError) throw createError;
+      userId = newUser.user.id;
+    }
+
+    // 3. Upsert profile into `profiles` using service role (bypassing RLS)
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .upsert(
+        {
+          id: userId,
+          email: email.toLowerCase(),
+          display_name: displayName || email.split("@")[0],
+          created_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+
+    if (profileError) {
+      console.error("Profile upsert error:", profileError);
+    }
+
+    return res.status(200).json({ userId });
+  } catch (error: any) {
+    console.error("Ensure user error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 router.post("/approve", async (req, res) => {
 
   const { registrationId, userEmail, status, reason } = req.body;

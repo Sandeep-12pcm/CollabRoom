@@ -168,9 +168,66 @@ export const TempTournamentPageWithPayment = () => {
     setSubmitting(true);
 
     try {
+      let registeredUserId: string | null = session?.user?.id || null;
+      let isNewAccountCreated = false;
+
+      // If user is not logged in, ensure account & profile exist for that email ID
+      if (!session?.user && finalEmail) {
+        const HOST = import.meta.env.VITE_HOST_URL || "http://localhost:4000";
+        try {
+          // Call server backend to ensure user & profile exist (service role bypasses RLS)
+          const res = await fetch(`${HOST}/api/tournament/ensure-user`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: finalEmail,
+              displayName: formData.teamName || finalEmail.split("@")[0],
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.userId) {
+              registeredUserId = data.userId;
+              isNewAccountCreated = true;
+            }
+          }
+        } catch (apiErr) {
+          console.warn("Backend server ensure-user call note:", apiErr);
+        }
+
+        // Fallback to client signUp if backend call returned no userId
+        if (!registeredUserId) {
+          const autoPassword = `Collab_${Math.random().toString(36).slice(2, 8)}${Math.floor(1000 + Math.random() * 9000)}!`;
+          try {
+            const { data: signUpData } = await supabase.auth.signUp({
+              email: finalEmail,
+              password: autoPassword,
+              options: {
+                data: {
+                  display_name: formData.teamName || finalEmail.split("@")[0],
+                },
+              },
+            });
+
+            if (signUpData?.user) {
+              registeredUserId = signUpData.user.id;
+              isNewAccountCreated = true;
+              if (signUpData.session) setSession(signUpData.session);
+            }
+          } catch (err) {
+            console.warn("Client fallback sign-up note:", err);
+          }
+        }
+      }
+
+      if (!registeredUserId) {
+        throw new Error("Unable to create user account for registration. Please check your email or try logging in.");
+      }
+
       // 1. Upload payment receipt screenshot to Supabase Storage
       const payFileExt = paymentScreenshot.name.split(".").pop();
-      const userFolder = session?.user?.id || "guest";
+      const userFolder = registeredUserId || "guest";
       const payFileName = `${userFolder}/${Math.random()}.${payFileExt}`;
 
       const { error: payUploadError } = await supabase.storage
@@ -230,7 +287,7 @@ export const TempTournamentPageWithPayment = () => {
       const { error: dbError } = await supabase
         .from("tournament_registrations")
         .insert({
-          user_id: session?.user?.id || null,
+          user_id: registeredUserId,
           team_name: formData.teamName,
           mobile_number: formData.mobileNumber,
           player1_ign: getPlayerIgn(1, formData.player1Ign),
@@ -252,12 +309,18 @@ export const TempTournamentPageWithPayment = () => {
       if (dbError) throw dbError;
 
       toast({
-        title: "Registration successful!",
-        description: "Your team has been registered for the tournament.",
+        title: isNewAccountCreated ? "Account Created & Registration Successful!" : "Registration successful!",
+        description: isNewAccountCreated
+          ? `An account has been created for ${finalEmail} and your team is registered.`
+          : "Your team has been registered for the tournament.",
       });
 
       // Show alert window
-      window.alert(`You will receive a mail on registered email id (${finalEmail}) once approved. Please check your inbox as well as spam folder.`);
+      if (isNewAccountCreated) {
+        window.alert(`An account was created for ${finalEmail}! You will receive a mail on your registered email id once approved. Please check your inbox as well as spam folder.`);
+      } else {
+        window.alert(`You will receive a mail on registered email id (${finalEmail}) once approved. Please check your inbox as well as spam folder.`);
+      }
 
       // Clear form
       setFormData({

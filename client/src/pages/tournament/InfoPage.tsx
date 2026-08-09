@@ -134,7 +134,7 @@ const TOURNAMENT_DATA = {
     phone: "+91 7303042793",
     email: "collabroomdevelopers@gmail.com",
     instagram: "@aigamerwala",
-    youtube: "youtube.com/@aigamerwala",
+    youtube: "https://youtu.be/2YZD7ygGiIU",
   },
 
   // FAQs
@@ -832,13 +832,13 @@ export const TournamentInfoPage = () => {
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400 font-bold">🚇</span>
                         <span>
-                          <strong className="text-white">Metro:</strong> Old Faridabad Metro Station
+                          <strong className="text-white">Metro:</strong> Bata Chowk Metro Station
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="font-bold">🚌</span>
                         <span>
-                          <strong className="text-white">Bus:</strong> Haryana Roadways 903 stop at Sector-16A
+                          <strong className="text-white">Bus Stop:</strong> Near by Sector 12 Town Park
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
@@ -854,14 +854,31 @@ export const TournamentInfoPage = () => {
                 {/* Venue Map Info Card */}
                 <div className="ff-3d-card ff-hud-corner rounded-2xl p-6 flex flex-col justify-between space-y-4">
                   <div className="space-y-3">
-                    <h3 className="font-black text-lg text-amber-400 uppercase tracking-wide">Location Info</h3>
+                    <h3 className="font-black text-lg text-amber-400 uppercase tracking-wide flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-amber-400" /> Location & Map
+                    </h3>
                     <p className="text-sm text-slate-300 leading-relaxed font-medium">
-                      The tournament is organized offline in <strong className="text-white">Faridabad, Sector-16A</strong>. Ensure your entire squad reaches the venue 30 minutes prior to check-in.
+                      The tournament is organized offline at <strong className="text-white">{d.venue.name}</strong>. Ensure your entire squad reaches the venue 30 minutes prior to check-in.
                     </p>
+
+                    {/* Embedded Google Map */}
+                    <div className="w-full h-48 rounded-xl overflow-hidden border border-amber-500/30 shadow-lg">
+                      <iframe
+                        src={d.venue.mapEmbedUrl}
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Tournament Venue Map"
+                      />
+                    </div>
                   </div>
+
                   <Button asChild size="lg" className="ff-button w-full text-sm font-extrabold tracking-wider py-6">
-                    <a href="https://instagram.com/aigamerwala" target="_blank" rel="noopener noreferrer">
-                      Get Directions via Instagram <ExternalLink className="w-4 h-4 ml-2" />
+                    <a href={d.venue.directionsUrl} target="_blank" rel="noopener noreferrer">
+                      Get Directions on Google Maps <ExternalLink className="w-4 h-4 ml-2" />
                     </a>
                   </Button>
                 </div>
