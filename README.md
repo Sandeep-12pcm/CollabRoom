@@ -67,21 +67,6 @@ CollabRoom is built using modern, stable tools that scale well.
 
 ---
 
-## 🏗 Project Structure
-
-CollabRoom/
-├── client/ # React + Vite frontend
-│ ├── src/
-│ └── public/
-│
-├── server/ # Node.js + Express backend
-│ ├── src/
-│ └── index.ts
-│
-└── README.md
-
----
-
 ## 🏁 Getting Started
 
 ### Prerequisites
