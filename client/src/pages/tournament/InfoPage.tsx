@@ -82,7 +82,7 @@ const TOURNAMENT_DATA = {
     rounds: ["Bermuda"],
     matchType: "Battle Royale",
     map: "Bermuda",
-    entryFee: "Free Entry",
+    entryFee: "40 Rs. Commitment Charge.",
   },
 
   // Schedule
