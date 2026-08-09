@@ -295,7 +295,7 @@ router.post("/approve", async (req, res) => {
                 </p>
 
                 <div style="text-align:center;margin:24px 0;">
-                  <a href="https://chat.whatsapp.com/GkM5x3CeEyH4aQHWJrwmxH"
+                  <a href="https://chat.whatsapp.com/ChLb4axpSlE2nSHLa3RASi"
                      style="display:inline-block;background:#25d366;color:#ffffff;font-weight:700;font-size:15px;padding:12px 28px;border-radius:8px;text-decoration:none;">
                     &#128172; Join WhatsApp Group
                   </a>
