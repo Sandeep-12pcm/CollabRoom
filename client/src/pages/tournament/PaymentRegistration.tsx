@@ -28,7 +28,7 @@ export const TempTournamentPageWithPayment = () => {
   // Auth & Email State
   const [userEmail, setUserEmail] = useState("");
 
-  const amount = 10;
+  const amount = 40;
   const upiId = "sandybhai@upi";
   const name = "Sandeep";
   const note = "Tournament Registration";
