@@ -525,7 +525,7 @@ export const TournamentInfoPage = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
               <StatBadge
                 icon={<Calendar className="w-5 h-5 text-amber-400" />}
-                label="Tournament Date"
+                label="Qualifier's Day"
                 value={d.tournamentDate}
               />
               <StatBadge
