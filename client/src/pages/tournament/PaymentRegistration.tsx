@@ -168,66 +168,19 @@ export const TempTournamentPageWithPayment = () => {
     setSubmitting(true);
 
     try {
-      let registeredUserId: string | null = session?.user?.id || null;
-      let isNewAccountCreated = false;
-
-      // If user is not logged in, ensure account & profile exist for that email ID
-      if (!session?.user && finalEmail) {
-        const HOST = import.meta.env.VITE_HOST_URL || "http://localhost:4000";
-        try {
-          // Call server backend to ensure user & profile exist (service role bypasses RLS)
-          const res = await fetch(`${HOST}/api/tournament/ensure-user`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: finalEmail,
-              displayName: formData.teamName || finalEmail.split("@")[0],
-            }),
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            if (data.userId) {
-              registeredUserId = data.userId;
-              isNewAccountCreated = true;
-            }
-          }
-        } catch (apiErr) {
-          console.warn("Backend server ensure-user call note:", apiErr);
+      // Helper function to resolve backend server API URL dynamically
+      const getApiHost = () => {
+        if (import.meta.env.VITE_HOST_URL) return import.meta.env.VITE_HOST_URL;
+        if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+          return "http://localhost:4000";
         }
+        return window.location.origin;
+      };
 
-        // Fallback to client signUp if backend call returned no userId
-        if (!registeredUserId) {
-          const autoPassword = `Collab_${Math.random().toString(36).slice(2, 8)}${Math.floor(1000 + Math.random() * 9000)}!`;
-          try {
-            const { data: signUpData } = await supabase.auth.signUp({
-              email: finalEmail,
-              password: autoPassword,
-              options: {
-                data: {
-                  display_name: formData.teamName || finalEmail.split("@")[0],
-                },
-              },
-            });
-
-            if (signUpData?.user) {
-              registeredUserId = signUpData.user.id;
-              isNewAccountCreated = true;
-              if (signUpData.session) setSession(signUpData.session);
-            }
-          } catch (err) {
-            console.warn("Client fallback sign-up note:", err);
-          }
-        }
-      }
-
-      if (!registeredUserId) {
-        throw new Error("Unable to create user account for registration. Please check your email or try logging in.");
-      }
+      const userFolder = session?.user?.id || "guest";
 
       // 1. Upload payment receipt screenshot to Supabase Storage
       const payFileExt = paymentScreenshot.name.split(".").pop();
-      const userFolder = registeredUserId || "guest";
       const payFileName = `${userFolder}/${Math.random()}.${payFileExt}`;
 
       const { error: payUploadError } = await supabase.storage
@@ -283,30 +236,99 @@ export const TempTournamentPageWithPayment = () => {
         ? `${paymentPublicUrl} | Game ID Screenshots: ${playerScreenshotList.join(" | ")}`
         : paymentPublicUrl;
 
-      // 3. Save registration data in Supabase
-      const { error: dbError } = await supabase
-        .from("tournament_registrations")
-        .insert({
-          user_id: registeredUserId,
-          team_name: formData.teamName,
-          mobile_number: formData.mobileNumber,
-          player1_ign: getPlayerIgn(1, formData.player1Ign),
-          player1_uid: getPlayerUid(1, formData.player1Uid),
-          player2_ign: getPlayerIgn(2, formData.player2Ign),
-          player2_uid: getPlayerUid(2, formData.player2Uid),
-          player3_ign: getPlayerIgn(3, formData.player3Ign),
-          player3_uid: getPlayerUid(3, formData.player3Uid),
-          player4_ign: getPlayerIgn(4, formData.player4Ign),
-          player4_uid: getPlayerUid(4, formData.player4Uid),
-          player5_ign: getPlayerIgn(5, formData.player5Ign) || null,
-          player5_uid: getPlayerUid(5, formData.player5Uid) || null,
-          payment_screenshot_url: compositeScreenshotUrl,
-          user_email: finalEmail,
-          status: "pending",
-          tournament_code: "lan_season_2",
+      let registrationSuccess = false;
+      let isNewAccountCreated = false;
+
+      // 3. Save registration data using backend API (Service Role Key creates user/profile & bypasses RLS)
+      try {
+        const HOST = getApiHost();
+        const res = await fetch(`${HOST}/api/tournament/register-squad`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: session?.user?.id || null,
+            userEmail: finalEmail,
+            teamName: formData.teamName,
+            mobileNumber: formData.mobileNumber,
+            player1Ign: getPlayerIgn(1, formData.player1Ign),
+            player1Uid: getPlayerUid(1, formData.player1Uid),
+            player2Ign: getPlayerIgn(2, formData.player2Ign),
+            player2Uid: getPlayerUid(2, formData.player2Uid),
+            player3Ign: getPlayerIgn(3, formData.player3Ign),
+            player3Uid: getPlayerUid(3, formData.player3Uid),
+            player4Ign: getPlayerIgn(4, formData.player4Ign),
+            player4Uid: getPlayerUid(4, formData.player4Uid),
+            player5Ign: getPlayerIgn(5, formData.player5Ign) || null,
+            player5Uid: getPlayerUid(5, formData.player5Uid) || null,
+            paymentScreenshotUrl: compositeScreenshotUrl,
+            tournamentCode: "lan_season_2",
+          }),
         });
 
-      if (dbError) throw dbError;
+        if (res.ok) {
+          const apiData = await res.json();
+          if (apiData.success) {
+            registrationSuccess = true;
+            isNewAccountCreated = Boolean(apiData.isNewAccount);
+          }
+        } else {
+          const errRes = await res.json().catch(() => ({}));
+          console.warn("Server register-squad returned error:", errRes);
+        }
+      } catch (serverErr) {
+        console.warn("Server API call failed, falling back to direct client DB insert:", serverErr);
+      }
+
+      // Fallback: Direct Supabase client insert if backend API server was unreachable
+      if (!registrationSuccess) {
+        let registeredUserId = session?.user?.id || null;
+
+        if (!session?.user && finalEmail) {
+          const autoPassword = `Collab_${Math.random().toString(36).slice(2, 8)}${Math.floor(1000 + Math.random() * 9000)}!`;
+          try {
+            const { data: signUpData } = await supabase.auth.signUp({
+              email: finalEmail,
+              password: autoPassword,
+              options: {
+                data: {
+                  display_name: formData.teamName || finalEmail.split("@")[0],
+                },
+              },
+            });
+
+            if (signUpData?.user) {
+              registeredUserId = signUpData.user.id;
+              isNewAccountCreated = true;
+            }
+          } catch (signUpErr) {
+            console.warn("Client fallback auto sign-up note:", signUpErr);
+          }
+        }
+
+        const { error: dbError } = await supabase
+          .from("tournament_registrations")
+          .insert({
+            user_id: registeredUserId,
+            team_name: formData.teamName,
+            mobile_number: formData.mobileNumber,
+            player1_ign: getPlayerIgn(1, formData.player1Ign),
+            player1_uid: getPlayerUid(1, formData.player1Uid),
+            player2_ign: getPlayerIgn(2, formData.player2Ign),
+            player2_uid: getPlayerUid(2, formData.player2Uid),
+            player3_ign: getPlayerIgn(3, formData.player3Ign),
+            player3_uid: getPlayerUid(3, formData.player3Uid),
+            player4_ign: getPlayerIgn(4, formData.player4Ign),
+            player4_uid: getPlayerUid(4, formData.player4Uid),
+            player5_ign: getPlayerIgn(5, formData.player5Ign) || null,
+            player5_uid: getPlayerUid(5, formData.player5Uid) || null,
+            payment_screenshot_url: compositeScreenshotUrl,
+            user_email: finalEmail,
+            status: "pending",
+            tournament_code: "lan_season_2",
+          });
+
+        if (dbError) throw dbError;
+      }
 
       toast({
         title: isNewAccountCreated ? "Account Created & Registration Successful!" : "Registration successful!",
@@ -709,7 +731,7 @@ export const TempTournamentPageWithPayment = () => {
                 {/* Submit Action */}
                 <div className="pt-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-amber-500/20">
                   <a
-                    href="https://www.youtube.com/@aigamerwala"
+                    href="https://youtu.be/hS4lYiBjzzM"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs uppercase font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 hover:underline"

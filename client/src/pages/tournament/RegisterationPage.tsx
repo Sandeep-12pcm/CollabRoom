@@ -519,7 +519,7 @@ export const TempTournamentPage = () => {
                 {/* Submit Action */}
                 <div className="pt-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-amber-500/20">
                   <a
-                    href="https://www.youtube.com/@aigamerwala"
+                    href="https://youtu.be/hS4lYiBjzzM"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs uppercase font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 hover:underline"

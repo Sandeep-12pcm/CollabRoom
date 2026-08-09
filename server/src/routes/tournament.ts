@@ -47,40 +47,52 @@ router.post("/ensure-user", async (req, res) => {
 
   try {
     let userId: string | null = null;
+    const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Check if user already exists in auth.users by email
-    const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
-    if (listData?.users) {
-      const existingUser = listData.users.find(
-        (u) => u.email?.toLowerCase() === email.toLowerCase()
-      );
-      if (existingUser) {
-        userId = existingUser.id;
+    // 1. Check if profile already exists by email
+    const { data: profileMatch } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    if (profileMatch?.id) {
+      userId = profileMatch.id;
+    } else {
+      // 2. Check if user already exists in auth.users by email
+      const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+      if (listData?.users) {
+        const existingUser = listData.users.find(
+          (u) => u.email?.toLowerCase() === cleanEmail
+        );
+        if (existingUser) {
+          userId = existingUser.id;
+        }
       }
     }
 
-    // 2. If user doesn't exist, create a new user using service role
+    // 3. If user doesn't exist anywhere, create a new user using service role
     if (!userId) {
       const autoPassword = `Collab_${Math.random().toString(36).slice(2, 8)}${Math.floor(1000 + Math.random() * 9000)}!`;
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
+        email: cleanEmail,
         password: autoPassword,
         email_confirm: true,
-        user_metadata: { display_name: displayName || email.split("@")[0] },
+        user_metadata: { display_name: displayName || cleanEmail.split("@")[0] },
       });
 
       if (createError) throw createError;
       userId = newUser.user.id;
     }
 
-    // 3. Upsert profile into `profiles` using service role (bypassing RLS)
+    // 4. Upsert profile into `profiles` using service role (bypassing RLS)
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .upsert(
         {
           id: userId,
-          email: email.toLowerCase(),
-          display_name: displayName || email.split("@")[0],
+          email: cleanEmail,
+          display_name: displayName || cleanEmail.split("@")[0],
           created_at: new Date().toISOString(),
         },
         { onConflict: "id" }
@@ -93,6 +105,127 @@ router.post("/ensure-user", async (req, res) => {
     return res.status(200).json({ userId });
   } catch (error: any) {
     console.error("Ensure user error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/tournament/register-squad — Handles squad registration using service role
+router.post("/register-squad", async (req, res) => {
+  const {
+    userId,
+    userEmail,
+    teamName,
+    mobileNumber,
+    player1Ign,
+    player1Uid,
+    player2Ign,
+    player2Uid,
+    player3Ign,
+    player3Uid,
+    player4Ign,
+    player4Uid,
+    player5Ign,
+    player5Uid,
+    paymentScreenshotUrl,
+    tournamentCode,
+  } = req.body;
+
+  if (!userEmail || !teamName) {
+    return res.status(400).json({ error: "Email and Squad Name are required" });
+  }
+
+  try {
+    let finalUserId: string | null = userId || null;
+    let isNewAccount = false;
+    const cleanEmail = userEmail.trim().toLowerCase();
+
+    // 1. Check if user & profile already exist before attempting to create a new one
+    if (!finalUserId) {
+      // Check profiles first
+      const { data: profileMatch } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", cleanEmail)
+        .maybeSingle();
+
+      if (profileMatch?.id) {
+        finalUserId = profileMatch.id;
+      } else {
+        // Check auth.users
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+        if (listData?.users) {
+          const existingUser = listData.users.find(
+            (u) => u.email?.toLowerCase() === cleanEmail
+          );
+          if (existingUser) {
+            finalUserId = existingUser.id;
+          }
+        }
+      }
+
+      // If user does not exist at all, create a new account
+      if (!finalUserId) {
+        const autoPassword = `Collab_${Math.random().toString(36).slice(2, 8)}${Math.floor(1000 + Math.random() * 9000)}!`;
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: cleanEmail,
+          password: autoPassword,
+          email_confirm: true,
+          user_metadata: { display_name: teamName || cleanEmail.split("@")[0] },
+        });
+
+        if (createError) throw createError;
+        finalUserId = newUser.user.id;
+        isNewAccount = true;
+      }
+    }
+
+    // 2. Ensure profile exists in `profiles` table using service role
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .upsert(
+        {
+          id: finalUserId,
+          email: userEmail.toLowerCase(),
+          display_name: teamName || userEmail.split("@")[0],
+          created_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+
+    if (profileError) {
+      console.error("Profile upsert error in register-squad:", profileError);
+    }
+
+    // 3. Insert into `tournament_registrations` table (using service role)
+    const { data: regData, error: regError } = await supabaseAdmin
+      .from("tournament_registrations")
+      .insert({
+        user_id: finalUserId,
+        team_name: teamName,
+        mobile_number: mobileNumber,
+        player1_ign: player1Ign,
+        player1_uid: player1Uid,
+        player2_ign: player2Ign || null,
+        player2_uid: player2Uid || null,
+        player3_ign: player3Ign || null,
+        player3_uid: player3Uid || null,
+        player4_ign: player4Ign || null,
+        player4_uid: player4Uid || null,
+        player5_ign: player5Ign || null,
+        player5_uid: player5Uid || null,
+        payment_screenshot_url: paymentScreenshotUrl,
+        user_email: userEmail,
+        status: "pending",
+        tournament_code: tournamentCode || "lan_season_2",
+      })
+      .select()
+      .single();
+
+    if (regError) throw regError;
+
+    return res.status(200).json({ success: true, isNewAccount, registration: regData });
+  } catch (error: any) {
+    console.error("Register squad server error:", error);
     return res.status(500).json({ error: error.message });
   }
 });
