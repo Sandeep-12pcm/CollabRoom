@@ -88,34 +88,24 @@ const TOURNAMENT_DATA = {
   // Schedule
   schedule: [
     {
-      time: "4:50 PM",
-      event: "Team Check-in & Verification",
+      time: "16 Aug",
+      event: "Practice Match (Online Mode)",
+      icon: <Gamepad2 className="w-4 h-4" />,
+    },
+    {
+      time: "23 Aug — 12:00 PM",
+      event: "Online Qualifiers Day 1",
       icon: <Users className="w-4 h-4" />,
     },
     {
-      time: "5:10 PM",
-      event: "Opening Ceremony",
+      time: "30 Aug",
+      event: "Online Qualifiers Day 2 or LAN (Depending upon registrations, final decision communicated later)",
       icon: <Star className="w-4 h-4" />,
     },
     {
-      time: "5:20 PM",
-      event: "Group Stage — Round 1",
-      icon: <Gamepad2 className="w-4 h-4" />,
-    },
-    {
-      time: "5:40 PM",
-      event: "Group Stage — Round 2",
-      icon: <Gamepad2 className="w-4 h-4" />,
-    },
-    {
-      time: "6:00 PM",
-      event: "Group Stage - Round 3",
+      time: "6 Sept",
+      event: "LAN Match (If not played on 30 August)",
       icon: <Trophy className="w-4 h-4" />,
-    },
-    {
-      time: "6:30 PM",
-      event: "Prize Distribution & Closing",
-      icon: <Award className="w-4 h-4" />,
     },
   ],
 
