@@ -82,7 +82,7 @@ const TOURNAMENT_DATA = {
     rounds: ["Bermuda"],
     matchType: "Battle Royale",
     map: "Bermuda",
-    entryFee: "40 Rs. Commitment Charge.",
+    entryFee: "40 Rs.",
   },
 
   // Schedule
@@ -189,13 +189,13 @@ const StatBadge = ({
   label: string;
   value: string;
 }) => (
-  <div className="flex items-center gap-3.5 ff-3d-card ff-hud-corner rounded-xl px-4 py-3.5 shadow-xl">
-    <div className="p-2.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex-shrink-0 shadow-inner">
+  <div className="flex items-center gap-2 sm:gap-3.5 ff-3d-card ff-hud-corner rounded-xl px-2.5 py-3 sm:px-4 sm:py-3.5 shadow-xl min-w-0">
+    <div className="p-2 sm:p-2.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex-shrink-0 shadow-inner">
       {icon}
     </div>
-    <div>
-      <p className="text-[11px] text-amber-400/80 font-bold uppercase tracking-wider">{label}</p>
-      <p className="font-black text-sm sm:text-base text-white tracking-wide">{value}</p>
+    <div className="flex flex-col justify-center min-w-0 flex-1">
+      <p className="text-[10px] sm:text-[11px] text-amber-400/80 font-bold uppercase tracking-wider truncate">{label}</p>
+      <p className="font-black text-xs sm:text-base text-white tracking-wide truncate">{value}</p>
     </div>
   </div>
 );
@@ -507,9 +507,29 @@ export const TournamentInfoPage = () => {
             <p className="text-lg sm:text-2xl text-amber-300 font-extrabold uppercase tracking-wide mb-3">
               {d.game} &bull; {d.edition}
             </p>
-            <p className="text-sm sm:text-base text-slate-300 italic mb-10 max-w-2xl mx-auto font-medium">
+            <p className="text-sm sm:text-base text-slate-300 italic mb-8 max-w-2xl mx-auto font-medium">
               "{d.tagline}"
             </p>
+
+            {/* ── Special Announcement Banner ── */}
+            <div className="max-w-3xl mx-auto mb-10 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950/90 via-orange-950/80 to-amber-950/90 border-2 border-amber-400/80 shadow-[0_0_25px_rgba(245,158,11,0.35)] backdrop-blur-md ff-hud-corner text-left flex items-start sm:items-center gap-4">
+              <div className="p-3 rounded-xl bg-amber-500/20 border border-amber-400/60 text-amber-300 flex-shrink-0">
+                <Trophy className="w-7 h-7 text-amber-400 animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-md">
+                    📢 SPECIAL ANNOUNCEMENT
+                  </span>
+                  <span className="text-amber-300 text-xs font-black uppercase tracking-wider">
+                    Bonus Rewards Unlocked!
+                  </span>
+                </div>
+                <p className="text-white font-black text-sm sm:text-base tracking-wide leading-snug">
+                  Winners will get trophies and cash prize if 24+ teams are registered!
+                </p>
+              </div>
+            </div>
 
             {/* Quick stat grid (3D Cards) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
@@ -563,9 +583,9 @@ export const TournamentInfoPage = () => {
         <main className="flex-grow">
 
           {/* ── About Section ── */}
-          <section id="about" className="py-16 px-4 border-b border-amber-500/20">
+          <section id="about" className="py-16 px-2 md:px-4 border-b border-amber-500/20">
             <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 items-center">
-              <div className="space-y-4">
+              <div className="space-y-4 ">
                 <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wide flex items-center gap-3 text-amber-400">
                   <Gamepad2 className="w-7 h-7 text-amber-400" /> About Tournament
                 </h2>
@@ -735,6 +755,28 @@ export const TournamentInfoPage = () => {
                   <PrizeTier key={p.position} {...p} />
                 ))}
               </div>
+
+              {/* Special Cash Prize & Trophies Announcement Card */}
+              <div className="mt-8 ff-3d-card ff-hud-corner rounded-2xl p-5 sm:p-6 bg-gradient-to-r from-amber-950/90 via-amber-900/40 to-slate-950 border-2 border-amber-400/70 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                <div className="flex items-center gap-4">
+                  <div className="p-3.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-400 flex-shrink-0">
+                    <Award className="w-7 h-7 text-amber-300" />
+                  </div>
+                  <div>
+                    <h4 className="text-amber-400 font-black text-base uppercase tracking-wider flex items-center gap-2 justify-center sm:justify-start">
+                      🏆 Bonus Rewards Unlocked
+                    </h4>
+                    <p className="text-slate-100 font-bold text-sm sm:text-base mt-1">
+                      Winners will get <span className="text-amber-300 font-black">trophies</span> and <span className="text-amber-300 font-black">cash prize</span> if we have <span className="text-amber-400 font-black underline decoration-amber-400/60 underline-offset-4">24+ teams registered</span>!
+                    </p>
+                  </div>
+                </div>
+                <Button asChild size="sm" className="ff-button text-xs font-black uppercase tracking-wider px-6 py-5 flex-shrink-0">
+                  <Link to="/tournament/register-with-payment">
+                    Register Squad <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </section>
 
@@ -779,8 +821,8 @@ export const TournamentInfoPage = () => {
           </section>
 
           {/* ── Venue & Directions Section ── */}
-          <section id="venue" className="py-16 px-4 border-b border-amber-500/20">
-            <div className="max-w-5xl mx-auto">
+          <section id="venue" className="py-16 md:px-4 border-b border-amber-500/20">
+            <div className="max-w-5xl mx-auto px-2">
               <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wide mb-2 flex items-center gap-3 text-amber-400">
                 <MapPin className="w-7 h-7 text-amber-400" /> LAN Venue & Location
               </h2>
@@ -791,7 +833,7 @@ export const TournamentInfoPage = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Venue Details */}
                 <div className="space-y-4">
-                  <div className="ff-3d-card ff-hud-corner rounded-2xl p-6">
+                  <div className="ff-3d-card ff-hud-corner rounded-2xl md:p-6 p-5">
                     <h3 className="font-black text-xl text-amber-300 mb-4 uppercase tracking-wide">{d.venue.name}</h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex gap-3">
@@ -866,9 +908,9 @@ export const TournamentInfoPage = () => {
                     </div>
                   </div>
 
-                  <Button asChild size="lg" className="ff-button w-full text-sm font-extrabold tracking-wider py-6">
+                  <Button asChild size="lg" className="ff-button w-full text-xs sm:text-sm font-extrabold tracking-wider py-6">
                     <a href={d.venue.directionsUrl} target="_blank" rel="noopener noreferrer">
-                      Get Directions on Google Maps <ExternalLink className="w-4 h-4 ml-2" />
+                      Get Directions on Google Maps <ExternalLink className="w-4 h-4 md:ml-2" />
                     </a>
                   </Button>
                 </div>
@@ -1006,7 +1048,7 @@ export const TournamentInfoPage = () => {
                   <Button
                     asChild
                     size="lg"
-                    className="ff-button text-lg font-black uppercase tracking-wider px-12 py-7 shadow-2xl"
+                    className="ff-button text-sm sm:text-lg font-black uppercase tracking-wider px-4 py-6 sm:px-12 sm:py-7 shadow-2xl"
                     id="final-register-btn"
                   >
                     <Link to="/tournament/register-with-payment">

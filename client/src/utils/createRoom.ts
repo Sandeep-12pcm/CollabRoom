@@ -56,19 +56,42 @@ export const createRoom = async ({
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create room, Please contact developer",
+        variant: "destructive",
+      });
+      return;
+    };
 
     toast({
       title: "Room created!",
       description: `Share this code with others to join: ${roomCode}`,
     });
 
+    // Add user to room participants
+    const { error: participantError } = await supabase.from("room_participants").insert({
+      room_id: room.id,
+      user_id: user.id,
+      
+    });
+
+    if (participantError) {
+      toast({
+        title: "Error",
+        description: participantError.message || "Failed to add user to room, Please contact developer",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setOpen(false);
     navigate(`/room/${room.id}`);
   } catch (error: any) {
     toast({
       title: "Error",
-      description: error.message || "Failed to create room",
+      description: error.message || "Failed to create room, Please contact developer",
       variant: "destructive",
     });
   } finally {
