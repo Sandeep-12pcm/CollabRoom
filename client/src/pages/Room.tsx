@@ -296,7 +296,11 @@ body {
       supabase.removeChannel(channel);
     };
   }, [id, queryClient]);
+  // const insertPage = async () => {
+  //   try{
 
+  //   }
+  // }
   const addPage = async () => {
     if (!id) return;
     if (!currentUser) {
@@ -308,27 +312,28 @@ body {
       return;
     }
     try {
-      // Calculate next page number
       const pageNumbers = pages
         .map((p) => {
           const match = p.title?.match(/^Page (\d+)$/);
           return match ? parseInt(match[1], 10) : 0;
         })
         .filter((n) => !isNaN(n));
+      // Calculate next page number
       const nextNum = pageNumbers.length > 0 ? Math.max(...pageNumbers) + 1 : 1;
-      console.log("Language: ");
       const { data, error } = await supabase
         .from("pages")
         .insert({
           room_id: id,
           title: `Page ${nextNum}`,
+          selected_language: language || "any",
           content: JSON.stringify({
-            [language]: defaultCodeTemplates[language],
+            [language || "any"]: defaultCodeTemplates[language || "any"],
           }),
           created_by: currentUser ? currentUser.id : null,
         })
         .select()
         .single();
+        // handleLanguageChange(language|| "any");
       if (error) {
         toast({
           title: "Error",
@@ -337,10 +342,7 @@ body {
         });
       } else if (data) {
         setActivePageId(data.id);
-        useQuery({
-          queryKey: ["room-pages", id],
-          // queryFn: fetchRoomPages
-        })
+        queryClient.invalidateQueries({ queryKey: ["room-pages", id] });
       }
     } catch (err) {
       toast({
@@ -349,7 +351,6 @@ body {
         variant: "destructive",
       });
     }
-
   };
   const languageExtensions: Record<string, string> = {
     javascript: "js",

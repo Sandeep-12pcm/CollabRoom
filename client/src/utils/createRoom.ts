@@ -59,7 +59,7 @@ export const createRoom = async ({
     if (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create room, Please contact developer",
+        description: "Failed to create room, Please contact developer",
         variant: "destructive",
       });
       return;
@@ -74,13 +74,14 @@ export const createRoom = async ({
     const { error: participantError } = await supabase.from("room_participants").insert({
       room_id: room.id,
       user_id: user.id,
-      
+      role: 'owner',
+      display_name: user.user_metadata.full_name,
     });
 
     if (participantError) {
       toast({
         title: "Error",
-        description: participantError.message || "Failed to add user to room, Please contact developer",
+        description: "Failed to add user to room, Please contact developer",
         variant: "destructive",
       });
       return;
@@ -88,10 +89,25 @@ export const createRoom = async ({
 
     setOpen(false);
     navigate(`/room/${room.id}`);
+    try {
+      const { error: pageError } = await supabase.from("pages").insert({
+        room_id: room.id,
+        title: "Getting Started",
+        selected_language: "any",
+        content: "# Getting Started\n\n## Welcome to CollabRoom!\n\nThis is your collaborative workspace.\n\nTo invite others, share your Room Code.\n\nHappy coding! 🚀",
+        created_by: user.id,
+      });
+
+      if (pageError) {
+        console.error("Error creating initial page:", pageError);
+      }
+    } catch (error: any) {
+      console.error("Error creating initial page:", error);
+    }
   } catch (error: any) {
     toast({
       title: "Error",
-      description: error.message || "Failed to create room, Please contact developer",
+      description: "Failed to create room, Please contact developer",
       variant: "destructive",
     });
   } finally {
